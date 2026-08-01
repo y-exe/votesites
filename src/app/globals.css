@@ -365,6 +365,24 @@ a {
   font-size: clamp(1.15rem, 1.95vw, 1.55rem);
 }
 
+.vote-entry__vote-button--current,
+.vote-entry__vote-button--current:disabled {
+  background: #f63049;
+  cursor: not-allowed;
+  filter: none;
+  font-size: clamp(0.95rem, 1.65vw, 1.28rem);
+}
+
+.vote-entry__vote-button:disabled:not(.vote-entry__vote-button--current) {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.vote-entry__current-label {
+  padding-inline: 0.5rem;
+  line-height: 1.2;
+}
+
 .vote-entry__discord-icon {
   flex: none;
   width: 1.55em;
@@ -527,6 +545,13 @@ a {
   line-height: 1.5;
 }
 
+.vote-confirm-card__content > div > .vote-confirm-card__error {
+  max-width: 34rem;
+  margin-top: 0.8rem;
+  color: #d31838;
+  font-size: clamp(0.85rem, 1.8vw, 1.05rem);
+}
+
 .vote-confirm-card__actions {
   display: grid;
   width: min(100%, 37rem);
@@ -605,6 +630,12 @@ a {
 .vote-confirm-card__cancel:focus-visible {
   outline: 4px solid #111;
   outline-offset: 4px;
+}
+
+.vote-confirm-card__continue:disabled,
+.vote-confirm-card__cancel:disabled {
+  cursor: wait;
+  opacity: 0.72;
 }
 
 @keyframes vote-confirm-backdrop-in {

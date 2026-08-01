@@ -495,6 +495,12 @@ export default function VotePage() {
   const [pendingVoteEntry, setPendingVoteEntry] = useState<VoteEntry | null>(null);
   const [voteHoldActive, setVoteHoldActive] = useState(false);
   const [voteConfirmClosing, setVoteConfirmClosing] = useState(false);
+  const [voteSubmitting, setVoteSubmitting] = useState(false);
+  const [voteError, setVoteError] = useState<string | null>(null);
+  const [currentVoteId, setCurrentVoteId] = useState<string | null>(null);
+  const [voteState, setVoteState] = useState<"idle" | "loading" | "ready" | "error">(
+    "idle",
+  );
   const holdTimerRef = useRef<number | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const continueButtonRef = useRef<HTMLButtonElement>(null);
@@ -514,7 +520,7 @@ export default function VotePage() {
   };
 
   const closeVoteConfirmation = () => {
-    if (voteConfirmClosing) return;
+    if (voteConfirmClosing || voteSubmitting) return;
     cancelVoteHold();
     setVoteConfirmClosing(true);
     closeTimerRef.current = window.setTimeout(() => {
@@ -524,14 +530,60 @@ export default function VotePage() {
     }, 260);
   };
 
-  const startVoteHold = () => {
-    if (holdTimerRef.current !== null || voteConfirmClosing) return;
+  const submitVote = async (entry: VoteEntry) => {
+    setVoteSubmitting(true);
+    setVoteError(null);
 
+    try {
+      const response = await fetch("/api/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId: entry.youtubeId }),
+      });
+      const payload = (await response.json()) as {
+        vote?: { videoId?: string };
+        error?: string;
+      };
+
+      if (response.status === 401) {
+        setAuthState("anonymous");
+        setCurrentVoteId(null);
+        throw new Error("ログインの有効期限が切れました。再度ログインしてください");
+      }
+      if (!response.ok || payload.vote?.videoId !== entry.youtubeId) {
+        throw new Error("投票を保存できませんでした。もう一度お試しください");
+      }
+
+      setCurrentVoteId(entry.youtubeId);
+      setVoteState("ready");
+      setVoteSubmitting(false);
+      closeVoteConfirmation();
+    } catch (error) {
+      setVoteError(
+        error instanceof Error
+          ? error.message
+          : "投票を保存できませんでした。もう一度お試しください",
+      );
+      setVoteSubmitting(false);
+    }
+  };
+
+  const startVoteHold = () => {
+    if (
+      holdTimerRef.current !== null ||
+      voteConfirmClosing ||
+      voteSubmitting ||
+      !pendingVoteEntry
+    ) {
+      return;
+    }
+
+    const entry = pendingVoteEntry;
     setVoteHoldActive(true);
     holdTimerRef.current = window.setTimeout(() => {
       holdTimerRef.current = null;
       setVoteHoldActive(false);
-      closeVoteConfirmation();
+      void submitVote(entry);
     }, 800);
   };
 
@@ -582,10 +634,35 @@ export default function VotePage() {
         const response = await fetch("/api/auth/session", { cache: "no-store" });
         const payload = (await response.json()) as { authenticated?: boolean };
         if (active) {
-          setAuthState(payload.authenticated ? "authenticated" : "anonymous");
+          if (!payload.authenticated) {
+            setAuthState("anonymous");
+            setCurrentVoteId(null);
+            setVoteState("idle");
+            return;
+          }
+
+          setAuthState("authenticated");
+          setVoteState("loading");
+
+          const voteResponse = await fetch("/api/vote", { cache: "no-store" });
+          const votePayload = (await voteResponse.json()) as {
+            vote?: { videoId?: string } | null;
+          };
+          if (!active) return;
+          if (!voteResponse.ok) {
+            setVoteState("error");
+            return;
+          }
+
+          setCurrentVoteId(votePayload.vote?.videoId ?? null);
+          setVoteState("ready");
         }
       } catch {
-        if (active) setAuthState("anonymous");
+        if (active) {
+          setAuthState("anonymous");
+          setCurrentVoteId(null);
+          setVoteState("error");
+        }
       }
     };
 
@@ -885,26 +962,54 @@ export default function VotePage() {
                   </button>
                   <div className="vote-entry__actions">
                     <button
-                      className="vote-entry__vote-button home-reel-trigger"
+                      className={`vote-entry__vote-button home-reel-trigger${
+                        authState === "authenticated" &&
+                        currentVoteId === entry.youtubeId
+                          ? " vote-entry__vote-button--current"
+                          : ""
+                      }`}
                       type="button"
+                      disabled={
+                        authState === "loading" ||
+                        (authState === "authenticated" &&
+                          (voteState === "loading" || currentVoteId === entry.youtubeId))
+                      }
                       aria-label={
-                        authState === "authenticated"
-                          ? `エントリー作品 ${index + 1} に投票`
+                        authState === "loading"
+                          ? "ログイン状態を確認中"
+                          : authState === "authenticated" &&
+                              currentVoteId === entry.youtubeId
+                            ? `エントリー作品 ${index + 1} にすでに投票しています`
+                            : authState === "authenticated" && currentVoteId
+                              ? `エントリー作品 ${index + 1} に投票を移行する`
+                              : authState === "authenticated"
+                                ? `エントリー作品 ${index + 1} に投票`
                           : `Discordでログインしてエントリー作品 ${index + 1} に投票`
                       }
                       onClick={() => {
-                        if (authState !== "authenticated") {
+                        if (authState === "loading") return;
+                        if (authState === "anonymous") {
                           window.location.assign(
                             "/api/auth/discord/start?returnTo=%2Fvote",
                           );
-                        } else {
+                        } else if (currentVoteId !== entry.youtubeId) {
                           setVoteConfirmClosing(false);
+                          setVoteError(null);
                           setPendingVoteEntry(entry);
                         }
                       }}
                     >
-                      {authState === "authenticated" ? (
-                        <VoteReelText label="投票する" />
+                      {authState === "loading" ? (
+                        <VoteReelText label="確認中" />
+                      ) : authState === "authenticated" &&
+                        currentVoteId === entry.youtubeId ? (
+                        <span className="vote-entry__current-label">
+                          すでにこの動画に投票しています
+                        </span>
+                      ) : authState === "authenticated" ? (
+                        <VoteReelText
+                          label={currentVoteId ? "投票を移行する" : "投票する"}
+                        />
                       ) : (
                         <>
                           <DiscordLogo className="vote-entry__discord-icon" />
@@ -997,6 +1102,11 @@ export default function VotePage() {
                   <span>投票を続行しますか？</span>
                 </h2>
                 <p id="vote-confirm-note">※取り消し・投票の移動は可能です</p>
+                {voteError ? (
+                  <p className="vote-confirm-card__error" role="alert">
+                    {voteError}
+                  </p>
+                ) : null}
               </div>
               <div className="vote-confirm-card__actions">
                 <button
@@ -1005,6 +1115,7 @@ export default function VotePage() {
                     voteHoldActive ? " vote-confirm-card__continue--holding" : ""
                   }`}
                   type="button"
+                  disabled={voteSubmitting}
                   aria-label="続行する。長押ししてください"
                   onPointerDown={(event) => {
                     event.currentTarget.setPointerCapture(event.pointerId);
@@ -1027,11 +1138,12 @@ export default function VotePage() {
                   }}
                   onContextMenu={(event) => event.preventDefault()}
                 >
-                  <VoteReelText label="続行する" />
+                  <VoteReelText label={voteSubmitting ? "保存中" : "続行する"} />
                 </button>
                 <button
                   className="vote-confirm-card__cancel home-reel-trigger"
                   type="button"
+                  disabled={voteSubmitting}
                   onClick={closeVoteConfirmation}
                 >
                   <VoteReelText label="キャンセル" />

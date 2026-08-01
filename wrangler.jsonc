@@ -16,6 +16,14 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "d1_databases": [
+    {
+      "binding": "VOTES_DB",
+      "database_name": "votesites-db",
+      "database_id": "7c07d1fe-f367-411b-a442-41248d9fbca9",
+      "migrations_dir": "migrations"
+    }
+  ],
   "observability": {
     "enabled": true
   }

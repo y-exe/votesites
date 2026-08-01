@@ -33,3 +33,14 @@ npm run deploy
 ```
 
 本番環境では `ENTRY_FEED_URL`、`DISCORD_CLIENT_ID`、`DISCORD_CLIENT_SECRET`、`AUTH_SECRET`、`DISCORD_REDIRECT_URI` をWorkerの環境変数またはSecretとして設定してください。
+
+## 投票データベース
+
+投票はCloudflare D1の `votesites-db` に保存します。スキーマを変更した場合は、デプロイ前に未適用のマイグレーションを確認して適用します。
+
+```bash
+npx wrangler d1 migrations list votesites-db --remote
+npx wrangler d1 migrations apply votesites-db --remote
+```
+
+DBへは公開HTTP APIやブラウザーから直接接続せず、Workerの `VOTES_DB` Bindingからのみアクセスします。書き込みAPIは署名済みDiscordセッションと同一Originを検証します。
