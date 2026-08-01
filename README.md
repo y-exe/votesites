@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# YAMAKAWA編集大会
 
-## Getting Started
+編集大会の案内・エントリー作品・投票を提供する Next.js サイトです。
 
-First, run the development server:
+## ローカル開発
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`.env.local` に Google Apps Script の応募作品フィードと Discord OAuth2 の設定を入力してください。実値はGitへコミットしません。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 検証
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+npm run preview
+```
 
-## Learn More
+`preview` は OpenNext でビルドし、Cloudflare Workers と同じ `workerd` 環境で起動します。
 
-To learn more about Next.js, take a look at the following resources:
+## Cloudflare Workers
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+フロントエンドの静的ファイルは Workers Static Assets、Next.js の Route Handlers は同一のWorkerで配信します。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run deploy
+```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+本番環境では `ENTRY_FEED_URL`、`DISCORD_CLIENT_ID`、`DISCORD_CLIENT_SECRET`、`AUTH_SECRET`、`DISCORD_REDIRECT_URI` をWorkerの環境変数またはSecretとして設定してください。

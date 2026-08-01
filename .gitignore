@@ -16,6 +16,12 @@
 # next.js
 /.next/
 /out/
+/.open-next/
+/.wrangler/
+/.wrangler-dry-run/
+
+# local development artifacts
+/.tools/
 
 # production
 /build
@@ -32,6 +38,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +46,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+cloudflare-env.d.ts
