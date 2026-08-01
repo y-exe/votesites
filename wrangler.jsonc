@@ -4,6 +4,12 @@
   "main": ".open-next/worker.js",
   "workers_dev": true,
   "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "event.ymkw.top",
+      "custom_domain": true
+    }
+  ],
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {

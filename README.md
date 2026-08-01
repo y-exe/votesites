@@ -2,6 +2,8 @@
 
 編集大会の案内・エントリー作品・投票を提供する Next.js サイトです。
 
+本番URL: https://event.ymkw.top
+
 ## ローカル開発
 
 ```bash
