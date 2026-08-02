@@ -5,6 +5,7 @@ import {
   verifyDiscordSession,
 } from "@/lib/discord-auth";
 import { fetchContestEntries, isYouTubeId } from "@/lib/entries";
+import { getVotingPhase } from "@/data/schedule";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -106,6 +107,14 @@ export async function POST(request: NextRequest) {
 
   const session = getSession(request);
   if (!session) return json({ error: "authentication_required" }, { status: 401 });
+
+  const votingPhase = getVotingPhase();
+  if (votingPhase !== "open") {
+    return json(
+      { error: "voting_not_open", phase: votingPhase },
+      { status: 403 },
+    );
+  }
 
   let payload: unknown;
   try {
