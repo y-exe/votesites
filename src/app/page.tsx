@@ -1281,28 +1281,9 @@ export default function Home() {
 
           <footer className="home-footer">
             <div className="home-footer__inner">
-              <div className={`${lineSeedExtraBold.className} home-footer__brand`}>
-                <p>やまかわてるき</p>
-                <span>
-                  編集大会
-                  <br />
-                  投票サイト
-                </span>
-              </div>
-
-              <nav className="home-footer__nav" aria-label="フッターナビゲーション">
-                <a className="home-reel-trigger" href="#home-about-title" aria-label="ABOUT">
-                  <ReelText label="ABOUT" />
-                </a>
-                <a className="home-reel-trigger" href="#home-vote-title" aria-label="VOTE">
-                  <ReelText label="VOTE" />
-                </a>
-                <a className="home-reel-trigger" href="#home-qa-title" aria-label="Q&A">
-                  <ReelText label="Q&A" />
-                </a>
-              </nav>
-
-              <small className={lineSeedExtraBold.className}>© 2026 ymkw.top</small>
+              <p className={lineSeedExtraBold.className}>
+                やまかわてるき　編集大会　投票サイト
+              </p>
             </div>
           </footer>
         </section>
