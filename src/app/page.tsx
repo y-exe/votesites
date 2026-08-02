@@ -957,15 +957,9 @@ export default function Home() {
         </h2>
         <div className={`${lineSeedExtraBold.className} home-about__body`}>
           <div className="home-about__content">
-            <div className="home-about__intro">
-              <p className="home-about__lead">
-                <span>指定された動画を、おもしろく編集していただきます！</span>
-              </p>
-              <p className="home-about__lead-note">
-                ※応募条件を満たしていれば、<strong>世界観は自由。</strong>
-                YouTube風の動画やMADなど、あなたらしい表現でご応募ください！
-              </p>
-            </div>
+            <p className="home-about__lead">
+              <span>「良い編集者を見つける」を目的で始めたイベントです。</span>
+            </p>
 
             <article className="home-about__card">
               <VideoRow
