@@ -1,7 +1,7 @@
 "use client";
 
 import localFont from "next/font/local";
-import { Google_Sans } from "next/font/google";
+import { Google_Sans, League_Gothic } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -19,6 +19,17 @@ const googleSans = Google_Sans({
   weight: "700",
   display: "swap",
 });
+
+const leagueGothic = League_Gothic({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
+
+const entryPreviewVideos = Array.from(
+  { length: 10 },
+  (_, index) => `/video-preview/${index + 11}.mp4`,
+);
 
 type CircuitPoint = { x: number; y: number };
 
@@ -71,6 +82,115 @@ function VoteReelText({ label }: { label: string }) {
         </span>
       ))}
     </span>
+  );
+}
+
+function VoteEntryEnding() {
+  const endingRef = useRef<HTMLDivElement>(null);
+  const letters = [..."ENTRY"];
+  const letterCenters = letters.map((_, index) => 600 + (index - 2) * 205);
+
+  useEffect(() => {
+    const ending = endingRef.current;
+    if (!ending) return;
+
+    const videos = Array.from(ending.querySelectorAll("video"));
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        videos.forEach((video) => {
+          if (entry.isIntersecting) {
+            void video.play().catch(() => undefined);
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { rootMargin: "35% 0px" },
+    );
+
+    observer.observe(ending);
+    return () => {
+      observer.disconnect();
+      videos.forEach((video) => video.pause());
+    };
+  }, []);
+
+  return (
+    <div className="vote-entry-ending" ref={endingRef}>
+      <article className="vote-entry-cta-card">
+        <div className="vote-entry-cta-card__video-title" aria-hidden="true">
+          <svg viewBox="0 0 1200 620" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              {letters.map((letter, index) => (
+                <clipPath id={`vote-entry-video-letter-${index}`} key={letter}>
+                  <text
+                    className={leagueGothic.className}
+                    x={letterCenters[index]}
+                    y="440"
+                    textAnchor="middle"
+                    fontSize="640"
+                    fontWeight="400"
+                  >
+                    {letter}
+                  </text>
+                </clipPath>
+              ))}
+            </defs>
+            {letters.map((letter, index) => (
+              <foreignObject
+                x={letterCenters[index] - 120}
+                y="0"
+                width="240"
+                height="620"
+                clipPath={`url(#vote-entry-video-letter-${index})`}
+                key={letter}
+              >
+                <video
+                  className="vote-entry-cta-card__letter-video"
+                  src={entryPreviewVideos[index % entryPreviewVideos.length]}
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                />
+              </foreignObject>
+            ))}
+          </svg>
+        </div>
+        <div className="vote-entry-cta-card__content">
+          <h3>投票動画はここまでです！！</h3>
+          <p>
+            あなたも<strong>エントリー</strong>してみませんか？
+          </p>
+          <Link
+            className="vote-entry-cta-card__link home-reel-trigger"
+            href="/#entry-card-title"
+            aria-label="エントリーページへ戻る"
+          >
+            <VoteReelText label="エントリーページへ戻る →" />
+          </Link>
+        </div>
+      </article>
+
+      <div className="vote-entry-ending__videos" aria-hidden="true">
+        <div className="vote-entry-ending__track">
+          {Array.from({ length: 2 }, (_, groupIndex) => (
+            <div className="vote-entry-ending__group" key={groupIndex}>
+              {entryPreviewVideos.map((src) => (
+                <video
+                  src={src}
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  key={`${groupIndex}-${src}`}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1034,24 +1154,7 @@ export default function VotePage() {
                   </article>
                 ))}
               </div>
-              <article className="vote-entry-cta-card">
-                <span className="vote-entry-cta-card__backdrop" aria-hidden="true">
-                  ENTRY
-                </span>
-                <div className="vote-entry-cta-card__content">
-                  <h3>投票動画はここまでです！！</h3>
-                  <p>
-                    あなたも<strong>エントリー</strong>してみませんか？
-                  </p>
-                  <Link
-                    className="vote-entry-cta-card__link home-reel-trigger"
-                    href="/#entry-card-title"
-                    aria-label="エントリーページへ戻る"
-                  >
-                    <VoteReelText label="エントリーページへ戻る →" />
-                  </Link>
-                </div>
-              </article>
+              <VoteEntryEnding />
             </>
           ) : entriesState === "loading" ? (
             <div className="vote-entries__grid" role="status" aria-busy="true">
