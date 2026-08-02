@@ -944,9 +944,10 @@ export default function VotePage() {
             ENTRY VIDEOS
           </h2>
           {entries.length > 0 ? (
-            <div className="vote-entries__grid">
-              {entries.map((entry, index) => (
-                <article className="vote-entry-item" key={entry.id}>
+            <>
+              <div className="vote-entries__grid">
+                {entries.map((entry, index) => (
+                  <article className="vote-entry-item" key={entry.id}>
                   <button
                     className="vote-entry"
                     type="button"
@@ -1030,9 +1031,28 @@ export default function VotePage() {
                       <VoteReelText label="⚑" />
                     </button>
                   </div>
-                </article>
-              ))}
-            </div>
+                  </article>
+                ))}
+              </div>
+              <article className="vote-entry-cta-card">
+                <span className="vote-entry-cta-card__backdrop" aria-hidden="true">
+                  ENTRY
+                </span>
+                <div className="vote-entry-cta-card__content">
+                  <h3>投票動画はここまでです！！</h3>
+                  <p>
+                    あなたも<strong>エントリー</strong>してみませんか？
+                  </p>
+                  <Link
+                    className="vote-entry-cta-card__link home-reel-trigger"
+                    href="/#entry-card-title"
+                    aria-label="エントリーページへ戻る"
+                  >
+                    <VoteReelText label="エントリーページへ戻る →" />
+                  </Link>
+                </div>
+              </article>
+            </>
           ) : entriesState === "loading" ? (
             <div className="vote-entries__grid" role="status" aria-busy="true">
               <span className="vote-sr-only">応募作品を読み込んでいます</span>

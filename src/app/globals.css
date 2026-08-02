@@ -285,6 +285,104 @@ a {
   gap: clamp(0.8rem, 1.7vw, 1.5rem);
 }
 
+.vote-entry-cta-card {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 68rem);
+  margin: clamp(3.5rem, 8vw, 7rem) auto 0;
+  overflow: hidden;
+  border-radius: clamp(1.5rem, 3vw, 2.75rem);
+  color: #171117;
+  background: rgb(255 255 255 / 97%);
+  box-shadow: 0 1rem 2.5rem rgb(76 10 39 / 18%);
+}
+
+.vote-entry-cta-card__backdrop {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  color: rgb(246 48 73 / 10%);
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: clamp(10rem, 31vw, 27rem);
+  font-weight: 900;
+  line-height: 0.72;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.vote-entry-cta-card__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  padding: clamp(3.5rem, 7vw, 6.5rem) clamp(1.25rem, 6vw, 5rem);
+  text-align: center;
+}
+
+.vote-entry-cta-card h3,
+.vote-entry-cta-card p {
+  filter:
+    drop-shadow(0 0 1px #fff)
+    drop-shadow(0 0 3px #fff)
+    drop-shadow(0 0 7px rgb(255 255 255 / 96%))
+    drop-shadow(0 0 12px rgb(255 255 255 / 78%));
+}
+
+.vote-entry-cta-card h3 {
+  margin: 0;
+  font-size: clamp(1.55rem, 3.4vw, 3rem);
+  line-height: 1.35;
+}
+
+.vote-entry-cta-card p {
+  margin: clamp(1.1rem, 2.5vw, 1.8rem) 0 0;
+  font-size: clamp(1.1rem, 2.4vw, 2rem);
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.vote-entry-cta-card p strong {
+  position: relative;
+  z-index: 0;
+  display: inline-block;
+  font-size: 1.12em;
+}
+
+.vote-entry-cta-card p strong::after {
+  position: absolute;
+  z-index: -1;
+  right: -0.08em;
+  bottom: 0.08em;
+  left: -0.08em;
+  height: 0.4em;
+  background: linear-gradient(90deg, #ffe53d, #ffb51f);
+  content: "";
+}
+
+.vote-entry-cta-card__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 39rem);
+  margin-top: clamp(2rem, 4vw, 3.3rem);
+  padding: clamp(0.85rem, 1.5vw, 1.1rem) clamp(1rem, 2.4vw, 2rem);
+  border-radius: 999px;
+  color: #fff;
+  background: #f63049;
+  font-size: clamp(1.15rem, 2.4vw, 2rem);
+  font-weight: 800;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.vote-entry-cta-card__link:focus-visible {
+  outline: 4px solid #111;
+  outline-offset: 5px;
+}
+
 .vote-entry {
   display: block;
   width: 100%;
