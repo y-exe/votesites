@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { League_Gothic } from "next/font/google";
 import localFont from "next/font/local";
 import Script from "next/script";
 import { ReactLenis } from "lenis/react";
-import EquipmentFlow, { editingAppIcons } from "./equipment-flow";
+import { editingAppIcons } from "./equipment-data";
 import DiscordLogo from "./discord-logo";
 import {
   type CSSProperties,
@@ -15,6 +16,10 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+
+const EquipmentFlow = dynamic(() => import("./equipment-flow"), {
+  ssr: false,
+});
 
 declare global {
   interface Window {
@@ -653,74 +658,64 @@ export function ArchivedCurrentHome() {
 
 export default function Home() {
   const pageRef = useRef<HTMLElement>(null);
-  const homeEquipmentReadyRef = useRef(false);
   const rows = useSyncExternalStore(subscribe, getBrowserRows, () => initialRows);
   const [homeLoaderVisible, setHomeLoaderVisible] = useState(true);
   const [homeLoaderClosing, setHomeLoaderClosing] = useState(false);
+  const [equipmentEnabled, setEquipmentEnabled] = useState(false);
   const [discordAuthState, setDiscordAuthState] = useState<
     "loading" | "authenticated" | "anonymous"
   >("loading");
 
   useEffect(() => {
-    const minimumDuration = 1200;
+    const minimumDuration = 700;
     const startedAt = performance.now();
     const previousOverflow = document.body.style.overflow;
     let hideTimer = 0;
-    let removeTimer = 0;
-    let safetyTimer = 0;
     let readyFrame = 0;
-    let scheduled = false;
-    let initialRenderReady = false;
-    let equipmentReady = homeEquipmentReadyRef.current;
 
     document.body.style.overflow = "hidden";
 
-    const scheduleHide = () => {
-      if (scheduled) return;
-      scheduled = true;
+    const beginClosing = () => {
       const remaining = Math.max(0, minimumDuration - (performance.now() - startedAt));
 
       hideTimer = window.setTimeout(() => {
         setHomeLoaderClosing(true);
-        removeTimer = window.setTimeout(() => {
-          document.body.style.overflow = previousOverflow;
-          setHomeLoaderVisible(false);
-        }, 500);
       }, remaining);
     };
 
-    const tryFinish = () => {
-      equipmentReady = equipmentReady || homeEquipmentReadyRef.current;
-      if (initialRenderReady && equipmentReady) scheduleHide();
-    };
-
-    void document.fonts.ready.then(() => {
+    readyFrame = window.requestAnimationFrame(() => {
       readyFrame = window.requestAnimationFrame(() => {
-        readyFrame = window.requestAnimationFrame(() => {
-          initialRenderReady = true;
-          tryFinish();
-        });
+        beginClosing();
       });
     });
 
-    const handleEquipmentReady = () => {
-      equipmentReady = true;
-      tryFinish();
-    };
-
-    window.addEventListener("home-equipment-ready", handleEquipmentReady);
-
-    safetyTimer = window.setTimeout(scheduleHide, 8000);
-
     return () => {
-      window.removeEventListener("home-equipment-ready", handleEquipmentReady);
       window.clearTimeout(hideTimer);
-      window.clearTimeout(removeTimer);
-      window.clearTimeout(safetyTimer);
       window.cancelAnimationFrame(readyFrame);
       document.body.style.overflow = previousOverflow;
     };
   }, []);
+
+  useEffect(() => {
+    if (homeLoaderVisible) return;
+
+    const enableEquipment = () => setEquipmentEnabled(true);
+    const idleWindow = window as unknown as {
+      requestIdleCallback?: (
+        callback: IdleRequestCallback,
+        options?: IdleRequestOptions,
+      ) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+
+    if (idleWindow.requestIdleCallback) {
+      const idleId = idleWindow.requestIdleCallback(enableEquipment, { timeout: 1200 });
+      return () => idleWindow.cancelIdleCallback?.(idleId);
+    }
+
+    const timer = globalThis.setTimeout(enableEquipment, 250);
+    return () => globalThis.clearTimeout(timer);
+  }, [homeLoaderVisible]);
 
   useEffect(() => {
     let active = true;
@@ -807,6 +802,19 @@ export default function Home() {
           }`}
           role="status"
           aria-label="ホームページを読み込んでいます"
+          aria-hidden={homeLoaderClosing}
+          onTransitionEnd={(event) => {
+            if (
+              !homeLoaderClosing ||
+              event.target !== event.currentTarget ||
+              event.propertyName !== "opacity"
+            ) {
+              return;
+            }
+
+            document.body.style.overflow = "";
+            setHomeLoaderVisible(false);
+          }}
         >
           <div className={`${zakkuriGothic.className} home-loading-screen__grid`}>
             <span className="home-loading-screen__char home-loading-screen__char--1">
@@ -934,13 +942,7 @@ export default function Home() {
           />
         </svg>
 
-        <EquipmentFlow
-          direction="diagonal"
-          onReady={() => {
-            homeEquipmentReadyRef.current = true;
-            window.dispatchEvent(new Event("home-equipment-ready"));
-          }}
-        />
+        {equipmentEnabled ? <EquipmentFlow direction="diagonal" /> : null}
 
         <h2
           id="home-about-title"
