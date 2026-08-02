@@ -957,9 +957,15 @@ export default function Home() {
         </h2>
         <div className={`${lineSeedExtraBold.className} home-about__body`}>
           <div className="home-about__content">
-            <p className="home-about__lead">
-              <span>「良い編集者を見つける」を目的で始めたイベントです。</span>
-            </p>
+            <div className="home-about__intro">
+              <p className="home-about__lead">
+                <span>指定された動画を、おもしろく編集していただきます！</span>
+              </p>
+              <p className="home-about__lead-note">
+                ※応募条件を満たしていれば、<strong>世界観は自由。</strong>
+                YouTube風の動画やMADなど、あなたらしい表現でご応募ください！
+              </p>
+            </div>
 
             <article className="home-about__card">
               <VideoRow
@@ -973,10 +979,10 @@ export default function Home() {
               <div className="home-about__card-content">
                 <h3 className="home-about__label">応募動画</h3>
                 <p className="home-about__card-title">
-                  指定された動画をYoutubeっぽく編集していただきます!!
+                  指定された動画を、あなたの世界観で自由に編集!!
                 </p>
                 <p className="home-about__card-note">
-                  一部テロップの色・フォントのおおまかな指定があります
+                  YouTube風・MADなど、条件を満たしていれば表現方法は自由です
                 </p>
                 <p className="home-about__software-note">
                   ※編集ソフトに指定はありません
@@ -1024,16 +1030,16 @@ export default function Home() {
                 <h3 className="home-about__label">開催概要</h3>
                 <dl className="home-about__dates">
                   <div>
-                    <dt>応募日時：</dt>
-                    <dd>2026年XX/XX ～ XX/XX</dd>
+                    <dt>応募締め切り：</dt>
+                    <dd>2026年8月28日 23:59</dd>
                   </div>
                   <div>
-                    <dt>投票日時：</dt>
-                    <dd>2026年XX/XX ～ XX/XX</dd>
+                    <dt>投票期間：</dt>
+                    <dd>2026年8月29日 20:00 ～ 9月4日 23:59</dd>
                   </div>
                   <div>
-                    <dt>最終結果生放送：</dt>
-                    <dd>2026年08/28</dd>
+                    <dt>結果生放送：</dt>
+                    <dd>2026年9月5日 21:00</dd>
                   </div>
                 </dl>
               </div>
@@ -1178,13 +1184,16 @@ export default function Home() {
                   <strong>不正投票は禁止</strong>とします
                 </li>
                 <li>
-                  Webで行われるのは予選投票であり、最終投票は
-                  <strong>
-                    2026年08/28のやまかわてるきの生放送のYoutube内投票で行われます
-                  </strong>
+                  順位は<strong>Web投票のみ</strong>で決定します
                 </li>
                 <li>
-                  投票は<strong>一人X回</strong>まですることができます
+                  投票できるのは<strong>一人1票</strong>です
+                  （投票期間中は投票先を変更できます）
+                </li>
+                <li>
+                  途中経過とランキングは非公開です。結果は
+                  <strong>2026年9月5日 21:00の結果生放送</strong>
+                  で発表します
                 </li>
               </ul>
             </div>

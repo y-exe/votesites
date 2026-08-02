@@ -7,6 +7,7 @@ import Link from "next/link";
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ReactLenis, type LenisRef } from "lenis/react";
 import DiscordLogo from "../discord-logo";
+import { getVotingPhase, type VotingPhase } from "@/data/schedule";
 
 const lineSeedExtraBold = localFont({
   src: "../fonts/LINESeedJP-ExtraBold.ttf",
@@ -621,6 +622,9 @@ export default function VotePage() {
   const [voteState, setVoteState] = useState<"idle" | "loading" | "ready" | "error">(
     "idle",
   );
+  const [votingPhase, setVotingPhase] = useState<VotingPhase | "checking">(
+    "checking",
+  );
   const holdTimerRef = useRef<number | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const continueButtonRef = useRef<HTMLButtonElement>(null);
@@ -663,12 +667,22 @@ export default function VotePage() {
       const payload = (await response.json()) as {
         vote?: { videoId?: string };
         error?: string;
+        phase?: VotingPhase;
       };
 
       if (response.status === 401) {
         setAuthState("anonymous");
         setCurrentVoteId(null);
         throw new Error("ログインの有効期限が切れました。再度ログインしてください");
+      }
+      if (payload.error === "voting_not_open") {
+        const nextPhase = payload.phase ?? getVotingPhase();
+        setVotingPhase(nextPhase);
+        throw new Error(
+          nextPhase === "before"
+            ? "投票期間はまだ始まっていません"
+            : "投票期間は終了しました",
+        );
       }
       if (!response.ok || payload.vote?.videoId !== entry.youtubeId) {
         throw new Error("投票を保存できませんでした。もう一度お試しください");
@@ -687,6 +701,13 @@ export default function VotePage() {
       setVoteSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    const updateVotingPhase = () => setVotingPhase(getVotingPhase());
+    updateVotingPhase();
+    const timer = window.setInterval(updateVotingPhase, 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const startVoteHold = () => {
     if (
@@ -1045,6 +1066,12 @@ export default function VotePage() {
                 <strong>不快な内容</strong>が含まれる動画を発見した場合は、
                 <strong>通報ボタン</strong>で通報のご協力をお願い致します。
               </p>
+              <p className="vote-criteria__rule">
+                投票は<strong>一人1票</strong>です。途中経過とランキングは
+                <strong>結果生放送まで非公開</strong>です。
+                <br />
+                投票期間：2026年8月29日 20:00 ～ 9月4日 23:59
+              </p>
             </article>
             <div className="vote-home-link-wrap">
               <Link
@@ -1088,27 +1115,42 @@ export default function VotePage() {
                         currentVoteId === entry.youtubeId
                           ? " vote-entry__vote-button--current"
                           : ""
+                      }${
+                        votingPhase !== "open" &&
+                        !(
+                          authState === "authenticated" &&
+                          currentVoteId === entry.youtubeId
+                        )
+                          ? " vote-entry__vote-button--unavailable"
+                          : ""
                       }`}
                       type="button"
                       disabled={
+                        votingPhase !== "open" ||
                         authState === "loading" ||
                         (authState === "authenticated" &&
                           (voteState === "loading" || currentVoteId === entry.youtubeId))
                       }
                       aria-label={
-                        authState === "loading"
-                          ? "ログイン状態を確認中"
-                          : authState === "authenticated" &&
-                              currentVoteId === entry.youtubeId
+                        authState === "authenticated" &&
+                        currentVoteId === entry.youtubeId
                             ? `エントリー作品 ${index + 1} にすでに投票しています`
-                            : authState === "authenticated" && currentVoteId
-                              ? `エントリー作品 ${index + 1} に投票を移行する`
-                              : authState === "authenticated"
-                                ? `エントリー作品 ${index + 1} に投票`
-                          : `Discordでログインしてエントリー作品 ${index + 1} に投票`
+                            : votingPhase === "checking"
+                              ? "投票期間を確認中"
+                              : votingPhase === "before"
+                                ? "投票期間は2026年8月29日20時からです"
+                                : votingPhase === "closed"
+                                  ? "投票期間は終了しました"
+                                  : authState === "loading"
+                                    ? "ログイン状態を確認中"
+                                    : authState === "authenticated" && currentVoteId
+                                      ? `エントリー作品 ${index + 1} に投票を移行する`
+                                      : authState === "authenticated"
+                                        ? `エントリー作品 ${index + 1} に投票`
+                                        : `Discordでログインしてエントリー作品 ${index + 1} に投票`
                       }
                       onClick={() => {
-                        if (authState === "loading") return;
+                        if (votingPhase !== "open" || authState === "loading") return;
                         if (authState === "anonymous") {
                           window.location.assign(
                             "/api/auth/discord/start?returnTo=%2Fvote",
@@ -1120,13 +1162,19 @@ export default function VotePage() {
                         }
                       }}
                     >
-                      {authState === "loading" ? (
-                        <VoteReelText label="確認中" />
-                      ) : authState === "authenticated" &&
-                        currentVoteId === entry.youtubeId ? (
+                      {authState === "authenticated" &&
+                      currentVoteId === entry.youtubeId ? (
                         <span className="vote-entry__current-label">
                           すでにこの動画に投票しています
                         </span>
+                      ) : votingPhase === "checking" ? (
+                        <VoteReelText label="投票期間を確認中" />
+                      ) : votingPhase === "before" ? (
+                        <VoteReelText label="8月29日 20:00 投票開始" />
+                      ) : votingPhase === "closed" ? (
+                        <VoteReelText label="投票期間は終了しました" />
+                      ) : authState === "loading" ? (
+                        <VoteReelText label="確認中" />
                       ) : authState === "authenticated" ? (
                         <VoteReelText
                           label={currentVoteId ? "投票を移行する" : "投票する"}
@@ -1224,7 +1272,9 @@ export default function VotePage() {
                 <h2 id="vote-confirm-title">
                   <span>投票を続行しますか？</span>
                 </h2>
-                <p id="vote-confirm-note">※取り消し・投票の移動は可能です</p>
+                <p id="vote-confirm-note">
+                  ※投票期間中は、あとから投票先を変更できます
+                </p>
                 {voteError ? (
                   <p className="vote-confirm-card__error" role="alert">
                     {voteError}

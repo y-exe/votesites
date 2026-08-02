@@ -8,7 +8,7 @@
   [![Cloudflare D1](https://img.shields.io/badge/Cloudflare-D1-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/d1/)
   [![License GPL-3.0](https://img.shields.io/badge/LICENSE-GPL--3.0-green.svg?style=flat-square)](LICENSE)
 </h1>
-「良い編集者を見つける」を目的に始めた編集大会の公式サイト！！<br>
+指定された動画を、自由な世界観でおもしろく編集する大会の公式サイト！！<br>
 開催要項、エントリー、応募動画の閲覧・投票までを1つにまとめています。<br>
 <br>
 
