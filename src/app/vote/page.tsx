@@ -1062,10 +1062,6 @@ export default function VotePage() {
                 <br className="vote-criteria__mobile-break" />
                 <strong>投票してください</strong>
               </p>
-              <p className="vote-criteria__notice">
-                <strong>不快な内容</strong>が含まれる動画を発見した場合は、
-                <strong>通報ボタン</strong>で通報のご協力をお願い致します。
-              </p>
               <p className="vote-criteria__rule">
                 投票は<strong>一人1票</strong>です。途中経過とランキングは
                 <strong>結果生放送まで非公開</strong>です。
