@@ -40,6 +40,7 @@ function getRenderProfile() {
   const isIPad =
     /iPad/.test(userAgent) ||
     (userAgent.includes("Macintosh") && navigator.maxTouchPoints > 1);
+  const isCompactViewport = window.matchMedia("(max-width: 1024px)").matches;
   const isAndroidTablet =
     /Android/.test(userAgent) && Math.min(window.innerWidth, window.innerHeight) >= 600;
   const isTablet = isIPad || isAndroidTablet;
@@ -64,6 +65,7 @@ function getRenderProfile() {
     quality = "low";
   } else if (
     isTablet ||
+    isCompactViewport ||
     logicalCores <= 8 ||
     (deviceMemory !== undefined && deviceMemory <= 8) ||
     pixelWorkload >= 8_000_000
@@ -326,6 +328,9 @@ export default function EquipmentFlow({
       ? (isMobile ? 12 : lowQuality ? 4 : balancedQuality ? 5 : 14)
       : (isMobile ? 9 : lowQuality ? 3 : balancedQuality ? 4 : 9);
     const count = equipmentCount + appCount;
+    element.dataset.modelCount = String(count);
+    element.dataset.frameRate = String(frameRateLimit);
+    element.dataset.pixelRatioLimit = String(pixelRatioLimit);
     const diagonalColumns = isMobile ? 4 : lowQuality ? 5 : balancedQuality ? 6 : 12;
     const diagonalRows = Math.ceil(count / diagonalColumns);
     const appInterval = Math.max(2, Math.floor(count / appCount));

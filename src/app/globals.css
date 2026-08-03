@@ -1289,6 +1289,16 @@ a {
   z-index: 0;
 }
 
+@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
+  .home--hero {
+    height: 100svh;
+  }
+
+  .home--hero .home__layer {
+    will-change: auto;
+  }
+}
+
 .home__contest-wall {
   position: absolute;
   z-index: 1;
@@ -2814,6 +2824,15 @@ a {
     margin-top: 3rem;
   }
 
+  .home-about__entry-video-title svg {
+    width: auto;
+    max-width: none;
+    height: 100%;
+    aspect-ratio: 1200 / 620;
+    transform: scale(1.35);
+    transform-origin: center;
+  }
+
   .home-about__entry-content {
     padding: 2.8rem 1.25rem;
   }
@@ -2846,6 +2865,10 @@ a {
 
   .video-row--right .video-row__tilt {
     transform: translateY(1.5rem) rotate(2deg) scale(1.06);
+  }
+
+  .video-row--closing.video-row--right .video-row__tilt {
+    transform: none;
   }
 
   .video-card {
