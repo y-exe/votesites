@@ -928,9 +928,10 @@ export default function Home() {
     const updateEffects = (scrollPosition: number) => {
       const safeScroll = Math.max(scrollPosition, 0);
       const progress = Math.min(safeScroll / (window.innerHeight * 0.9), 1);
-      const isMobile = coarsePointer.matches || window.innerWidth <= 640;
-      const imageTravel = isMobile ? 0.14 : 0.2;
-      const baseScale = isMobile ? 1.12 : 1.08;
+      const isPhone = window.innerWidth <= 640;
+      const hasTouchInput = coarsePointer.matches || navigator.maxTouchPoints > 0;
+      const stabilizeHeroImage = hasTouchInput || window.innerWidth <= 1024;
+      const baseScale = isPhone ? 1.12 : 1.08;
 
       if (reducedMotion.matches) {
         page.style.setProperty("--home-image-y", "0px");
@@ -941,16 +942,22 @@ export default function Home() {
         return;
       }
 
-      page.style.setProperty("--home-image-y", `${safeScroll * imageTravel}px`);
-      page.style.setProperty("--home-image-scale", `${baseScale + progress * 0.035}`);
+      page.style.setProperty(
+        "--home-image-y",
+        stabilizeHeroImage ? "0px" : `${safeScroll * 0.2}px`,
+      );
+      page.style.setProperty(
+        "--home-image-scale",
+        `${stabilizeHeroImage ? baseScale : baseScale + progress * 0.035}`,
+      );
       page.style.setProperty("--home-image-dim", `${progress * 0.52}`);
       page.style.setProperty(
         "--home-wave-y",
-        `${-Math.min(safeScroll * (isMobile ? 0.028 : 0.04), isMobile ? 26 : 38)}px`,
+        `${-Math.min(safeScroll * (isPhone ? 0.028 : 0.04), isPhone ? 26 : 38)}px`,
       );
       page.style.setProperty(
         "--home-title-y",
-        `${-Math.min(safeScroll * (isMobile ? 0.05 : 0.075), isMobile ? 38 : 54)}px`,
+        `${-Math.min(safeScroll * (isPhone ? 0.05 : 0.075), isPhone ? 38 : 54)}px`,
       );
     };
 
