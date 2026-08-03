@@ -303,7 +303,12 @@ a {
   border-radius: clamp(1.5rem, 3vw, 2.75rem) clamp(1.5rem, 3vw, 2.75rem) 0 0;
   color: #171117;
   background: rgb(255 255 255 / 97%);
-  box-shadow: 0 1rem 2.5rem rgb(76 10 39 / 18%);
+  box-shadow:
+    0 0 0 2px rgb(0 0 0 / 94%),
+    0 0 5px rgb(0 0 0 / 92%),
+    0 0 12px rgb(0 0 0 / 76%),
+    0 0 24px rgb(0 0 0 / 54%),
+    0 1rem 2.5rem rgb(0 0 0 / 32%);
 }
 
 .vote-entry-cta-card__video-title {
