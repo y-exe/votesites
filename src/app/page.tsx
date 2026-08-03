@@ -11,6 +11,7 @@ import DiscordLogo from "./discord-logo";
 import {
   type CSSProperties,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -54,6 +55,139 @@ const zakkuriGothic = localFont({
 const videoPaths = Array.from({ length: 20 }, (_, index) =>
   `/video-preview/${index + 1}.mp4`,
 );
+
+function getVideoPoster(src: string) {
+  return src.replace("/video-preview/", "/video-preview/posters/").replace(/\.mp4$/, ".webp");
+}
+
+type AmbientMediaMode = "poster" | "video" | "ios-image";
+
+type NavigatorWithConnection = Navigator & {
+  connection?: EventTarget & { saveData?: boolean };
+};
+
+function getAmbientMediaMode(): AmbientMediaMode {
+  const navigatorWithConnection = navigator as NavigatorWithConnection;
+  const isIOS =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.userAgent.includes("Macintosh") && navigator.maxTouchPoints > 1);
+  const shouldSaveData = navigatorWithConnection.connection?.saveData === true;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  return shouldSaveData || reduceMotion ? "poster" : isIOS ? "ios-image" : "video";
+}
+
+function subscribeAmbientMediaMode(callback: () => void) {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const connection = (navigator as NavigatorWithConnection).connection;
+
+  reduceMotion.addEventListener("change", callback);
+  connection?.addEventListener("change", callback);
+
+  return () => {
+    reduceMotion.removeEventListener("change", callback);
+    connection?.removeEventListener("change", callback);
+  };
+}
+
+function useAmbientMediaMode() {
+  const mode = useSyncExternalStore<AmbientMediaMode>(
+    subscribeAmbientMediaMode,
+    getAmbientMediaMode,
+    (): AmbientMediaMode => "poster",
+  );
+
+  return mode;
+}
+
+function AmbientMedia({
+  src,
+  className,
+  mode,
+}: {
+  src: string;
+  className?: string;
+  mode: AmbientMediaMode;
+}) {
+  const hostRef = useRef<HTMLSpanElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isNearViewport, setIsNearViewport] = useState(false);
+  const [motionFailed, setMotionFailed] = useState(false);
+  const poster = getVideoPoster(src);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsNearViewport(entry.isIntersecting),
+      { rootMargin: "120px" },
+    );
+    observer.observe(host);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isNearViewport || mode !== "video") return;
+
+    video.muted = true;
+    video.defaultMuted = true;
+    const playback = video.play();
+    playback?.catch(() => setMotionFailed(true));
+
+    return () => video.pause();
+  }, [isNearViewport, mode]);
+
+  return (
+    <span className="ambient-media" data-media-mode={mode} ref={hostRef}>
+      <Image
+        className={`ambient-media__poster${className ? ` ${className}` : ""}`}
+        src={poster}
+        alt=""
+        fill
+        sizes="(max-width: 640px) 60vw, 28vw"
+        unoptimized
+      />
+      {isNearViewport && mode === "video" && !motionFailed ? (
+        <video
+          className={`ambient-media__motion${className ? ` ${className}` : ""}`}
+          ref={videoRef}
+          src={src}
+          poster={poster}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="none"
+          controls={false}
+          disablePictureInPicture
+          disableRemotePlayback
+          onLoadedMetadata={(event) => {
+            const player = event.currentTarget;
+            player.muted = true;
+            player.defaultMuted = true;
+            if (Number.isFinite(player.duration) && player.duration > 0) {
+              player.currentTime = Math.random() * player.duration;
+            }
+          }}
+          onError={() => setMotionFailed(true)}
+        />
+      ) : null}
+      {isNearViewport && mode === "ios-image" && !motionFailed ? (
+        // Safari supports short MP4 files in image elements without media controls.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className={`ambient-media__motion${className ? ` ${className}` : ""}`}
+          src={src}
+          alt=""
+          onError={() => setMotionFailed(true)}
+        />
+      ) : null}
+    </span>
+  );
+}
 
 const initialRows = {
   top: videoPaths.slice(0, 10),
@@ -123,6 +257,7 @@ function HeroReelLink({ href, label }: { href: string; label: string }) {
 function EntryVideoTitle({ videos }: { videos: string[] }) {
   const letters = [..."ENTRY"];
   const letterCenters = letters.map((_, index) => 600 + (index - 2) * 205);
+  const mediaMode = useAmbientMediaMode();
 
   return (
     <div className="home-about__entry-video-title" aria-hidden="true">
@@ -145,33 +280,47 @@ function EntryVideoTitle({ videos }: { videos: string[] }) {
         </defs>
         {letters.map((letter, index) => {
           const video = videos[index % videos.length];
+          const clipPath = `url(#entry-video-letter-${index})`;
 
           return (
-            <foreignObject
-              x={letterCenters[index] - 120}
-              y="0"
-              width="240"
-              height="620"
-              clipPath={`url(#entry-video-letter-${index})`}
-              key={letter}
-            >
-              <video
-                className="home-about__entry-video"
-                src={video}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                onLoadedMetadata={(event) => {
-                  const player = event.currentTarget;
-
-                  if (Number.isFinite(player.duration) && player.duration > 0) {
-                    player.currentTime = Math.random() * player.duration;
-                  }
-                }}
+            <g key={letter}>
+              <image
+                x={letterCenters[index] - 120}
+                y="0"
+                width="240"
+                height="620"
+                href={getVideoPoster(video)}
+                preserveAspectRatio="xMidYMid slice"
+                clipPath={clipPath}
               />
-            </foreignObject>
+              {mediaMode === "ios-image" ? (
+                <image
+                  className="home-about__entry-video-image"
+                  x={letterCenters[index] - 120}
+                  y="0"
+                  width="240"
+                  height="620"
+                  href={video}
+                  preserveAspectRatio="xMidYMid slice"
+                  clipPath={clipPath}
+                />
+              ) : null}
+              {mediaMode === "video" ? (
+                <foreignObject
+                  x={letterCenters[index] - 120}
+                  y="0"
+                  width="240"
+                  height="620"
+                  clipPath={clipPath}
+                >
+                  <AmbientMedia
+                    className="home-about__entry-video"
+                    src={video}
+                    mode={mediaMode}
+                  />
+                </foreignObject>
+              ) : null}
+            </g>
           );
         })}
       </svg>
@@ -278,6 +427,8 @@ function VideoRow({
   scrollReactive?: boolean;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const clipPrefix = useId().replaceAll(":", "");
+  const mediaMode = useAmbientMediaMode();
   const [cards] = useState(() => {
     const created = videos.map((src, index) => ({
       id: `${src}-${index}`,
@@ -308,9 +459,11 @@ function VideoRow({
     let lastScrollEventTime = lastScrollTime;
     let targetScrollMultiplier = 1;
     let scrollMultiplier = 1;
+    const compactMedia = window.matchMedia("(max-width: 1024px)");
+    let scrollReactivityEnabled = scrollReactive && !compactMedia.matches;
 
     const handleScroll = () => {
-      if (!scrollReactive) return;
+      if (!scrollReactivityEnabled) return;
 
       const now = performance.now();
       const elapsed = Math.min(Math.max(now - lastScrollTime, 8), 80);
@@ -329,9 +482,22 @@ function VideoRow({
       lastScrollEventTime = now;
     };
 
-    if (scrollReactive) {
-      window.addEventListener("scroll", handleScroll, { passive: true });
-    }
+    const syncScrollReactivity = () => {
+      window.removeEventListener("scroll", handleScroll);
+      scrollReactivityEnabled = scrollReactive && !compactMedia.matches;
+      targetScrollMultiplier = 1;
+      scrollMultiplier = 1;
+      lastScrollPosition = window.scrollY;
+      lastScrollTime = performance.now();
+      lastScrollEventTime = lastScrollTime;
+
+      if (scrollReactivityEnabled) {
+        window.addEventListener("scroll", handleScroll, { passive: true });
+      }
+    };
+
+    syncScrollReactivity();
+    compactMedia.addEventListener("change", syncScrollReactivity);
 
     const animate = (now: number) => {
       const firstGroup = track.firstElementChild as HTMLElement | null;
@@ -350,7 +516,7 @@ function VideoRow({
       const elapsed = Math.min(now - previousTime, 100);
       previousTime = now;
 
-      if (scrollReactive) {
+      if (scrollReactivityEnabled) {
         const elapsedSeconds = elapsed / 1000;
 
         if (now - lastScrollEventTime > 90) {
@@ -387,6 +553,7 @@ function VideoRow({
     return () => {
       cancelAnimationFrame(animationFrame);
       window.removeEventListener("scroll", handleScroll);
+      compactMedia.removeEventListener("change", syncScrollReactivity);
     };
   }, [direction, scrollReactive]);
 
@@ -443,10 +610,10 @@ function VideoRow({
     >
       <div className="video-row__tilt">
         <div ref={trackRef} className="video-row__track">
-          {Array.from({ length: 3 }, (_, groupIndex) =>
+          {Array.from({ length: 2 }, (_, groupIndex) =>
             <div className="video-row__group" key={groupIndex}>
               {cards.map(({ id, src, variant, leftSlope, rightSlope, verticalOffset }) => {
-                const clipId = `video-clip-${groupIndex}-${id.replace(/[^a-z0-9-]/gi, "-")}`;
+                const clipId = `${clipPrefix}-video-clip-${groupIndex}-${id.replace(/[^a-z0-9-]/gi, "-")}`;
 
                 return (
                   <div
@@ -470,16 +637,7 @@ function VideoRow({
                       className="video-card__media"
                       style={{ clipPath: `url(#${clipId})` }}
                     >
-                      <video
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        preload="metadata"
-                        disablePictureInPicture
-                      >
-                        <source src={src} type="video/mp4" />
-                      </video>
+                      <AmbientMedia src={src} mode={mediaMode} />
                     </div>
                   </div>
                 );
@@ -509,8 +667,12 @@ function EditingContestWall() {
     let lastScrollEventTime = previousTime;
     let targetScrollMultiplier = 1;
     let scrollMultiplier = 1;
+    const compactMedia = window.matchMedia("(max-width: 1024px)");
+    let scrollReactivityEnabled = !compactMedia.matches;
 
     const handleScroll = () => {
+      if (!scrollReactivityEnabled) return;
+
       const now = performance.now();
       const elapsed = Math.min(Math.max(now - lastScrollTime, 8), 80);
       const scrollPosition = window.scrollY;
@@ -544,14 +706,16 @@ function EditingContestWall() {
         initialized = true;
       }
 
-      if (now - lastScrollEventTime > 90) {
+      if (scrollReactivityEnabled && now - lastScrollEventTime > 90) {
         targetScrollMultiplier +=
           (1 - targetScrollMultiplier) * Math.min(elapsedSeconds * 5.5, 1);
       }
 
-      scrollMultiplier +=
-        (targetScrollMultiplier - scrollMultiplier) *
-        Math.min(elapsedSeconds * 10, 1);
+      if (scrollReactivityEnabled) {
+        scrollMultiplier +=
+          (targetScrollMultiplier - scrollMultiplier) *
+          Math.min(elapsedSeconds * 10, 1);
+      }
 
       trackRefs.current.forEach((track, index) => {
         const groupWidth = groupWidths[index];
@@ -572,12 +736,28 @@ function EditingContestWall() {
       animationFrame = requestAnimationFrame(animate);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    const syncScrollReactivity = () => {
+      window.removeEventListener("scroll", handleScroll);
+      scrollReactivityEnabled = !compactMedia.matches;
+      targetScrollMultiplier = 1;
+      scrollMultiplier = 1;
+      lastScrollPosition = window.scrollY;
+      lastScrollTime = performance.now();
+      lastScrollEventTime = lastScrollTime;
+
+      if (scrollReactivityEnabled) {
+        window.addEventListener("scroll", handleScroll, { passive: true });
+      }
+    };
+
+    syncScrollReactivity();
+    compactMedia.addEventListener("change", syncScrollReactivity);
     animationFrame = requestAnimationFrame(animate);
 
     return () => {
       cancelAnimationFrame(animationFrame);
       window.removeEventListener("scroll", handleScroll);
+      compactMedia.removeEventListener("change", syncScrollReactivity);
     };
   }, []);
 
@@ -658,6 +838,7 @@ export function ArchivedCurrentHome() {
 
 export default function Home() {
   const pageRef = useRef<HTMLElement>(null);
+  const aboutSectionRef = useRef<HTMLElement>(null);
   const rows = useSyncExternalStore(subscribe, getBrowserRows, () => initialRows);
   const [homeLoaderVisible, setHomeLoaderVisible] = useState(true);
   const [homeLoaderClosing, setHomeLoaderClosing] = useState(false);
@@ -699,22 +880,20 @@ export default function Home() {
   useEffect(() => {
     if (homeLoaderVisible) return;
 
-    const enableEquipment = () => setEquipmentEnabled(true);
-    const idleWindow = window as unknown as {
-      requestIdleCallback?: (
-        callback: IdleRequestCallback,
-        options?: IdleRequestOptions,
-      ) => number;
-      cancelIdleCallback?: (handle: number) => void;
-    };
+    const section = aboutSectionRef.current;
+    if (!section) return;
 
-    if (idleWindow.requestIdleCallback) {
-      const idleId = idleWindow.requestIdleCallback(enableEquipment, { timeout: 1200 });
-      return () => idleWindow.cancelIdleCallback?.(idleId);
-    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setEquipmentEnabled(true);
+        observer.disconnect();
+      },
+      { rootMargin: "50% 0px" },
+    );
 
-    const timer = globalThis.setTimeout(enableEquipment, 250);
-    return () => globalThis.clearTimeout(timer);
+    observer.observe(section);
+    return () => observer.disconnect();
   }, [homeLoaderVisible]);
 
   useEffect(() => {
@@ -922,7 +1101,11 @@ export default function Home() {
           </nav>
         </section>
 
-      <section className="home-about" aria-labelledby="home-about-title">
+      <section
+        className="home-about"
+        aria-labelledby="home-about-title"
+        ref={aboutSectionRef}
+      >
         <svg
           className="home-about__wave"
           viewBox="0 0 1440 280"
