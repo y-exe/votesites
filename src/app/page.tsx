@@ -973,7 +973,7 @@ export default function Home() {
               <div className="home-about__card-content">
                 <h3 className="home-about__label">応募動画</h3>
                 <p className="home-about__card-title">
-                  指定された動画を、あなたの世界観で自由に編集!!
+                  指定された動画素材を、あなたの世界観で自由に編集してください!!
                 </p>
                 <p className="home-about__card-note">
                   YouTube風・MADなど、条件を満たしていれば表現方法は自由です
@@ -1179,10 +1179,6 @@ export default function Home() {
                 </li>
                 <li>
                   順位は<strong>Web投票のみ</strong>で決定します
-                </li>
-                <li>
-                  投票できるのは<strong>一人1票</strong>です
-                  （投票期間中は投票先を変更できます）
                 </li>
                 <li>
                   途中経過とランキングは非公開です。結果は

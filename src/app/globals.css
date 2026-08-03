@@ -201,21 +201,11 @@ a {
 }
 
 .vote-criteria__copy strong,
-.vote-criteria__notice strong,
 .vote-criteria__rule strong {
   color: #000;
   font-size: 1.18em;
   line-height: 1.35;
   background: linear-gradient(transparent 62%, #ffe33c 62%);
-}
-
-.vote-criteria__notice {
-  max-width: 52rem;
-  margin: clamp(1rem, 2vw, 1.5rem) auto 0;
-  font-size: clamp(0.78rem, 1.35vw, 1.05rem);
-  font-weight: 800;
-  line-height: 1.75;
-  text-wrap: balance;
 }
 
 .vote-criteria__mobile-break {
