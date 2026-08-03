@@ -26,6 +26,60 @@ const pinkPalette = [
   "#fc7f81",
 ];
 
+type RenderQuality = "low" | "balanced" | "high";
+
+type NavigatorWithDeviceHints = Navigator & {
+  deviceMemory?: number;
+  connection?: { saveData?: boolean };
+};
+
+function getRenderProfile() {
+  const deviceNavigator = navigator as NavigatorWithDeviceHints;
+  const userAgent = navigator.userAgent;
+  const isMobile = window.matchMedia("(max-width: 640px)").matches;
+  const isIPad =
+    /iPad/.test(userAgent) ||
+    (userAgent.includes("Macintosh") && navigator.maxTouchPoints > 1);
+  const isAndroidTablet =
+    /Android/.test(userAgent) && Math.min(window.innerWidth, window.innerHeight) >= 600;
+  const isTablet = isIPad || isAndroidTablet;
+  const logicalCores = navigator.hardwareConcurrency || 4;
+  const deviceMemory = deviceNavigator.deviceMemory;
+  const pixelWorkload =
+    window.innerWidth *
+    window.innerHeight *
+    Math.min(window.devicePixelRatio || 1, 2) ** 2;
+  const shouldSaveResources =
+    deviceNavigator.connection?.saveData === true ||
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let quality: RenderQuality = "high";
+
+  if (
+    isMobile ||
+    shouldSaveResources ||
+    logicalCores <= 4 ||
+    (deviceMemory !== undefined && deviceMemory <= 4)
+  ) {
+    quality = "low";
+  } else if (
+    isTablet ||
+    logicalCores <= 8 ||
+    (deviceMemory !== undefined && deviceMemory <= 8) ||
+    pixelWorkload >= 8_000_000
+  ) {
+    quality = "balanced";
+  }
+
+  return {
+    quality,
+    isMobile,
+    isTablet,
+    logicalCores,
+    deviceMemory,
+  };
+}
+
 function createRoundedSquare(size: number, radius: number) {
   const half = size / 2;
   const shape = new THREE.Shape();
@@ -56,6 +110,7 @@ function createIconFace(shape: THREE.Shape, size: number) {
 function createAppIcon(
   config: (typeof editingAppIcons)[number],
   renderer: THREE.WebGLRenderer,
+  maxAnisotropy: number,
 ) {
   const group = new THREE.Group();
   const size = 1.82;
@@ -76,7 +131,10 @@ function createAppIcon(
 
   const texture = new THREE.TextureLoader().load(config.image);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  texture.anisotropy = Math.min(
+    renderer.capabilities.getMaxAnisotropy(),
+    maxAnisotropy,
+  );
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
@@ -224,11 +282,29 @@ export default function EquipmentFlow({
     const element = mount.current;
     if (!element) return;
 
+    const {
+      quality,
+      isMobile,
+      isTablet,
+      logicalCores,
+      deviceMemory,
+    } = getRenderProfile();
+    const isResourceLimited = quality !== "high";
+    const pixelRatioLimit = quality === "low" ? 1 : quality === "balanced" ? 1.25 : 2;
+    const frameRateLimit = quality === "low" ? 24 : quality === "balanced" ? 30 : 60;
+    element.dataset.renderQuality = quality;
+    element.dataset.logicalCores = String(logicalCores);
+    element.dataset.deviceMemory = deviceMemory === undefined ? "unknown" : String(deviceMemory);
+    element.dataset.tablet = String(isTablet);
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-4, 4, 2, -2, 0.1, 30);
     camera.position.z = 10;
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const renderer = new THREE.WebGLRenderer({
+      antialias: quality === "high",
+      alpha: true,
+      powerPreference: isResourceLimited ? "low-power" : "high-performance",
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioLimit));
     renderer.setClearColor(0x000000, 0);
     element.appendChild(renderer.domElement);
 
@@ -241,32 +317,45 @@ export default function EquipmentFlow({
     let lastScrollEventTime = lastScrollTime;
     let targetScrollInfluence = 0;
     let scrollInfluence = 0;
-    const isMobile = window.innerWidth < 640;
+    const lowQuality = quality === "low";
+    const balancedQuality = quality === "balanced";
     const equipmentCount = direction === "diagonal"
-      ? (isMobile ? 54 : 88)
-      : (isMobile ? 34 : 52);
+      ? (isMobile ? 12 : lowQuality ? 20 : balancedQuality ? 30 : 88)
+      : (isMobile ? 9 : lowQuality ? 15 : balancedQuality ? 20 : 52);
     const appCount = direction === "diagonal"
-      ? (isMobile ? 8 : 14)
-      : (isMobile ? 6 : 9);
+      ? (isMobile ? 12 : lowQuality ? 4 : balancedQuality ? 5 : 14)
+      : (isMobile ? 9 : lowQuality ? 3 : balancedQuality ? 4 : 9);
     const count = equipmentCount + appCount;
-    const diagonalColumns = isMobile ? 8 : 12;
+    const diagonalColumns = isMobile ? 4 : lowQuality ? 5 : balancedQuality ? 6 : 12;
     const diagonalRows = Math.ceil(count / diagonalColumns);
+    const appInterval = Math.max(2, Math.floor(count / appCount));
+    const appOffset = Math.floor(appInterval / 2);
     let nextApp = 0;
+    let nextEquipment = 0;
     const items = Array.from({ length: count }, (_, index) => {
-      const isApp = index % 7 === 3 && nextApp < appCount;
-      const group = isApp
-        ? createAppIcon(
-            editingAppIcons[nextApp++ % editingAppIcons.length],
-            renderer,
-          )
-        : createEquipment(
-            equipmentKinds[index % equipmentKinds.length],
-            pinkPalette[index % pinkPalette.length],
-          );
+      const isApp = isMobile
+        ? index % 2 === 1
+        : index % appInterval === appOffset && nextApp < appCount;
+      let group: THREE.Group;
+
+      if (isApp) {
+        group = createAppIcon(
+          editingAppIcons[nextApp++ % editingAppIcons.length],
+          renderer,
+          quality === "low" ? 1 : quality === "balanced" ? 2 : Number.POSITIVE_INFINITY,
+        );
+      } else {
+        group = createEquipment(
+          equipmentKinds[nextEquipment % equipmentKinds.length],
+          pinkPalette[nextEquipment % pinkPalette.length],
+        );
+        nextEquipment += 1;
+      }
       const baseScale = isApp
         ? 0.32 + Math.random() * 0.14
         : 0.18 + Math.random() * 0.14;
-      const scale = baseScale * (direction === "diagonal" && isMobile ? 0.64 : 1);
+      const scale = baseScale *
+        (direction === "diagonal" && isMobile ? 0.8 : lowQuality ? 0.9 : 1);
       group.scale.setScalar(scale);
       group.position.set(
         0,
@@ -322,9 +411,18 @@ export default function EquipmentFlow({
         }
       });
     };
-    const observer = new ResizeObserver(resize);
-    observer.observe(element);
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(element);
     resize();
+
+    let isNearViewport = false;
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        isNearViewport = entry.isIntersecting;
+      },
+      { rootMargin: "300px 0px" },
+    );
+    visibilityObserver.observe(element);
 
     const handleScroll = () => {
       if (direction !== "diagonal") return;
@@ -346,7 +444,9 @@ export default function EquipmentFlow({
       lastScrollEventTime = now;
     };
 
-    if (direction === "diagonal") {
+    const scrollReactive = direction === "diagonal" && !isMobile && !isTablet;
+
+    if (scrollReactive) {
       window.addEventListener("scroll", handleScroll, { passive: true });
     }
 
@@ -354,12 +454,28 @@ export default function EquipmentFlow({
     timer.connect(document);
     let frame = 0;
     let readyReported = false;
-    const animate = (timestamp?: number) => {
+    let previousFrameTime = performance.now();
+    let renderAccumulator = 0;
+    const renderInterval = 1000 / frameRateLimit;
+    const animate = (timestamp = performance.now()) => {
       frame = requestAnimationFrame(animate);
-      timer.update(timestamp);
-      const delta = Math.min(timer.getDelta(), 0.04);
 
-      if (direction === "diagonal") {
+      const frameElapsed = Math.min(timestamp - previousFrameTime, 100);
+      previousFrameTime = timestamp;
+
+      if (!isNearViewport || document.visibilityState === "hidden") {
+        renderAccumulator = 0;
+        return;
+      }
+
+      renderAccumulator += frameElapsed;
+      if (renderAccumulator < renderInterval) return;
+      renderAccumulator %= renderInterval;
+
+      timer.update(timestamp);
+      const delta = Math.min(timer.getDelta(), 0.06);
+
+      if (scrollReactive) {
         if (performance.now() - lastScrollEventTime > 90) {
           targetScrollInfluence +=
             (0 - targetScrollInfluence) * Math.min(delta * 5.5, 1);
@@ -400,7 +516,8 @@ export default function EquipmentFlow({
     return () => {
       cancelAnimationFrame(frame);
       timer.dispose();
-      observer.disconnect();
+      resizeObserver.disconnect();
+      visibilityObserver.disconnect();
       window.removeEventListener("scroll", handleScroll);
       renderer.dispose();
       items.forEach(({ group }) => {
