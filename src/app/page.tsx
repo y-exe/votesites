@@ -1181,15 +1181,8 @@ export default function Home() {
           preserveAspectRatio="none"
           aria-hidden="true"
         >
-          <defs>
-            <linearGradient id="home-about-wave-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#000" stopOpacity="0.4" />
-              <stop offset="62%" stopColor="#000" stopOpacity="0.75" />
-              <stop offset="100%" stopColor="#000" stopOpacity="0.95" />
-            </linearGradient>
-          </defs>
           <path
-            fill="url(#home-about-wave-fill)"
+            fill="#000"
             d="M0 206C166 82 326-16 530 28C735 72 820 205 1054 224C1222 238 1340 198 1440 142V280H0Z"
           />
         </svg>
