@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { League_Gothic } from "next/font/google";
 import localFont from "next/font/local";
@@ -1575,8 +1576,28 @@ export default function Home() {
             </div>
           </div>
         </section>
-
         </section>
+        <footer
+          style={{
+            backgroundColor: "#000000",
+            borderTop: "1px solid #222222",
+            padding: "2.5rem 1.5rem",
+            textAlign: "center",
+            color: "#ffffff",
+          }}
+        >
+          <Link
+            href="/policy"
+            style={{
+              color: "#ffffff",
+              textDecoration: "underline",
+              fontSize: "0.95rem",
+              opacity: 0.85,
+            }}
+          >
+            プライバシーポリシー
+          </Link>
+        </footer>
       </main>
       {fontGuideOpen ? (
         <div

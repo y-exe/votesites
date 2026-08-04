@@ -1308,11 +1308,6 @@ export default function VotePage() {
                     </article>
                   ))}
                 </div>
-                <p className="vote-entries__status" role="status" style={{ marginTop: "2rem" }}>
-                  {entriesState === "error"
-                    ? "読み込みに失敗しました"
-                    : "作品はまだありません"}
-                </p>
                 <VoteEntryEnding />
               </>
             )}
