@@ -1577,11 +1577,26 @@ export default function Home() {
           style={{
             backgroundColor: "#000000",
             borderTop: "1px solid #222222",
-            padding: "2.5rem 1.5rem",
+            padding: "3rem 1.5rem",
             textAlign: "center",
             color: "#ffffff",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "1.2rem",
           }}
         >
+          <Image
+            src="/logo/logo.png"
+            alt="やまかわ動画編集大会"
+            width={180}
+            height={60}
+            style={{
+              height: "auto",
+              width: "clamp(120px, 20vw, 180px)",
+              display: "block",
+            }}
+          />
           <Link
             href="/policy"
             style={{
