@@ -1566,9 +1566,59 @@ export default function Home() {
 
           <footer className="home-footer">
             <div className="home-footer__inner">
-              <p className={lineSeedExtraBold.className}>
-                やまかわてるき　編集大会　投票サイト
-              </p>
+              <div className="home-footer__main">
+                <div className="home-footer__brand">
+                  <h3 className={`${lineSeedExtraBold.className} home-footer__brand-title`}>
+                    やまかわてるき 編集大会 投票サイト
+                  </h3>
+                  <p className="home-footer__brand-desc">
+                    本サイトは「やまかわてるき動画編集大会」の公式投票サイトです。
+                  </p>
+                  <p className="home-footer__brand-note">
+                    指定素材を使用し、コミュニティの投票によって優秀作品を決定します。
+                  </p>
+                </div>
+
+                <div className="home-footer__contact-card">
+                  <h4 className={`${leagueGothic.className} home-footer__contact-title`}>
+                    CONTACT
+                  </h4>
+                  <p className="home-footer__contact-text">
+                    その他 質問や 問い合わせがある場合は XのDM または リプライでおねがいします
+                  </p>
+                  <a
+                    className="home-footer__x-button"
+                    href="https://x.com/yamakawateruki"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="やまかわてるきのX(Twitter)アカウントを開く"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    <span className={lineSeedExtraBold.className}>やまかわてるき</span>
+                  </a>
+                </div>
+              </div>
+
+              <div className="home-footer__bottom">
+                <p className="home-footer__copyright">Copyright yamakawa.top</p>
+                <a
+                  className="home-footer__oss-link"
+                  href="https://github.com/y-exe/votesites"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="GitHubリポジトリを見る"
+                >
+                  OSS
+                </a>
+              </div>
             </div>
           </footer>
         </section>
