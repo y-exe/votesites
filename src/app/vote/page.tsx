@@ -1316,16 +1316,16 @@ export default function VotePage() {
         <footer
           style={{
             position: "relative",
-            zIndex: 10,
+            zIndex: 100,
             backgroundColor: "#000000",
-            borderTop: "1px solid #222222",
-            padding: "3rem 1.5rem",
+            borderTop: "none",
+            padding: "4rem 1.5rem 5rem",
             textAlign: "center",
             color: "#ffffff",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "1.2rem",
+            gap: "1.5rem",
           }}
         >
           <Image
