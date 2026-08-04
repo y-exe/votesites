@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { entries, configured } = await fetchContestEntries();
+    const { entries, configured } = await fetchContestEntries(getVotesDatabase());
     if (!configured || !entries.some((entry) => entry.youtubeId === videoId)) {
       return json({ error: "entry_not_found" }, { status: 404 });
     }

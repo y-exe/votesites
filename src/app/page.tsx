@@ -52,6 +52,21 @@ const zakkuriGothic = localFont({
   fallback: ["sans-serif"],
 });
 
+const homeQaItems = [
+  { question: "誰でも参加できますか？", answer: "応募条件を満たしていれば、編集歴や使用ソフトを問わず参加できます。" },
+  { question: "どんな動画を作ればいいですか？", answer: "指定素材を使い、YouTube風やMADなど自由な世界観で編集してください。" },
+  { question: "編集ソフトに指定はありますか？", answer: "ありません。普段お使いの編集ソフトで制作できます。" },
+  { question: "動画の公開設定は？", answer: "公開または限定公開で投稿してください。非公開動画は応募できません。" },
+  { question: "どうやって応募しますか？", answer: "YouTubeへ動画を投稿し、そのURLをGoogleフォームから送信してください。" },
+  { question: "応募締切はいつですか？", answer: "2026年8月28日 23:59です。余裕をもって送信してください。" },
+  { question: "投票期間はいつですか？", answer: "2026年8月29日 20:00から9月4日 23:59までです。" },
+  { question: "投票にDiscordは必要ですか？", answer: "重複・不正投票を防ぐため、Discordでのログインが必要です。" },
+  { question: "投票先は変更できますか？", answer: "投票期間中であれば、別の作品へ投票を移行できます。" },
+  { question: "結果はいつ分かりますか？", answer: "途中順位は非公開です。9月5日 21:00の生放送で発表します。" },
+] as const;
+
+const homeQaBackdropWords = Array.from({ length: 6 }, () => "やまかわてるき");
+
 const videoPaths = Array.from({ length: 20 }, (_, index) =>
   `/video-preview/${index + 1}.mp4`,
 );
@@ -1054,6 +1069,10 @@ export default function Home() {
           </div>
 
           <div className="home-hero__topbar">
+            <p className={`${lineSeedExtraBold.className} home-hero__brand`}>
+              <span className="home-hero__brand-desktop">やまかわ動画編集大会</span>
+              <span className="home-hero__brand-mobile">編集大会</span>
+            </p>
             <nav
               className={`${lineSeedExtraBold.className} home-social`}
               aria-label="ソーシャルメディア"
@@ -1440,32 +1459,76 @@ export default function Home() {
         </div>
 
         <section className="home-qa" aria-labelledby="home-qa-title">
-          <svg
-            className="home-qa__wave"
-            viewBox="0 0 1440 280"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <path
-              fill="#fff"
-              d="M0 206C166 82 326-16 530 28C735 72 820 205 1054 224C1222 238 1340 198 1440 142V280H0Z"
-            />
-          </svg>
-          <h2
-            id="home-qa-title"
-            className={`${leagueGothic.className} home-qa__title`}
-          >
-            <span className="home-qa__word">Q&amp;A</span>
-            <span
-              className={`${lineSeedExtraBold.className} home-qa__title-tag`}
+          <div className="home-qa__surface">
+            <svg
+              className="home-qa__wave"
+              viewBox="0 0 1440 280"
+              preserveAspectRatio="none"
+              aria-hidden="true"
             >
-              よくある質問
-            </span>
-          </h2>
-          <div className="home-qa__body">
-            <p className={`${leagueGothic.className} home-qa__coming-soon`}>
-              COMING SOON
-            </p>
+              <path
+                fill="#fff"
+                d="M0 206C166 82 326-16 530 28C735 72 820 205 1054 224C1222 238 1340 198 1440 142V280H0Z"
+              />
+            </svg>
+            <div className="home-qa__backdrop" aria-hidden="true">
+              <div className="home-qa__backdrop-field">
+                {Array.from({ length: 38 }, (_, rowIndex) => (
+                  <div className="home-qa__backdrop-row" key={rowIndex}>
+                    <div
+                      className={`${lineSeedExtraBold.className} home-qa__backdrop-track ${
+                        rowIndex % 2 === 0 ? "" : "home-qa__backdrop-track--reverse"
+                      }`}
+                      style={{
+                        "--home-qa-row-duration": `${22 + (rowIndex % 6) * 2}s`,
+                      } as CSSProperties}
+                    >
+                      {Array.from({ length: 2 }, (_, groupIndex) => (
+                        <div className="home-qa__backdrop-group" key={groupIndex}>
+                          {homeQaBackdropWords.map((word, wordIndex) => (
+                            <span key={wordIndex}>{word}</span>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <h2
+              id="home-qa-title"
+              className={`${leagueGothic.className} home-qa__title`}
+            >
+              <span className="home-qa__word">Q&amp;A</span>
+              <span className={`${lineSeedExtraBold.className} home-qa__title-tag`}>
+                よくある質問
+              </span>
+            </h2>
+
+            <div className="home-qa__body">
+              <div className="home-qa__list">
+                {homeQaItems.map((item, index) => (
+                  <article className="home-qa__card" key={item.question}>
+                    <div className="home-qa__question-row">
+                      <span className={`${leagueGothic.className} home-qa__number`}>
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <h3 className={`${lineSeedExtraBold.className} home-qa__question`}>
+                        <span className={`${leagueGothic.className} home-qa__marker`}>Q</span>
+                        {item.question}
+                      </h3>
+                    </div>
+                    <p className="home-qa__answer">
+                      <span className={`${leagueGothic.className} home-qa__marker home-qa__marker--answer`}>
+                        A
+                      </span>
+                      <span>{item.answer}</span>
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </div>
           </div>
 
           <footer className="home-footer">
