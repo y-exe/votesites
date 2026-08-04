@@ -1240,10 +1240,10 @@ export default function Home() {
                   <button
                     className="home-about__label home-about__label--small home-reel-trigger"
                     type="button"
-                    aria-label="応募条件と指定フォントを確認する"
+                    aria-label="応募条件と素材説明を確認する"
                     onClick={() => setFontGuideOpen(true)}
                   >
-                    <ReelText label="条件・指定フォント" />
+                    <ReelText label="応募条件・素材説明" />
                   </button>
                   <a
                     className="home-about__label home-about__label--small home-reel-trigger"
