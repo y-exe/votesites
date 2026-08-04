@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { League_Gothic } from "next/font/google";
 import localFont from "next/font/local";
 import Script from "next/script";
-import { ReactLenis } from "lenis/react";
+import { ReactLenis, type LenisRef } from "lenis/react";
 import { editingAppIcons } from "./equipment-data";
 import DiscordLogo from "./discord-logo";
 import {
@@ -852,15 +852,43 @@ export function ArchivedCurrentHome() {
 }
 
 export default function Home() {
+  const lenisRef = useRef<LenisRef>(null);
   const pageRef = useRef<HTMLElement>(null);
   const aboutSectionRef = useRef<HTMLElement>(null);
   const rows = useSyncExternalStore(subscribe, getBrowserRows, () => initialRows);
   const [homeLoaderVisible, setHomeLoaderVisible] = useState(true);
   const [homeLoaderClosing, setHomeLoaderClosing] = useState(false);
   const [equipmentEnabled, setEquipmentEnabled] = useState(false);
+  const [fontGuideOpen, setFontGuideOpen] = useState(false);
   const [discordAuthState, setDiscordAuthState] = useState<
     "loading" | "authenticated" | "anonymous"
   >("loading");
+
+  const copyMainCaptionColor = async () => {
+    try {
+      await navigator.clipboard.writeText("#C30202");
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (!fontGuideOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const lenis = lenisRef.current?.lenis;
+    const closeModal = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFontGuideOpen(false);
+    };
+
+    document.body.style.overflow = "hidden";
+    lenis?.stop();
+    window.addEventListener("keydown", closeModal);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      lenis?.start();
+      window.removeEventListener("keydown", closeModal);
+    };
+  }, [fontGuideOpen]);
 
   useEffect(() => {
     const minimumDuration = 700;
@@ -1045,7 +1073,7 @@ export default function Home() {
           });
         }}
       />
-      <ReactLenis root />
+      <ReactLenis ref={lenisRef} root />
       <main ref={pageRef} className="home-page home--blank">
         <section className="home home--hero" aria-labelledby="home-hero-title">
           <div className="home__banner-visual">
@@ -1210,12 +1238,14 @@ export default function Home() {
                   >
                     <ReelText label="素材ダウンロード" />
                   </a>
-                  <span
+                  <button
                     className="home-about__label home-about__label--small home-reel-trigger"
-                    aria-label="指定フォントURL"
+                    type="button"
+                    aria-label="応募条件と指定フォントを確認する"
+                    onClick={() => setFontGuideOpen(true)}
                   >
                     <ReelText label="指定フォントURL" />
-                  </span>
+                  </button>
                 </div>
               </div>
 
@@ -1541,6 +1571,78 @@ export default function Home() {
         </section>
       </section>
       </main>
+      {fontGuideOpen ? (
+        <div
+          className="home-font-modal"
+          role="presentation"
+          data-lenis-prevent
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setFontGuideOpen(false);
+          }}
+        >
+          <section
+            className={`${lineSeedExtraBold.className} home-font-modal__card`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="home-font-modal-title"
+            data-lenis-prevent
+          >
+            <h2 id="home-font-modal-title"><span>応募条件</span>・素材説明</h2>
+
+            <section className="home-font-modal__section">
+              <h3>必須条件</h3>
+              <ul className="home-font-modal__conditions">
+                <li>動画時間は<strong>5分以下</strong>にしてください。</li>
+                <li>配布された映像素材を<strong>必ず使用</strong>してください。</li>
+                <li>
+                  メインで使う字幕は<strong>源ノ角ゴシック</strong>、カラーは
+                  <button
+                    className="home-font-modal__color-copy"
+                    type="button"
+                    onClick={() => void copyMainCaptionColor()}
+                    aria-label="カラーコード #C30202 をコピー"
+                  >
+                    <span aria-hidden="true" />
+                    #C30202
+                  </button>
+                  、<strong>白縁取り</strong>にしてください。
+                </li>
+              </ul>
+              <a
+                className="home-font-modal__font-link home-reel-trigger"
+                href="https://myfont.jp/fonts/16"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="源ノ角ゴシックのダウンロードページを開く"
+              >
+                <ReelText label="源ノ角ゴシックをダウンロード　→" />
+              </a>
+            </section>
+
+            <section className="home-font-modal__section home-font-modal__section--optional">
+              <h3>自由に使えるもの</h3>
+              <p>
+                それ以外の字幕・効果音・BGMの使用はすべて任意です。編集ソフトの指定もありません。
+              </p>
+              <p>上記の条件を満たしていれば、編集スタイルは自由です。</p>
+            </section>
+
+            <section className="home-font-modal__section">
+              <h3>素材説明</h3>
+              <ol className="home-font-modal__materials">
+                <li>
+                  <code>C690/C691.MP4</code>
+                  <span>顔の映像です。音質の良いピンマイク音声を収録しています。</span>
+                </li>
+                <li>
+                  <code>DJI~.MP4</code>
+                  <span>主観カメラの映像です。</span>
+                </li>
+              </ol>
+            </section>
+          </section>
+        </div>
+      ) : null}
     </>
   );
 }
