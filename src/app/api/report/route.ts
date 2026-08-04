@@ -7,14 +7,26 @@ import {
 
 export const runtime = "nodejs";
 
-const ADMIN_PASSWORD = "YMKY1130";
+// SHA-256 hash of "ymkwdev1130"
+const EXPECTED_PASSWORD_HASH =
+  "2f11bf70add2518a3c218295612a992132459445ffd2e375db85402341b3d5f3";
 
 function getDatabase() {
   return getCloudflareContext().env.VOTES_DB;
 }
 
-function verifyPassword(providedPassword: unknown): boolean {
-  return typeof providedPassword === "string" && providedPassword === ADMIN_PASSWORD;
+async function verifyPassword(providedPassword: unknown): Promise<boolean> {
+  if (typeof providedPassword !== "string" || !providedPassword) return false;
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(providedPassword);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    return hashHex === EXPECTED_PASSWORD_HASH;
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(request: Request) {
@@ -29,7 +41,8 @@ export async function POST(request: Request) {
     const headerPassword = request.headers.get("x-report-password");
     const password = headerPassword || payload.password;
 
-    if (!verifyPassword(password)) {
+    const isAuth = await verifyPassword(password);
+    if (!isAuth) {
       return Response.json(
         { success: false, error: "unauthorized" },
         { status: 401 },

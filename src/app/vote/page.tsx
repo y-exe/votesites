@@ -647,6 +647,34 @@ export default function VotePage() {
   const [pendingReportEntry, setPendingReportEntry] = useState<VoteEntry | null>(null);
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportSuccess, setReportSuccess] = useState(false);
+  const [reportHoldActive, setReportHoldActive] = useState(false);
+  const reportHoldTimerRef = useRef<number | null>(null);
+
+  const startReportHold = () => {
+    if (
+      reportHoldTimerRef.current !== null ||
+      reportSubmitting ||
+      !pendingReportEntry
+    ) {
+      return;
+    }
+
+    const entry = pendingReportEntry;
+    setReportHoldActive(true);
+    reportHoldTimerRef.current = window.setTimeout(() => {
+      reportHoldTimerRef.current = null;
+      setReportHoldActive(false);
+      void submitReport(entry);
+    }, 800);
+  };
+
+  const cancelReportHold = () => {
+    if (reportHoldTimerRef.current !== null) {
+      window.clearTimeout(reportHoldTimerRef.current);
+      reportHoldTimerRef.current = null;
+    }
+    setReportHoldActive(false);
+  };
 
   const submitReport = async (entry: VoteEntry) => {
     setReportSubmitting(true);
@@ -1376,12 +1404,6 @@ export default function VotePage() {
             aria-modal="true"
             aria-labelledby="vote-report-title"
           >
-            <span className="home__mesh home__mesh--top" aria-hidden="true">
-              <span className="home__mesh-pattern" />
-            </span>
-            <span className="home__mesh home__mesh--bottom" aria-hidden="true">
-              <span className="home__mesh-pattern" />
-            </span>
             <div className="vote-confirm-card__content">
               <div>
                 <h2 id="vote-report-title">
@@ -1390,19 +1412,41 @@ export default function VotePage() {
                 <p id="vote-report-note" style={{ marginTop: "0.6rem", fontSize: "0.95rem", opacity: 0.85 }}>
                   {reportSuccess
                     ? "通報を受け付けました。"
-                    : "この作品に通報を送りますか？"}
+                    : "この作品に通報を送りますか？（長押しで確定）"}
                 </p>
               </div>
               {!reportSuccess ? (
                 <div className="vote-confirm-card__actions" style={{ gap: "0.8rem", marginTop: "1.2rem" }}>
                   <button
-                    className="vote-confirm-card__continue home-reel-trigger"
+                    className={`vote-confirm-card__continue home-reel-trigger${
+                      reportHoldActive ? " vote-confirm-card__continue--holding" : ""
+                    }`}
                     type="button"
                     disabled={reportSubmitting}
-                    onClick={() => void submitReport(pendingReportEntry)}
+                    aria-label="通報を確定する。長押ししてください"
+                    onPointerDown={(event) => {
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                      startReportHold();
+                    }}
+                    onPointerUp={cancelReportHold}
+                    onPointerCancel={cancelReportHold}
+                    onPointerLeave={cancelReportHold}
+                    onKeyDown={(event) => {
+                      if ((event.key === " " || event.key === "Enter") && !event.repeat) {
+                        event.preventDefault();
+                        startReportHold();
+                      }
+                    }}
+                    onKeyUp={(event) => {
+                      if (event.key === " " || event.key === "Enter") {
+                        event.preventDefault();
+                        cancelReportHold();
+                      }
+                    }}
+                    onContextMenu={(event) => event.preventDefault()}
                     style={{ background: "#f63049", color: "#fff" }}
                   >
-                    <VoteReelText label={reportSubmitting ? "送信中..." : "通報を確定する"} />
+                    <VoteReelText label={reportSubmitting ? "送信中..." : "長押しで確定"} />
                   </button>
                   <button
                     className="vote-confirm-card__cancel home-reel-trigger"
