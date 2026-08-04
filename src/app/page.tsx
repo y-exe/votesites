@@ -1616,7 +1616,7 @@ export default function Home() {
                 <li>動画時間は<strong>5分以下</strong>にしてください。</li>
                 <li>配布された映像素材を<strong>必ず使用</strong>してください。</li>
                 <li>
-                  メインで使う字幕は<strong>源ノ角ゴシック</strong>、カラーは
+                  字幕は<strong>源ノ角ゴシック</strong>、カラーは
                   <button
                     className="home-font-modal__color-copy"
                     type="button"
@@ -1655,7 +1655,7 @@ export default function Home() {
                       </svg>
                     )}
                   </button>
-                  、<strong>白縁取り</strong>にしてください。
+                  、<strong>白縁取り</strong>を使うと本人動画のようになります!!
                 </li>
               </ul>
               <a
