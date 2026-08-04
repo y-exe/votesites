@@ -4,11 +4,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "やまかわ動画編集大会",
-  description: "やまかわ動画編集大会の投票サイト。あなたのお気に入りの作品に投票しよう！",
+  description: "やまかわてるきの動画編集大会投票・エントリーサイトです。",
   metadataBase: new URL("https://event.ymkw.top"),
   openGraph: {
     title: "やまかわ動画編集大会",
-    description: "やまかわ動画編集大会の投票サイト。あなたのお気に入りの作品に投票しよう！",
+    description: "やまかわてるきの動画編集大会投票・エントリーサイトです。",
     url: "https://event.ymkw.top",
     siteName: "やまかわ動画編集大会",
     images: [
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "やまかわ動画編集大会",
-    description: "やまかわ動画編集大会の投票サイト。あなたのお気に入りの作品に投票しよう！",
+    description: "やまかわてるきの動画編集大会投票・エントリーサイトです。",
     images: ["/ogp/ogp.png"],
   },
 };
