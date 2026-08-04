@@ -136,44 +136,6 @@ export default function PolicyPage() {
           </div>
         </div>
       </main>
-      <footer
-        style={{
-          position: "relative",
-          zIndex: 10,
-          backgroundColor: "#000000",
-          borderTop: "1px solid #222222",
-          padding: "3rem 1.5rem",
-          textAlign: "center",
-          color: "#ffffff",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "1.2rem",
-        }}
-      >
-        <Image
-          src="/logo/logo.png"
-          alt="やまかわ動画編集大会"
-          width={540}
-          height={180}
-          style={{
-            height: "auto",
-            width: "clamp(300px, 50vw, 540px)",
-            display: "block",
-          }}
-        />
-        <Link
-          href="/policy"
-          style={{
-            color: "#ffffff",
-            textDecoration: "underline",
-            fontSize: "0.95rem",
-            opacity: 0.85,
-          }}
-        >
-          プライバシーポリシー
-        </Link>
-      </footer>
     </>
   );
 }
