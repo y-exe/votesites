@@ -3,8 +3,8 @@ import "lenis/dist/lenis.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Vote",
-  description: "Vote site",
+  title: "やまかわ動画編集大会",
+  description: "やまかわ動画編集大会の投票サイト",
 };
 
 export default function RootLayout({

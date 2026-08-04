@@ -31,6 +31,7 @@ const entryPreviewVideos = Array.from(
   { length: 10 },
   (_, index) => `/video-preview/${index + 11}.mp4`,
 );
+const ENTRY_LOADING_PLACEHOLDERS = 16;
 
 type CircuitPoint = { x: number; y: number };
 
@@ -47,7 +48,15 @@ type VoteEntry = {
   youtubeId: string;
 };
 
-function YouTubeThumbnail({ youtubeId, alt }: { youtubeId: string; alt: string }) {
+function YouTubeThumbnail({
+  youtubeId,
+  alt,
+  eager = false,
+}: {
+  youtubeId: string;
+  alt: string;
+  eager?: boolean;
+}) {
   const [resolution, setResolution] = useState<
     "maxresdefault" | "sddefault" | "hqdefault"
   >("maxresdefault");
@@ -57,6 +66,7 @@ function YouTubeThumbnail({ youtubeId, alt }: { youtubeId: string; alt: string }
       src={`https://i.ytimg.com/vi/${youtubeId}/${resolution}.jpg`}
       alt={alt}
       fill
+      loading={eager ? "eager" : "lazy"}
       sizes="(max-width: 640px) calc(100vw - 2.5rem), 44vw"
       onError={() => {
         setResolution((current) =>
@@ -733,7 +743,7 @@ export default function VotePage() {
 
     const loadEntries = async () => {
       try {
-        const response = await fetch("/api/entries", { cache: "no-store" });
+        const response = await fetch("/api/entries");
         const payload = (await response.json()) as {
           entries?: VoteEntry[];
           configured?: boolean;
@@ -759,7 +769,7 @@ export default function VotePage() {
     };
 
     void loadEntries();
-    const refreshTimer = window.setInterval(loadEntries, 60_000);
+    const refreshTimer = window.setInterval(loadEntries, 5 * 60_000);
 
     return () => {
       active = false;
@@ -896,7 +906,7 @@ export default function VotePage() {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("resize", updateCircuit);
     };
-  }, [entries.length]);
+  }, [entries.length, entriesState]);
 
   useLayoutEffect(() => {
     if (!criteriaReady) return;
@@ -1101,6 +1111,7 @@ export default function VotePage() {
                       <YouTubeThumbnail
                         youtubeId={entry.youtubeId}
                         alt={`エントリー作品 ${index + 1} のサムネイル`}
+                        eager={index < 2}
                       />
                     </span>
                   </button>
@@ -1203,7 +1214,7 @@ export default function VotePage() {
           ) : entriesState === "loading" ? (
             <div className="vote-entries__grid" role="status" aria-busy="true">
               <span className="vote-sr-only">応募作品を読み込んでいます</span>
-              {Array.from({ length: 4 }, (_, index) => (
+              {Array.from({ length: ENTRY_LOADING_PLACEHOLDERS }, (_, index) => (
                 <span className="vote-entry-skeleton" aria-hidden="true" key={index} />
               ))}
             </div>
