@@ -1238,7 +1238,7 @@ export default function Home() {
                     aria-label="応募条件と指定フォントを確認する"
                     onClick={() => setFontGuideOpen(true)}
                   >
-                    <ReelText label="条件・指定フォントURL" />
+                    <ReelText label="条件・指定フォント" />
                   </button>
                   <a
                     className="home-about__label home-about__label--small home-reel-trigger"
@@ -1600,9 +1600,7 @@ export default function Home() {
                 <li>
                   メインで使う字幕は<strong>源ノ角ゴシック</strong>、カラーは
                   <button
-                    className={`home-font-modal__color-copy${
-                      colorCopied ? " home-font-modal__color-copy--copied" : ""
-                    }`}
+                    className="home-font-modal__color-copy"
                     type="button"
                     onClick={() => void copyMainCaptionColor()}
                     aria-label="カラーコード #C30202 をコピー"
