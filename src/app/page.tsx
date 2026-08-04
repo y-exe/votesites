@@ -860,6 +860,7 @@ export default function Home() {
   const [homeLoaderClosing, setHomeLoaderClosing] = useState(false);
   const [equipmentEnabled, setEquipmentEnabled] = useState(false);
   const [fontGuideOpen, setFontGuideOpen] = useState(false);
+  const [colorCopied, setColorCopied] = useState(false);
   const [discordAuthState, setDiscordAuthState] = useState<
     "loading" | "authenticated" | "anonymous"
   >("loading");
@@ -867,6 +868,8 @@ export default function Home() {
   const copyMainCaptionColor = async () => {
     try {
       await navigator.clipboard.writeText("#C30202");
+      setColorCopied(true);
+      setTimeout(() => setColorCopied(false), 2000);
     } catch {}
   };
 
@@ -1229,6 +1232,14 @@ export default function Home() {
                   ))}
                 </div>
                 <div className="home-about__resources" aria-label="応募用資料">
+                  <button
+                    className="home-about__label home-about__label--small home-reel-trigger"
+                    type="button"
+                    aria-label="応募条件と指定フォントを確認する"
+                    onClick={() => setFontGuideOpen(true)}
+                  >
+                    <ReelText label="条件・指定フォントURL" />
+                  </button>
                   <a
                     className="home-about__label home-about__label--small home-reel-trigger"
                     href="https://drive.google.com/file/d/1pFrnL11yfvQ_0ZzK03jkp2T9NdixLYJP/view?usp=drivesdk"
@@ -1238,14 +1249,6 @@ export default function Home() {
                   >
                     <ReelText label="素材ダウンロード" />
                   </a>
-                  <button
-                    className="home-about__label home-about__label--small home-reel-trigger"
-                    type="button"
-                    aria-label="応募条件と指定フォントを確認する"
-                    onClick={() => setFontGuideOpen(true)}
-                  >
-                    <ReelText label="指定フォントURL" />
-                  </button>
                 </div>
               </div>
 
@@ -1597,13 +1600,44 @@ export default function Home() {
                 <li>
                   メインで使う字幕は<strong>源ノ角ゴシック</strong>、カラーは
                   <button
-                    className="home-font-modal__color-copy"
+                    className={`home-font-modal__color-copy${
+                      colorCopied ? " home-font-modal__color-copy--copied" : ""
+                    }`}
                     type="button"
                     onClick={() => void copyMainCaptionColor()}
                     aria-label="カラーコード #C30202 をコピー"
                   >
-                    <span aria-hidden="true" />
                     #C30202
+                    {colorCopied ? (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    )}
                   </button>
                   、<strong>白縁取り</strong>にしてください。
                 </li>
@@ -1639,6 +1673,15 @@ export default function Home() {
                   <span>主観カメラの映像です。</span>
                 </li>
               </ol>
+              <a
+                className="home-font-modal__font-link home-reel-trigger"
+                href="https://drive.google.com/file/d/1pFrnL11yfvQ_0ZzK03jkp2T9NdixLYJP/view?usp=drivesdk"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="動画素材をダウンロードする"
+              >
+                <ReelText label="動画素材をダウンロード　→" />
+              </a>
             </section>
           </section>
         </div>
