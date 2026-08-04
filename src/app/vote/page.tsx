@@ -676,6 +676,8 @@ export default function VotePage() {
     setReportHoldActive(false);
   };
 
+  const [reportToastMessage, setReportToastMessage] = useState("通報を記録しました");
+
   const submitReport = async (entry: VoteEntry) => {
     setReportSubmitting(true);
     try {
@@ -684,12 +686,17 @@ export default function VotePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ videoId: entry.youtubeId }),
       });
+      const payload = (await response.json()) as { error?: string };
+
+      setPendingReportEntry(null);
       if (response.ok) {
-        setPendingReportEntry(null);
+        setReportToastMessage("通報を記録しました");
         setReportToastVisible(true);
-        setTimeout(() => {
-          setReportToastVisible(false);
-        }, 1800);
+        setTimeout(() => setReportToastVisible(false), 1800);
+      } else if (payload.error === "already_reported") {
+        setReportToastMessage("すでに対象の作品を通報済みです");
+        setReportToastVisible(true);
+        setTimeout(() => setReportToastVisible(false), 2200);
       } else {
         alert("通報を送信できませんでした。もう一度お試しください。");
       }
@@ -1416,7 +1423,7 @@ export default function VotePage() {
                   <span>通報の確認</span>
                 </h2>
                 <p id="vote-report-note" style={{ marginTop: "0.6rem", fontSize: "0.95rem", opacity: 0.85 }}>
-                  この作品に通報を送りますか？（長押しで確定）
+                  この作品の通報を確定しますか？（長押しで確定）
                 </p>
               </div>
               <div className="vote-confirm-card__actions" style={{ gap: "0.8rem", marginTop: "1.2rem" }}>
@@ -1488,7 +1495,7 @@ export default function VotePage() {
               animation: "vote-confirm-card-in 220ms ease-out both",
             }}
           >
-            通報を記録しました
+            {reportToastMessage}
           </div>
         </div>
       ) : null}

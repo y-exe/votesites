@@ -11,24 +11,35 @@ export function isValidYouTubeId(value: unknown): value is string {
   return typeof value === "string" && YOUTUBE_ID_PATTERN.test(value);
 }
 
+export type RecordReportResult =
+  | { success: true }
+  | { success: false; error: "invalid_video_id" | "already_reported" | "database_error" };
+
 export async function recordReport(
   database: D1Database,
   videoId: string,
-): Promise<boolean> {
-  if (!isValidYouTubeId(videoId)) return false;
+  ip: string,
+): Promise<RecordReportResult> {
+  if (!isValidYouTubeId(videoId)) {
+    return { success: false, error: "invalid_video_id" };
+  }
 
   try {
     const now = Date.now();
     await database
       .prepare(
-        "INSERT INTO reports (video_id, created_at) VALUES (?1, ?2)",
+        "INSERT INTO reports (video_id, created_at, ip) VALUES (?1, ?2, ?3)",
       )
-      .bind(videoId, now)
+      .bind(videoId, now, ip)
       .run();
-    return true;
+    return { success: true };
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("UNIQUE") || message.includes("constraint")) {
+      return { success: false, error: "already_reported" };
+    }
     console.error("Failed to record report:", error);
-    return false;
+    return { success: false, error: "database_error" };
   }
 }
 
