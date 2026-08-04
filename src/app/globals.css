@@ -3610,3 +3610,84 @@ a {
   color: #8a244b;
   font-size: 0.6rem;
 }
+
+.home-download-modal__card {
+  position: relative;
+  overflow: hidden;
+  border: clamp(0.35rem, 0.7vw, 0.65rem) solid #8a244b;
+  border-radius: clamp(1.2rem, 3vw, 2.25rem);
+  width: min(94vw, 48rem);
+  max-width: 48rem;
+  padding: clamp(4.5rem, 9vw, 6.2rem) clamp(2.2rem, 5vw, 4rem);
+  text-align: center;
+}
+
+.home-download-modal__content {
+  position: relative;
+  z-index: 2;
+}
+
+.home-download-modal__card h2 {
+  font-size: clamp(1.55rem, 2.8vw, 2.4rem);
+  text-align: center;
+}
+
+.home-download-modal__notice {
+  margin: 1.1rem 0 0;
+  color: #555;
+  font-size: clamp(0.85rem, 1.35vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.65;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.home-download-modal__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-top: 1.2rem;
+}
+
+.home-download-modal__button {
+  width: 100%;
+  margin-top: 0;
+  border-color: #f63049;
+  background: #f63049 !important;
+  color: #fff !important;
+  justify-content: center;
+  text-align: center;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.home-download-modal__button:hover {
+  background: #e0243c !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.home-download-modal__button span,
+.home-download-modal__button svg {
+  filter: none !important;
+}
+
+.home-download-modal__info {
+  margin-top: 1.4rem;
+  color: #666;
+  font-size: clamp(0.9rem, 1.3vw, 1.05rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+@media (min-width: 480px) {
+  .home-download-modal__buttons {
+    flex-direction: row;
+    gap: 1.2rem;
+  }
+
+  .home-download-modal__button {
+    flex: 1;
+  }
+}
