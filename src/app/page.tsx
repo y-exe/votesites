@@ -1183,9 +1183,9 @@ export default function Home() {
         >
           <defs>
             <linearGradient id="home-about-wave-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#000" stopOpacity="0.58" />
-              <stop offset="62%" stopColor="#000" stopOpacity="0.82" />
-              <stop offset="100%" stopColor="#000" stopOpacity="1" />
+              <stop offset="0%" stopColor="#000" stopOpacity="0.4" />
+              <stop offset="62%" stopColor="#000" stopOpacity="0.75" />
+              <stop offset="100%" stopColor="#000" stopOpacity="0.95" />
             </linearGradient>
           </defs>
           <path
@@ -1294,7 +1294,7 @@ export default function Home() {
 
               <div className="home-about__prize">
                 <h3 className="home-about__label">賞金</h3>
-                <p>10000円</p>
+                <p>10,000円</p>
               </div>
             </section>
 
@@ -1311,7 +1311,7 @@ export default function Home() {
                 <p className="home-about__entry-copy">
                   <span className="home-about__youtube-name">
                     <YouTubeLogo />
-                    Youtube
+                    YouTube
                   </span>
                   にエントリー動画を
                   <span className="home-about__entry-highlight">

@@ -1535,11 +1535,14 @@ a {
 }
 
 .home-about__wave {
-  position: relative;
-  z-index: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
   display: block;
   width: 100%;
   height: var(--home-about-wave-height);
+  pointer-events: none;
 }
 
 .home-about__title {
@@ -2903,24 +2906,23 @@ a {
 .home-about > .home__equipment-flow--diagonal {
   z-index: 1;
   inset: 0;
+  pointer-events: none;
   -webkit-mask-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 280' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M0 206C166 82 326-16 530 28C735 72 820 205 1054 224C1222 238 1340 198 1440 142V280H0Z'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 280' preserveAspectRatio='none'%3E%3Cpath fill='black' d='M0 206C166 82 326-16 530 28C735 72 820 205 1054 224C1222 238 1340 198 1440 142V280H0Z'/%3E%3C/svg%3E"),
     linear-gradient(#000, #000);
-  -webkit-mask-position: top, bottom;
+  -webkit-mask-position: top center, bottom center;
   -webkit-mask-size:
     100% var(--home-about-wave-height),
     100% calc(100% - var(--home-about-wave-height) + 1px);
   -webkit-mask-repeat: no-repeat;
-  -webkit-mask-composite: source-over;
   mask-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 280' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M0 206C166 82 326-16 530 28C735 72 820 205 1054 224C1222 238 1340 198 1440 142V280H0Z'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 280' preserveAspectRatio='none'%3E%3Cpath fill='black' d='M0 206C166 82 326-16 530 28C735 72 820 205 1054 224C1222 238 1340 198 1440 142V280H0Z'/%3E%3C/svg%3E"),
     linear-gradient(#000, #000);
-  mask-position: top, bottom;
+  mask-position: top center, bottom center;
   mask-size:
     100% var(--home-about-wave-height),
     100% calc(100% - var(--home-about-wave-height) + 1px);
   mask-repeat: no-repeat;
-  mask-composite: add;
 }
 
 @keyframes mesh-slide-left {
