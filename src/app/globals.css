@@ -21,12 +21,7 @@ body {
 }
 
 body::after {
-  position: fixed;
-  z-index: 50;
-  inset: 0;
-  border: 12px solid #ff7a78;
-  pointer-events: none;
-  content: "";
+  display: none;
 }
 
 body:has(.home--blank)::after {
@@ -772,16 +767,7 @@ a {
 
 .vote-confirm-card__continue::after,
 .vote-confirm-card__cancel::after {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  background:
-    linear-gradient(58deg, transparent 47%, rgb(255 255 255 / 20%) 48% 49%, transparent 50%)
-      0 0 / 7rem 100%,
-    linear-gradient(122deg, transparent 47%, rgb(255 255 255 / 14%) 48% 49%, transparent 50%)
-      2rem 0 / 9rem 100%;
-  content: "";
-  pointer-events: none;
+  display: none;
 }
 
 .vote-confirm-card__continue > span,
