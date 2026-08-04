@@ -898,27 +898,38 @@ export default function Home() {
     const startedAt = performance.now();
     const previousOverflow = document.body.style.overflow;
     let hideTimer = 0;
-    let readyFrame = 0;
+    let cancelled = false;
 
     document.body.style.overflow = "hidden";
 
-    const beginClosing = () => {
-      const remaining = Math.max(0, minimumDuration - (performance.now() - startedAt));
+    const bannerImages = ["/banner/back.png", "/banner/front.png"];
+    let loadedCount = 0;
 
-      hideTimer = window.setTimeout(() => {
-        setHomeLoaderClosing(true);
-      }, remaining);
+    const checkAndBeginClosing = () => {
+      if (cancelled) return;
+      loadedCount++;
+      if (loadedCount >= bannerImages.length) {
+        const remaining = Math.max(0, minimumDuration - (performance.now() - startedAt));
+        hideTimer = window.setTimeout(() => {
+          if (!cancelled) setHomeLoaderClosing(true);
+        }, remaining);
+      }
     };
 
-    readyFrame = window.requestAnimationFrame(() => {
-      readyFrame = window.requestAnimationFrame(() => {
-        beginClosing();
-      });
+    bannerImages.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+      if (img.complete) {
+        checkAndBeginClosing();
+      } else {
+        img.onload = checkAndBeginClosing;
+        img.onerror = checkAndBeginClosing;
+      }
     });
 
     return () => {
+      cancelled = true;
       window.clearTimeout(hideTimer);
-      window.cancelAnimationFrame(readyFrame);
       document.body.style.overflow = previousOverflow;
     };
   }, []);

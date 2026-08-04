@@ -1,8 +1,3 @@
-/**
- * Googleフォームの回答先スプレッドシートに紐づけて使用します。
- * 回答中のYouTube URLだけを抽出し、個人情報を含まないJSONを返します。
- */
-
 const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
 function extractYouTubeId(value) {
