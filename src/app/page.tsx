@@ -1615,7 +1615,7 @@ export default function Home() {
               <ul className="home-font-modal__conditions">
                 <li>動画時間は<strong>5分以下</strong>にしてください。</li>
                 <li>配布された映像素材を<strong>必ず使用</strong>してください。</li>
-                <li>
+                {/* <li>
                   字幕は<strong>源ノ角ゴシック</strong>、カラーは
                   <button
                     className="home-font-modal__color-copy"
@@ -1656,7 +1656,7 @@ export default function Home() {
                     )}
                   </button>
                   、<strong>白縁取り</strong>を使うと本人動画のようになります!!
-                </li>
+                </li> */}
               </ul>
               <a
                 className="home-font-modal__font-link home-reel-trigger"
