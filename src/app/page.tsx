@@ -1589,11 +1589,11 @@ export default function Home() {
           <Image
             src="/logo/logo.png"
             alt="やまかわ動画編集大会"
-            width={180}
-            height={60}
+            width={540}
+            height={180}
             style={{
               height: "auto",
-              width: "clamp(120px, 20vw, 180px)",
+              width: "clamp(300px, 50vw, 540px)",
               display: "block",
             }}
           />
