@@ -3328,7 +3328,8 @@ a {
   }
 
   .home-about__entry-video-title,
-  .vote-entry-cta-card__video-title {
+  .vote-entry-cta-card__video-title,
+  .vote-criteria__rule {
     display: none;
   }
 

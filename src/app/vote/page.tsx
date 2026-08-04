@@ -644,6 +644,33 @@ export default function VotePage() {
   const [entriesState, setEntriesState] = useState<
     "loading" | "ready" | "unconfigured" | "error"
   >("loading");
+  const [pendingReportEntry, setPendingReportEntry] = useState<VoteEntry | null>(null);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
+
+  const submitReport = async (entry: VoteEntry) => {
+    setReportSubmitting(true);
+    try {
+      const response = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId: entry.youtubeId }),
+      });
+      if (response.ok) {
+        setReportSuccess(true);
+        setTimeout(() => {
+          setPendingReportEntry(null);
+          setReportSuccess(false);
+        }, 1500);
+      } else {
+        alert("通報を送信できませんでした。もう一度お試しください。");
+      }
+    } catch {
+      alert("通信エラーが発生しました。");
+    } finally {
+      setReportSubmitting(false);
+    }
+  };
 
   const cancelVoteHold = () => {
     if (holdTimerRef.current !== null) {
@@ -1202,6 +1229,7 @@ export default function VotePage() {
                       className="vote-entry__report-button home-reel-trigger"
                       type="button"
                       aria-label={`エントリー作品 ${index + 1} を通報`}
+                      onClick={() => setPendingReportEntry(entry)}
                     >
                       <VoteReelText label="⚑" />
                     </button>
@@ -1329,6 +1357,63 @@ export default function VotePage() {
                   <VoteReelText label="キャンセル" />
                 </button>
               </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
+      {pendingReportEntry ? (
+        <div
+          className="vote-confirm-modal"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !reportSubmitting) {
+              setPendingReportEntry(null);
+            }
+          }}
+        >
+          <section
+            className="vote-confirm-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="vote-report-title"
+          >
+            <span className="home__mesh home__mesh--top" aria-hidden="true">
+              <span className="home__mesh-pattern" />
+            </span>
+            <span className="home__mesh home__mesh--bottom" aria-hidden="true">
+              <span className="home__mesh-pattern" />
+            </span>
+            <div className="vote-confirm-card__content">
+              <div>
+                <h2 id="vote-report-title">
+                  <span>通報の確認</span>
+                </h2>
+                <p id="vote-report-note" style={{ marginTop: "0.6rem", fontSize: "0.95rem", opacity: 0.85 }}>
+                  {reportSuccess
+                    ? "通報を受け付けました。"
+                    : "この作品に通報を送りますか？"}
+                </p>
+              </div>
+              {!reportSuccess ? (
+                <div className="vote-confirm-card__actions" style={{ gap: "0.8rem", marginTop: "1.2rem" }}>
+                  <button
+                    className="vote-confirm-card__continue home-reel-trigger"
+                    type="button"
+                    disabled={reportSubmitting}
+                    onClick={() => void submitReport(pendingReportEntry)}
+                    style={{ background: "#f63049", color: "#fff" }}
+                  >
+                    <VoteReelText label={reportSubmitting ? "送信中..." : "通報を確定する"} />
+                  </button>
+                  <button
+                    className="vote-confirm-card__cancel home-reel-trigger"
+                    type="button"
+                    disabled={reportSubmitting}
+                    onClick={() => setPendingReportEntry(null)}
+                  >
+                    <VoteReelText label="キャンセル" />
+                  </button>
+                </div>
+              ) : null}
             </div>
           </section>
         </div>

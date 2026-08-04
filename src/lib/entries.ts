@@ -109,6 +109,22 @@ async function requestContestEntries(feedUrl: string): Promise<EntryFeedResult> 
   return { entries, configured: true };
 }
 
+import { getHiddenVideoIds } from "./reports";
+
+async function filterHiddenEntries(
+  database: D1Database | undefined,
+  result: EntryFeedResult,
+): Promise<EntryFeedResult> {
+  if (!database || result.entries.length === 0) return result;
+  const hiddenSet = await getHiddenVideoIds(database);
+  if (hiddenSet.size === 0) return result;
+
+  return {
+    ...result,
+    entries: result.entries.filter((entry) => !hiddenSet.has(entry.youtubeId)),
+  };
+}
+
 export async function fetchContestEntries(
   database?: D1Database,
 ): Promise<EntryFeedResult> {
@@ -118,14 +134,14 @@ export async function fetchContestEntries(
 
   const now = Date.now();
   if (lastSuccessfulResult && now - lastSuccessfulAt < ENTRY_CACHE_TTL_MS) {
-    return lastSuccessfulResult;
+    return filterHiddenEntries(database, lastSuccessfulResult);
   }
 
   const databaseCache = database ? await readDatabaseCache(database) : null;
   if (databaseCache && now - databaseCache.updatedAt < ENTRY_CACHE_TTL_MS) {
     lastSuccessfulResult = databaseCache.result;
     lastSuccessfulAt = databaseCache.updatedAt;
-    return databaseCache.result;
+    return filterHiddenEntries(database, databaseCache.result);
   }
 
   pendingRequest ??= requestContestEntries(feedUrl)
@@ -141,10 +157,11 @@ export async function fetchContestEntries(
     });
 
   try {
-    return await pendingRequest;
+    const rawResult = await pendingRequest;
+    return filterHiddenEntries(database, rawResult);
   } catch (error) {
-    if (databaseCache) return databaseCache.result;
-    if (lastSuccessfulResult) return lastSuccessfulResult;
+    if (databaseCache) return filterHiddenEntries(database, databaseCache.result);
+    if (lastSuccessfulResult) return filterHiddenEntries(database, lastSuccessfulResult);
     throw error;
   }
 }
