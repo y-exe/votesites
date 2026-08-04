@@ -1563,9 +1563,10 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </section>
 
-          <footer className="home-footer">
-            <div className="home-footer__inner">
+        <footer className="home-footer">
+          <div className="home-footer__inner">
               <div className="home-footer__main">
                 <div className="home-footer__brand">
                   <h3 className={`${lineSeedExtraBold.className} home-footer__brand-title`}>
@@ -1622,7 +1623,6 @@ export default function Home() {
             </div>
           </footer>
         </section>
-      </section>
       </main>
       {fontGuideOpen ? (
         <div
