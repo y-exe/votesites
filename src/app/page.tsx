@@ -861,6 +861,7 @@ export default function Home() {
   const [homeLoaderClosing, setHomeLoaderClosing] = useState(false);
   const [equipmentEnabled, setEquipmentEnabled] = useState(false);
   const [fontGuideOpen, setFontGuideOpen] = useState(false);
+  const [materialDownloadOpen, setMaterialDownloadOpen] = useState(false);
   const [colorCopied, setColorCopied] = useState(false);
   const [discordAuthState, setDiscordAuthState] = useState<
     "loading" | "authenticated" | "anonymous"
@@ -875,12 +876,15 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (!fontGuideOpen) return;
+    if (!fontGuideOpen && !materialDownloadOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     const lenis = lenisRef.current?.lenis;
     const closeModal = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setFontGuideOpen(false);
+      if (event.key === "Escape") {
+        setFontGuideOpen(false);
+        setMaterialDownloadOpen(false);
+      }
     };
 
     document.body.style.overflow = "hidden";
@@ -892,7 +896,7 @@ export default function Home() {
       lenis?.start();
       window.removeEventListener("keydown", closeModal);
     };
-  }, [fontGuideOpen]);
+  }, [fontGuideOpen, materialDownloadOpen]);
 
   useEffect(() => {
     const minimumDuration = 700;
@@ -1245,15 +1249,14 @@ export default function Home() {
                   >
                     <ReelText label="応募条件・素材説明" />
                   </button>
-                  <a
+                  <button
                     className="home-about__label home-about__label--small home-reel-trigger"
-                    href="https://drive.google.com/file/d/1pFrnL11yfvQ_0ZzK03jkp2T9NdixLYJP/view?usp=drivesdk"
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="素材ダウンロード"
+                    type="button"
+                    aria-label="素材ダウンロードを開く"
+                    onClick={() => setMaterialDownloadOpen(true)}
                   >
                     <ReelText label="素材ダウンロード" />
-                  </a>
+                  </button>
                 </div>
               </div>
 
@@ -1689,16 +1692,77 @@ export default function Home() {
                   <span>主観カメラの映像です。</span>
                 </li>
               </ol>
-              <a
+              <button
                 className="home-font-modal__font-link home-reel-trigger"
-                href="https://drive.google.com/file/d/1pFrnL11yfvQ_0ZzK03jkp2T9NdixLYJP/view?usp=drivesdk"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="動画素材をダウンロードする"
+                type="button"
+                aria-label="動画素材のダウンロードを開く"
+                onClick={() => {
+                  setFontGuideOpen(false);
+                  setMaterialDownloadOpen(true);
+                }}
               >
                 <ReelText label="動画素材をダウンロード　→" />
-              </a>
+              </button>
             </section>
+          </section>
+        </div>
+      ) : null}
+
+      {materialDownloadOpen ? (
+        <div
+          className="home-font-modal"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setMaterialDownloadOpen(false);
+          }}
+        >
+          <section
+            className={`${lineSeedExtraBold.className} home-font-modal__card home-download-modal__card`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="home-download-modal-title"
+            data-lenis-prevent
+          >
+            <span className="home__mesh home__mesh--top" aria-hidden="true">
+              <span className="home__mesh-pattern" />
+            </span>
+            <span className="home__mesh home__mesh--bottom" aria-hidden="true">
+              <span className="home__mesh-pattern" />
+            </span>
+
+            <div className="home-download-modal__content">
+              <h2 id="home-download-modal-title">素材のダウンロード</h2>
+
+              <p className="home-download-modal__notice">
+                アクセス集中による負荷を分散させるため、ファイルを分割してご提供しております。<br />
+                ファイルの内容に違いはございませんので、あらかじめご了承ください。
+              </p>
+
+              <div className="home-download-modal__buttons">
+                <a
+                  className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
+                  href="https://drive.google.com/file/d/1miFB-xhQmYBeOoSYAfOapLeMRQcfoDYX/view"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="GoogleDriveで動画素材をダウンロード"
+                >
+                  <ReelText label="GoogleDrive" />
+                </a>
+                <a
+                  className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
+                  href="https://d.kuku.lu/rxe3gr8ub"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="ファイルなうで動画素材をダウンロード"
+                >
+                  <ReelText label="ファイルなう" />
+                </a>
+              </div>
+
+              <p className="home-download-modal__info">
+                サイズ: 18.4 GB ファイル数: 5
+              </p>
+            </div>
           </section>
         </div>
       ) : null}
