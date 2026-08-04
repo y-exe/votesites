@@ -1593,7 +1593,7 @@ a {
   display: grid;
   justify-items: center;
   width: min(90%, 76rem);
-  margin: calc(-1 * clamp(0.5rem, 1vw, 1rem)) auto 0;
+  margin: clamp(2rem, 5vw, 4rem) auto 0;
   padding: 0;
 }
 
@@ -3329,7 +3329,7 @@ a {
   }
 
   .home-qa__body {
-    padding: 0.75rem 1rem 6rem;
+    padding: clamp(4rem, 14vw, 6.5rem) 1rem 6rem;
   }
 
   .home-qa__list {
@@ -3385,7 +3385,7 @@ a {
 
   .home-about__content {
     width: min(88vw, 34rem);
-    margin-top: 0.5rem;
+    margin-top: clamp(3rem, 10vw, 5rem);
     padding-top: 0;
   }
 

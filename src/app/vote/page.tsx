@@ -646,7 +646,7 @@ export default function VotePage() {
   >("loading");
   const [pendingReportEntry, setPendingReportEntry] = useState<VoteEntry | null>(null);
   const [reportSubmitting, setReportSubmitting] = useState(false);
-  const [reportSuccess, setReportSuccess] = useState(false);
+  const [reportToastVisible, setReportToastVisible] = useState(false);
   const [reportHoldActive, setReportHoldActive] = useState(false);
   const reportHoldTimerRef = useRef<number | null>(null);
 
@@ -685,11 +685,11 @@ export default function VotePage() {
         body: JSON.stringify({ videoId: entry.youtubeId }),
       });
       if (response.ok) {
-        setReportSuccess(true);
+        setPendingReportEntry(null);
+        setReportToastVisible(true);
         setTimeout(() => {
-          setPendingReportEntry(null);
-          setReportSuccess(false);
-        }, 1500);
+          setReportToastVisible(false);
+        }, 1800);
       } else {
         alert("通報を送信できませんでした。もう一度お試しください。");
       }
@@ -1404,62 +1404,92 @@ export default function VotePage() {
             aria-modal="true"
             aria-labelledby="vote-report-title"
           >
+            <span className="home__mesh home__mesh--top" aria-hidden="true">
+              <span className="home__mesh-pattern" />
+            </span>
+            <span className="home__mesh home__mesh--bottom" aria-hidden="true">
+              <span className="home__mesh-pattern" />
+            </span>
             <div className="vote-confirm-card__content">
               <div>
                 <h2 id="vote-report-title">
                   <span>通報の確認</span>
                 </h2>
                 <p id="vote-report-note" style={{ marginTop: "0.6rem", fontSize: "0.95rem", opacity: 0.85 }}>
-                  {reportSuccess
-                    ? "通報を受け付けました。"
-                    : "この作品に通報を送りますか？（長押しで確定）"}
+                  この作品に通報を送りますか？（長押しで確定）
                 </p>
               </div>
-              {!reportSuccess ? (
-                <div className="vote-confirm-card__actions" style={{ gap: "0.8rem", marginTop: "1.2rem" }}>
-                  <button
-                    className={`vote-confirm-card__continue home-reel-trigger${
-                      reportHoldActive ? " vote-confirm-card__continue--holding" : ""
-                    }`}
-                    type="button"
-                    disabled={reportSubmitting}
-                    aria-label="通報を確定する。長押ししてください"
-                    onPointerDown={(event) => {
-                      event.currentTarget.setPointerCapture(event.pointerId);
+              <div className="vote-confirm-card__actions" style={{ gap: "0.8rem", marginTop: "1.2rem" }}>
+                <button
+                  className={`vote-confirm-card__continue home-reel-trigger${
+                    reportHoldActive ? " vote-confirm-card__continue--holding" : ""
+                  }`}
+                  type="button"
+                  disabled={reportSubmitting}
+                  aria-label="通報を確定する。長押ししてください"
+                  onPointerDown={(event) => {
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                    startReportHold();
+                  }}
+                  onPointerUp={cancelReportHold}
+                  onPointerCancel={cancelReportHold}
+                  onPointerLeave={cancelReportHold}
+                  onKeyDown={(event) => {
+                    if ((event.key === " " || event.key === "Enter") && !event.repeat) {
+                      event.preventDefault();
                       startReportHold();
-                    }}
-                    onPointerUp={cancelReportHold}
-                    onPointerCancel={cancelReportHold}
-                    onPointerLeave={cancelReportHold}
-                    onKeyDown={(event) => {
-                      if ((event.key === " " || event.key === "Enter") && !event.repeat) {
-                        event.preventDefault();
-                        startReportHold();
-                      }
-                    }}
-                    onKeyUp={(event) => {
-                      if (event.key === " " || event.key === "Enter") {
-                        event.preventDefault();
-                        cancelReportHold();
-                      }
-                    }}
-                    onContextMenu={(event) => event.preventDefault()}
-                    style={{ background: "#f63049", color: "#fff" }}
-                  >
-                    <VoteReelText label={reportSubmitting ? "送信中..." : "長押しで確定"} />
-                  </button>
-                  <button
-                    className="vote-confirm-card__cancel home-reel-trigger"
-                    type="button"
-                    disabled={reportSubmitting}
-                    onClick={() => setPendingReportEntry(null)}
-                  >
-                    <VoteReelText label="キャンセル" />
-                  </button>
-                </div>
-              ) : null}
+                    }
+                  }}
+                  onKeyUp={(event) => {
+                    if (event.key === " " || event.key === "Enter") {
+                      event.preventDefault();
+                      cancelReportHold();
+                    }
+                  }}
+                  onContextMenu={(event) => event.preventDefault()}
+                  style={{ background: "#f63049", color: "#fff" }}
+                >
+                  <VoteReelText label={reportSubmitting ? "送信中..." : "長押しで確定"} />
+                </button>
+                <button
+                  className="vote-confirm-card__cancel home-reel-trigger"
+                  type="button"
+                  disabled={reportSubmitting}
+                  onClick={() => setPendingReportEntry(null)}
+                >
+                  <VoteReelText label="キャンセル" />
+                </button>
+              </div>
             </div>
           </section>
+        </div>
+      ) : null}
+
+      {reportToastVisible ? (
+        <div
+          style={{
+            position: "fixed",
+            zIndex: 1100,
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              color: "#111111",
+              padding: "1rem 2.2rem",
+              borderRadius: "0.85rem",
+              fontWeight: 800,
+              fontSize: "1.15rem",
+              boxShadow: "0 0.8rem 2.5rem rgba(0,0,0,0.35)",
+              animation: "vote-confirm-card-in 220ms ease-out both",
+            }}
+          >
+            通報を記録しました
+          </div>
         </div>
       ) : null}
     </main>
