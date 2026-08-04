@@ -1597,17 +1597,32 @@ export default function Home() {
               display: "block",
             }}
           />
-          <Link
-            href="/policy"
-            style={{
-              color: "#ffffff",
-              textDecoration: "underline",
-              fontSize: "0.95rem",
-              opacity: 0.85,
-            }}
-          >
-            プライバシーポリシー
-          </Link>
+          <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", justifyContent: "center" }}>
+            <Link
+              href="/policy"
+              style={{
+                color: "#ffffff",
+                textDecoration: "underline",
+                fontSize: "0.95rem",
+                opacity: 0.85,
+              }}
+            >
+              プライバシーポリシー
+            </Link>
+            <a
+              href="https://github.com/y-exe/votesites"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                color: "#ffffff",
+                textDecoration: "underline",
+                fontSize: "0.95rem",
+                opacity: 0.85,
+              }}
+            >
+              OSS
+            </a>
+          </div>
         </footer>
       </main>
       {fontGuideOpen ? (
