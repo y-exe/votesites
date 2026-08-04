@@ -13,12 +13,10 @@ type EquipmentKind =
   | "headphones";
 
 const equipmentKinds: EquipmentKind[] = [
-  "mouse",
   "cursor",
   "microphone",
   "monitor",
   "keyboard",
-  "headphones",
 ];
 
 const pinkPalette = [
