@@ -1907,7 +1907,6 @@ a {
   line-height: 1.25;
 }
 
-.home-font-modal h2 span,
 .home-font-modal__conditions strong {
   background: linear-gradient(transparent 62%, #ffe33c 62%);
 }
@@ -1958,25 +1957,28 @@ a {
 .home-font-modal__color-copy {
   display: inline-flex;
   align-items: center;
-  gap: 0.4em;
-  margin: 0.15em 0.2em;
-  padding: 0.16em 0.55em;
-  border: 0;
-  border-radius: 0.3em;
-  color: #fff;
-  background: #c30202;
+  gap: 0.35em;
+  margin: 0.15em 0.25em;
+  padding: 0.2em 0.55em;
+  border: 1px solid rgb(0 0 0 / 12%);
+  border-radius: 0.35em;
+  color: #111;
+  background: #f4f4f5;
   font: inherit;
   font-size: 0.9em;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 160ms ease;
 }
 
-.home-font-modal__color-copy span {
-  display: inline-block;
-  width: 0.72em;
-  aspect-ratio: 1;
-  border: 1px solid rgb(255 255 255 / 72%);
-  background: #c30202;
+.home-font-modal__color-copy:hover {
+  background: #e4e4e7;
+}
+
+.home-font-modal__color-copy--copied {
+  color: #15803d;
+  background: #dcfce7;
+  border-color: #86efac;
 }
 
 .home-font-modal__font-link {
@@ -2032,7 +2034,7 @@ a {
 }
 
 .home-font-modal__materials code {
-  color: #c30202;
+  color: #111;
   font-family: inherit;
   font-weight: 800;
 }
@@ -2053,7 +2055,9 @@ a {
 .home-vote__word-ring {
   position: absolute;
   right: clamp(-14rem, -9vw, -6rem);
-  bottom: calc(55svh + clamp(6.5rem, 11vw, 11rem));
+  /* Keep the ring pinned to the end of the VOTE flow, not the Q&A height. */
+  top: clamp(50rem, 70vw, 68rem);
+  bottom: auto;
   z-index: 2;
   width: clamp(32rem, 50vw, 58rem);
   aspect-ratio: 1;
