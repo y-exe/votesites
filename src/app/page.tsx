@@ -1182,7 +1182,7 @@ export default function Home() {
           aria-hidden="true"
         >
           <path
-            fill="#000"
+            fill="none"
             d="M0 206C166 82 326-16 530 28C735 72 820 205 1054 224C1222 238 1340 198 1440 142V280H0Z"
           />
         </svg>
