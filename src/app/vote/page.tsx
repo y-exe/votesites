@@ -222,8 +222,8 @@ function findCircuitIntersections(paths: CircuitPoint[][], minimumY: number, wid
       for (let firstSegment = 0; firstSegment + 1 < firstPath.length; firstSegment += 1) {
         const a = firstPath[firstSegment];
         const b = firstPath[firstSegment + 1];
-          const firstDx = b.x - a.x;
-          const firstDy = b.y - a.y;
+        const firstDx = b.x - a.x;
+        const firstDy = b.y - a.y;
 
         for (
           let secondSegment = 0;
@@ -326,8 +326,6 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
   let currentX = anchors.map((anchor) => anchor.x);
   const maxAnchorY = Math.max(...anchors.map((anchor) => anchor.y));
 
-  // The opening viewport is deliberately self-contained: every line stays
-  // inside the title width and no junction rings are drawn here.
   const heroTurnStart = maxAnchorY + Math.max(72, (fieldTop - maxAnchorY) * 0.26);
   const heroTurnEnd = Math.max(heroTurnStart + 100, fieldTop - (mobile ? 70 : 95));
   const heroOrdered = currentX
@@ -340,8 +338,6 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
     const second = heroOrdered[index + 1];
     const gap = second.x - first.x;
 
-    // One line remains vertical while the other crosses it diagonally. This
-    // keeps every intersection in the straight-line × diagonal-line form.
     heroTargets[first.index] = clampToTitle(first.x);
     heroTargets[second.index] = clampToTitle(first.x - gap * 0.42);
   }
@@ -353,8 +349,6 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
   });
   currentX = heroTargets;
 
-  // Once the hero has left the viewport, release the title-width constraint
-  // and fan the same uninterrupted paths out into the full-page circuit.
   const spreadLeft = width * (mobile ? 0.13 : 0.11);
   const spreadRight = width * (mobile ? 0.87 : 0.89);
   const spreadLanes = currentX.map((_, index) =>
@@ -385,8 +379,8 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
       activeCount === 1
         ? Math.floor(orderedLineIndices.length / 2)
         : Math.round(
-            (activeIndex * (orderedLineIndices.length - 1)) / (activeCount - 1),
-          );
+          (activeIndex * (orderedLineIndices.length - 1)) / (activeCount - 1),
+        );
     return orderedLineIndices[orderedIndex];
   });
   const inactiveLines = orderedLineIndices.filter(
@@ -412,8 +406,6 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
     const turnY = fieldTop + 175 + inactiveIndex * 90;
     const intersectionY = turnY + 110;
 
-    // A discarded lane first runs straight, then ends exactly where its
-    // diagonal meets a continuing vertical lane. It never ends at a lone ring.
     paths[lineIndex].push({ x: lineX, y: turnY });
     paths[lineIndex].push({ x: currentX[targetLine], y: intersectionY });
   });
@@ -467,8 +459,6 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
   const advanceLane = (lane: (typeof lanes)[number], targetY: number) => {
     if (targetY <= lane.lastY) return;
 
-    // Keep the labelled section uninterrupted. Once the word has cleared,
-    // every lane must change direction before one straight run grows too long.
     if (lane.lastY < lane.exemptUntil) {
       const exemptEnd = Math.min(targetY, lane.exemptUntil);
       appendLanePoint(lane, { x: lane.x, y: exemptEnd });
@@ -820,7 +810,7 @@ export default function VotePage() {
         const nextEntries = Array.isArray(payload.entries) ? payload.entries : [];
         setEntries((currentEntries) =>
           currentEntries.map((entry) => entry.youtubeId).join(",") ===
-          nextEntries.map((entry) => entry.youtubeId).join(",")
+            nextEntries.map((entry) => entry.youtubeId).join(",")
             ? currentEntries
             : nextEntries,
         );
@@ -1054,452 +1044,487 @@ export default function VotePage() {
   return (
     <>
       <ReactLenis ref={lenisRef} root />
-    <main
-      ref={pageRef}
-      className={`${lineSeedExtraBold.className} home--blank vote-page`}
-      data-intro={introReady ? "ready" : "idle"}
-      data-scroll={criteriaReady ? "complete" : "pending"}
-      data-circuit={criteriaReady ? (circuitSynced ? "synced" : "shifting") : "initial"}
-      style={{ "--vote-top-trim": `${topTrim}px` } as CSSProperties}
-    >
-      {circuitLayout ? <VoteCircuit layout={circuitLayout} /> : null}
-      <section className="vote-hero" aria-labelledby="vote-welcome-title">
-        <div className="vote-hero__intro">
-          <p className="vote-hero__eyebrow">
-            <span aria-hidden="true" />
-            投票ページへようこそ！
-            <span aria-hidden="true" />
-          </p>
+      <main
+        ref={pageRef}
+        className={`${lineSeedExtraBold.className} home--blank vote-page`}
+        data-intro={introReady ? "ready" : "idle"}
+        data-scroll={criteriaReady ? "complete" : "pending"}
+        data-circuit={criteriaReady ? (circuitSynced ? "synced" : "shifting") : "initial"}
+        style={{ "--vote-top-trim": `${topTrim}px` } as CSSProperties}
+      >
+        {circuitLayout ? <VoteCircuit layout={circuitLayout} /> : null}
+        <section className="vote-hero" aria-labelledby="vote-welcome-title">
+          <div className="vote-hero__intro">
+            <p className="vote-hero__eyebrow">
+              <span aria-hidden="true" />
+              投票ページへようこそ！
+              <span aria-hidden="true" />
+            </p>
 
-          <div className="vote-hero__title-wrap">
-            <h1
-              id="vote-welcome-title"
-              className={`${googleSans.className} vote-hero__title`}
-              aria-label="WELCOME TO VOTE!"
-            >
-              <span className="vote-hero__word" aria-hidden="true">
-                <span data-circuit-mobile="true" data-circuit-anchor="center">W</span>
-                <span data-circuit-desktop="true" data-circuit-anchor="left">E</span>
-                <span data-circuit-desktop="true" data-circuit-anchor="left">L</span>
-                <span>C</span>
-                <span>O</span>
-                <span data-circuit-desktop="true" data-circuit-anchor="left">M</span>
-                <span
-                  data-circuit-desktop="true"
-                  data-circuit-mobile="true"
-                  data-circuit-anchor="left"
-                >
-                  E
-                </span>
-              </span>
-              <span className="vote-hero__title-space" aria-hidden="true" />
-              <span className="vote-hero__word" aria-hidden="true">
-                <span data-circuit-desktop="true" data-circuit-anchor="center">T</span>
-                <span>O</span>
-              </span>
-              <span className="vote-hero__title-space" aria-hidden="true" />
-              <span className="vote-hero__word" aria-hidden="true">
-                <span data-circuit-mobile="true" data-circuit-anchor="center">V</span>
-                <span>O</span>
-                <span
-                  data-circuit-desktop="true"
-                  data-circuit-mobile="true"
-                  data-circuit-anchor="center"
-                >
-                  T
-                </span>
-                <span
-                  data-circuit-desktop="true"
-                  data-circuit-mobile="true"
-                  data-circuit-anchor="left"
-                >
-                  E
-                </span>
-                <span>!</span>
-              </span>
-            </h1>
-          </div>
-        </div>
-
-        {criteriaReady ? (
-          <>
-            <article className="vote-criteria" aria-labelledby="vote-criteria-title">
-              <h2 id="vote-criteria-title" className="vote-criteria__label">
-                評価する基準
-              </h2>
-              <p className="vote-criteria__copy">
-                自分が見ていて
-                <br className="vote-criteria__mobile-break" />
-                <strong>面白いな</strong>と思った作品を
-                <br className="vote-criteria__mobile-break" />
-                <strong>投票してください</strong>
-              </p>
-              <p className="vote-criteria__rule">
-                投票は<strong>一人1票</strong>です。途中経過とランキングは
-                <strong>結果生放送まで非公開</strong>です。
-                <br />
-                投票期間：2026年8月29日 20:00 ～ 9月4日 23:59
-              </p>
-            </article>
-            <div className="vote-home-link-wrap">
-              <Link
-                className="vote-home-link home-reel-trigger"
-                href="/"
-                aria-label="ホームページに戻る"
+            <div className="vote-hero__title-wrap">
+              <h1
+                id="vote-welcome-title"
+                className={`${googleSans.className} vote-hero__title`}
+                aria-label="WELCOME TO VOTE!"
               >
-                <VoteReelText label="ホームページに戻る →" />
-              </Link>
-            </div>
-          </>
-        ) : null}
-      </section>
-      <section className="vote-line-field" aria-labelledby="vote-entries-title">
-        <div className="vote-entries">
-          <h2 id="vote-entries-title" className="vote-entries__title">
-            ENTRY VIDEOS
-          </h2>
-          {entries.length > 0 ? (
-            <>
-              <div className="vote-entries__grid">
-                {entries.map((entry, index) => (
-                  <article className="vote-entry-item" key={entry.id}>
-                  <button
-                    className="vote-entry"
-                    type="button"
-                    onClick={() => setSelectedEntry(entry)}
-                    aria-label={`エントリー作品 ${index + 1} を再生`}
+                <span className="vote-hero__word" aria-hidden="true">
+                  <span data-circuit-mobile="true" data-circuit-anchor="center">W</span>
+                  <span data-circuit-desktop="true" data-circuit-anchor="left">E</span>
+                  <span data-circuit-desktop="true" data-circuit-anchor="left">L</span>
+                  <span>C</span>
+                  <span>O</span>
+                  <span data-circuit-desktop="true" data-circuit-anchor="left">M</span>
+                  <span
+                    data-circuit-desktop="true"
+                    data-circuit-mobile="true"
+                    data-circuit-anchor="left"
                   >
-                    <span className="vote-entry__thumbnail">
-                      <YouTubeThumbnail
-                        youtubeId={entry.youtubeId}
-                        alt={`エントリー作品 ${index + 1} のサムネイル`}
-                        eager={index < 2}
-                      />
-                    </span>
-                  </button>
-                  <div className="vote-entry__actions">
-                    <button
-                      className={`vote-entry__vote-button home-reel-trigger${
-                        authState === "authenticated" &&
-                        currentVoteId === entry.youtubeId
-                          ? " vote-entry__vote-button--current"
-                          : ""
-                      }${
-                        votingPhase !== "open" &&
-                        !(
-                          authState === "authenticated" &&
-                          currentVoteId === entry.youtubeId
-                        )
-                          ? " vote-entry__vote-button--unavailable"
-                          : ""
-                      }`}
-                      type="button"
-                      disabled={
-                        votingPhase !== "open" ||
-                        authState === "loading" ||
-                        (authState === "authenticated" &&
-                          (voteState === "loading" || currentVoteId === entry.youtubeId))
-                      }
-                      aria-label={
-                        authState === "authenticated" &&
-                        currentVoteId === entry.youtubeId
-                            ? `エントリー作品 ${index + 1} にすでに投票しています`
-                            : votingPhase === "checking"
-                              ? "投票期間を確認中"
-                              : votingPhase === "before"
-                                ? "投票期間は2026年8月29日20時からです"
-                                : votingPhase === "closed"
-                                  ? "投票期間は終了しました"
-                                  : authState === "loading"
-                                    ? "ログイン状態を確認中"
-                                    : authState === "authenticated" && currentVoteId
-                                      ? `エントリー作品 ${index + 1} に投票を移行する`
-                                      : authState === "authenticated"
-                                        ? `エントリー作品 ${index + 1} に投票`
-                                        : `Discordでログインしてエントリー作品 ${index + 1} に投票`
-                      }
-                      onClick={() => {
-                        if (votingPhase !== "open" || authState === "loading") return;
-                        if (authState === "anonymous") {
-                          window.location.assign(
-                            "/api/auth/discord/start?returnTo=%2Fvote",
-                          );
-                        } else if (currentVoteId !== entry.youtubeId) {
-                          setVoteConfirmClosing(false);
-                          setVoteError(null);
-                          setPendingVoteEntry(entry);
-                        }
-                      }}
-                    >
-                      {authState === "authenticated" &&
-                      currentVoteId === entry.youtubeId ? (
-                        <span className="vote-entry__current-label">
-                          すでにこの動画に投票しています
+                    E
+                  </span>
+                </span>
+                <span className="vote-hero__title-space" aria-hidden="true" />
+                <span className="vote-hero__word" aria-hidden="true">
+                  <span data-circuit-desktop="true" data-circuit-anchor="center">T</span>
+                  <span>O</span>
+                </span>
+                <span className="vote-hero__title-space" aria-hidden="true" />
+                <span className="vote-hero__word" aria-hidden="true">
+                  <span data-circuit-mobile="true" data-circuit-anchor="center">V</span>
+                  <span>O</span>
+                  <span
+                    data-circuit-desktop="true"
+                    data-circuit-mobile="true"
+                    data-circuit-anchor="center"
+                  >
+                    T
+                  </span>
+                  <span
+                    data-circuit-desktop="true"
+                    data-circuit-mobile="true"
+                    data-circuit-anchor="left"
+                  >
+                    E
+                  </span>
+                  <span>!</span>
+                </span>
+              </h1>
+            </div>
+          </div>
+
+          {criteriaReady ? (
+            <>
+              <article className="vote-criteria" aria-labelledby="vote-criteria-title">
+                <h2 id="vote-criteria-title" className="vote-criteria__label">
+                  評価する基準
+                </h2>
+                <p className="vote-criteria__copy">
+                  自分が見ていて
+                  <br className="vote-criteria__mobile-break" />
+                  <strong>面白いな</strong>と思った作品を
+                  <br className="vote-criteria__mobile-break" />
+                  <strong>投票してください</strong>
+                </p>
+                <p className="vote-criteria__rule">
+                  投票は<strong>一人1票</strong>です。途中経過とランキングは
+                  <strong>結果生放送まで非公開</strong>です。
+                  <br />
+                  投票期間：2026年8月29日 20:00 ～ 9月4日 23:59
+                </p>
+              </article>
+              <div className="vote-home-link-wrap">
+                <Link
+                  className="vote-home-link home-reel-trigger"
+                  href="/"
+                  aria-label="ホームページに戻る"
+                >
+                  <VoteReelText label="ホームページに戻る →" />
+                </Link>
+              </div>
+            </>
+          ) : null}
+        </section>
+        <section className="vote-line-field" aria-labelledby="vote-entries-title">
+          <div className="vote-entries">
+            <h2 id="vote-entries-title" className="vote-entries__title">
+              ENTRY VIDEOS
+            </h2>
+            {entries.length > 0 ? (
+              <>
+                <div className="vote-entries__grid">
+                  {entries.map((entry, index) => (
+                    <article className="vote-entry-item" key={entry.id}>
+                      <button
+                        className="vote-entry"
+                        type="button"
+                        onClick={() => setSelectedEntry(entry)}
+                        aria-label={`エントリー作品 ${index + 1} を再生`}
+                      >
+                        <span className="vote-entry__thumbnail">
+                          <YouTubeThumbnail
+                            youtubeId={entry.youtubeId}
+                            alt={`エントリー作品 ${index + 1} のサムネイル`}
+                            eager={index < 2}
+                          />
                         </span>
-                      ) : votingPhase === "checking" ? (
-                        <VoteReelText label="投票期間を確認中" />
-                      ) : votingPhase === "before" ? (
-                        <VoteReelText label="8月29日 20:00 投票開始" />
-                      ) : votingPhase === "closed" ? (
-                        <VoteReelText label="投票期間は終了しました" />
-                      ) : authState === "loading" ? (
-                        <VoteReelText label="確認中" />
-                      ) : authState === "authenticated" ? (
-                        <VoteReelText
-                          label={currentVoteId ? "投票を移行する" : "投票する"}
-                        />
-                      ) : (
-                        <>
-                          <DiscordLogo className="vote-entry__discord-icon" />
-                          <span className="vote-entry__login-label vote-entry__login-label--desktop">
-                            <VoteReelText label="Discordでログインして投票する" />
-                          </span>
-                          <span className="vote-entry__login-label vote-entry__login-label--mobile">
-                            <VoteReelText label="ログインして投票" />
-                          </span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      className="vote-entry__report-button home-reel-trigger"
-                      type="button"
-                      aria-label={`エントリー作品 ${index + 1} を通報`}
-                      onClick={() => setPendingReportEntry(entry)}
-                    >
-                      <VoteReelText label="⚑" />
-                    </button>
-                  </div>
-                  </article>
+                      </button>
+                      <div className="vote-entry__actions">
+                        <button
+                          className={`vote-entry__vote-button home-reel-trigger${authState === "authenticated" &&
+                            currentVoteId === entry.youtubeId
+                            ? " vote-entry__vote-button--current"
+                            : ""
+                            }${votingPhase !== "open" &&
+                              !(
+                                authState === "authenticated" &&
+                                currentVoteId === entry.youtubeId
+                              )
+                              ? " vote-entry__vote-button--unavailable"
+                              : ""
+                            }`}
+                          type="button"
+                          disabled={
+                            votingPhase !== "open" ||
+                            authState === "loading" ||
+                            (authState === "authenticated" &&
+                              (voteState === "loading" || currentVoteId === entry.youtubeId))
+                          }
+                          aria-label={
+                            authState === "authenticated" &&
+                              currentVoteId === entry.youtubeId
+                              ? `エントリー作品 ${index + 1} にすでに投票しています`
+                              : votingPhase === "checking"
+                                ? "投票期間を確認中"
+                                : votingPhase === "before"
+                                  ? "投票期間は2026年8月29日20時からです"
+                                  : votingPhase === "closed"
+                                    ? "投票期間は終了しました"
+                                    : authState === "loading"
+                                      ? "ログイン状態を確認中"
+                                      : authState === "authenticated" && currentVoteId
+                                        ? `エントリー作品 ${index + 1} に投票を移行する`
+                                        : authState === "authenticated"
+                                          ? `エントリー作品 ${index + 1} に投票`
+                                          : `Discordでログインしてエントリー作品 ${index + 1} に投票`
+                          }
+                          onClick={() => {
+                            if (votingPhase !== "open" || authState === "loading") return;
+                            if (authState === "anonymous") {
+                              window.location.assign(
+                                "/api/auth/discord/start?returnTo=%2Fvote",
+                              );
+                            } else if (currentVoteId !== entry.youtubeId) {
+                              setVoteConfirmClosing(false);
+                              setVoteError(null);
+                              setPendingVoteEntry(entry);
+                            }
+                          }}
+                        >
+                          {authState === "authenticated" &&
+                            currentVoteId === entry.youtubeId ? (
+                            <span className="vote-entry__current-label">
+                              すでにこの動画に投票しています
+                            </span>
+                          ) : votingPhase === "checking" ? (
+                            <VoteReelText label="投票期間を確認中" />
+                          ) : votingPhase === "before" ? (
+                            <VoteReelText label="8月29日 20:00 投票開始" />
+                          ) : votingPhase === "closed" ? (
+                            <VoteReelText label="投票期間は終了しました" />
+                          ) : authState === "loading" ? (
+                            <VoteReelText label="確認中" />
+                          ) : authState === "authenticated" ? (
+                            <VoteReelText
+                              label={currentVoteId ? "投票を移行する" : "投票する"}
+                            />
+                          ) : (
+                            <>
+                              <DiscordLogo className="vote-entry__discord-icon" />
+                              <span className="vote-entry__login-label vote-entry__login-label--desktop">
+                                <VoteReelText label="Discordでログインして投票する" />
+                              </span>
+                              <span className="vote-entry__login-label vote-entry__login-label--mobile">
+                                <VoteReelText label="ログインして投票" />
+                              </span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          className="vote-entry__report-button home-reel-trigger"
+                          type="button"
+                          aria-label={`エントリー作品 ${index + 1} を通報`}
+                          onClick={() => setPendingReportEntry(entry)}
+                        >
+                          <VoteReelText label="⚑" />
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                <VoteEntryEnding />
+              </>
+            ) : entriesState === "loading" ? (
+              <div className="vote-entries__grid" role="status" aria-busy="true">
+                <span className="vote-sr-only">応募作品を読み込んでいます</span>
+                {Array.from({ length: ENTRY_LOADING_PLACEHOLDERS }, (_, index) => (
+                  <span className="vote-entry-skeleton" aria-hidden="true" key={index} />
                 ))}
               </div>
-              <VoteEntryEnding />
-            </>
-          ) : entriesState === "loading" ? (
-            <div className="vote-entries__grid" role="status" aria-busy="true">
-              <span className="vote-sr-only">応募作品を読み込んでいます</span>
-              {Array.from({ length: ENTRY_LOADING_PLACEHOLDERS }, (_, index) => (
-                <span className="vote-entry-skeleton" aria-hidden="true" key={index} />
-              ))}
-            </div>
-          ) : (
-            <p className="vote-entries__status" role="status">
-              {entriesState === "error"
-                ? "応募作品を読み込めませんでした"
-                : "応募作品は準備中です"}
-            </p>
-          )}
-        </div>
-      </section>
-      {selectedEntry ? (
-        <div
-          className="vote-video-modal"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) setSelectedEntry(null);
-          }}
-        >
-          <div
-            className="vote-video-modal__dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label="エントリー動画"
-          >
-            <div className="vote-video-modal__video">
-              <iframe
-                src={`https://www.youtube-nocookie.com/embed/${selectedEntry.youtubeId}?autoplay=1`}
-                title="エントリー動画"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-              />
-            </div>
+            ) : (
+              <>
+                <div className="vote-entries__grid">
+                  {Array.from({ length: 2 }, (_, index) => (
+                    <article className="vote-entry-item" key={index}>
+                      <div className="vote-entry" style={{ cursor: "default" }}>
+                        <span
+                          className="vote-entry__thumbnail"
+                          style={{
+                            background: "#888888",
+                            boxShadow: "none",
+                            display: "block",
+                          }}
+                        />
+                      </div>
+                      <div className="vote-entry__actions">
+                        <button
+                          className="vote-entry__vote-button vote-entry__vote-button--unavailable"
+                          type="button"
+                          disabled
+                          style={{
+                            opacity: 1,
+                            cursor: "not-allowed",
+                            width: "100%",
+                            background: "#666666",
+                          }}
+                        >
+                          <VoteReelText
+                            label={
+                              entriesState === "error"
+                                ? "読み込みに失敗しました"
+                                : "作品がまだありません"
+                            }
+                          />
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                <p className="vote-entries__status" role="status" style={{ marginTop: "2rem" }}>
+                  {entriesState === "error"
+                    ? "読み込みに失敗しました"
+                    : "作品はまだありません"}
+                </p>
+                <VoteEntryEnding />
+              </>
+            )}
           </div>
-        </div>
-      ) : null}
-      {pendingVoteEntry ? (
-        <div
-          className={`vote-confirm-modal${
-            voteConfirmClosing ? " vote-confirm-modal--closing" : ""
-          }`}
-          onClick={(event) => {
-            if (event.target === event.currentTarget) closeVoteConfirmation();
-          }}
-        >
-          <section
-            className="vote-confirm-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="vote-confirm-title"
-            aria-describedby="vote-confirm-note"
-          >
-            <span className="home__mesh home__mesh--top" aria-hidden="true">
-              <span className="home__mesh-pattern" />
-            </span>
-            <span className="home__mesh home__mesh--bottom" aria-hidden="true">
-              <span className="home__mesh-pattern" />
-            </span>
-            <div className="vote-confirm-card__content">
-              <div>
-                <h2 id="vote-confirm-title">
-                  <span>投票を続行しますか？</span>
-                </h2>
-                <p id="vote-confirm-note">
-                  ※投票期間中は、あとから投票先を変更できます
-                </p>
-                {voteError ? (
-                  <p className="vote-confirm-card__error" role="alert">
-                    {voteError}
-                  </p>
-                ) : null}
-              </div>
-              <div className="vote-confirm-card__actions">
-                <button
-                  ref={continueButtonRef}
-                  className={`vote-confirm-card__continue home-reel-trigger${
-                    voteHoldActive ? " vote-confirm-card__continue--holding" : ""
-                  }`}
-                  type="button"
-                  disabled={voteSubmitting}
-                  aria-label="続行する。長押ししてください"
-                  onPointerDown={(event) => {
-                    event.currentTarget.setPointerCapture(event.pointerId);
-                    startVoteHold();
-                  }}
-                  onPointerUp={cancelVoteHold}
-                  onPointerCancel={cancelVoteHold}
-                  onPointerLeave={cancelVoteHold}
-                  onKeyDown={(event) => {
-                    if ((event.key === " " || event.key === "Enter") && !event.repeat) {
-                      event.preventDefault();
-                      startVoteHold();
-                    }
-                  }}
-                  onKeyUp={(event) => {
-                    if (event.key === " " || event.key === "Enter") {
-                      event.preventDefault();
-                      cancelVoteHold();
-                    }
-                  }}
-                  onContextMenu={(event) => event.preventDefault()}
-                >
-                  <VoteReelText label={voteSubmitting ? "保存中" : "続行する"} />
-                </button>
-                <button
-                  className="vote-confirm-card__cancel home-reel-trigger"
-                  type="button"
-                  disabled={voteSubmitting}
-                  onClick={closeVoteConfirmation}
-                >
-                  <VoteReelText label="キャンセル" />
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : null}
-      {pendingReportEntry ? (
-        <div
-          className="vote-confirm-modal"
-          onClick={(event) => {
-            if (event.target === event.currentTarget && !reportSubmitting) {
-              setPendingReportEntry(null);
-            }
-          }}
-        >
-          <section
-            className="vote-confirm-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="vote-report-title"
-          >
-            <span className="home__mesh home__mesh--top" aria-hidden="true">
-              <span className="home__mesh-pattern" />
-            </span>
-            <span className="home__mesh home__mesh--bottom" aria-hidden="true">
-              <span className="home__mesh-pattern" />
-            </span>
-            <div className="vote-confirm-card__content">
-              <div>
-                <h2 id="vote-report-title">
-                  <span>通報の確認</span>
-                </h2>
-                <p id="vote-report-note" style={{ marginTop: "0.6rem", fontSize: "0.95rem", opacity: 0.85 }}>
-                  この作品の通報を確定しますか？（長押しで確定）
-                </p>
-              </div>
-              <div className="vote-confirm-card__actions" style={{ gap: "0.8rem", marginTop: "1.2rem" }}>
-                <button
-                  className={`vote-confirm-card__continue home-reel-trigger${
-                    reportHoldActive ? " vote-confirm-card__continue--holding" : ""
-                  }`}
-                  type="button"
-                  disabled={reportSubmitting}
-                  aria-label="通報を確定する。長押ししてください"
-                  onPointerDown={(event) => {
-                    event.currentTarget.setPointerCapture(event.pointerId);
-                    startReportHold();
-                  }}
-                  onPointerUp={cancelReportHold}
-                  onPointerCancel={cancelReportHold}
-                  onPointerLeave={cancelReportHold}
-                  onKeyDown={(event) => {
-                    if ((event.key === " " || event.key === "Enter") && !event.repeat) {
-                      event.preventDefault();
-                      startReportHold();
-                    }
-                  }}
-                  onKeyUp={(event) => {
-                    if (event.key === " " || event.key === "Enter") {
-                      event.preventDefault();
-                      cancelReportHold();
-                    }
-                  }}
-                  onContextMenu={(event) => event.preventDefault()}
-                  style={{ background: "#f63049", color: "#fff" }}
-                >
-                  <VoteReelText label={reportSubmitting ? "送信中..." : "長押しで確定"} />
-                </button>
-                <button
-                  className="vote-confirm-card__cancel home-reel-trigger"
-                  type="button"
-                  disabled={reportSubmitting}
-                  onClick={() => setPendingReportEntry(null)}
-                >
-                  <VoteReelText label="キャンセル" />
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : null}
-
-      {reportToastVisible ? (
-        <div
-          style={{
-            position: "fixed",
-            zIndex: 1100,
-            inset: 0,
-            display: "grid",
-            placeItems: "center",
-            pointerEvents: "none",
-          }}
-        >
+        </section>
+        {selectedEntry ? (
           <div
-            style={{
-              background: "#ffffff",
-              color: "#111111",
-              padding: "1rem 2.2rem",
-              borderRadius: "0.85rem",
-              fontWeight: 800,
-              fontSize: "1.15rem",
-              boxShadow: "0 0.8rem 2.5rem rgba(0,0,0,0.35)",
-              animation: "vote-confirm-card-in 220ms ease-out both",
+            className="vote-video-modal"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) setSelectedEntry(null);
             }}
           >
-            {reportToastMessage}
+            <div
+              className="vote-video-modal__dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-label="エントリー動画"
+            >
+              <div className="vote-video-modal__video">
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${selectedEntry.youtubeId}?autoplay=1`}
+                  title="エントリー動画"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      ) : null}
-    </main>
+        ) : null}
+        {pendingVoteEntry ? (
+          <div
+            className={`vote-confirm-modal${voteConfirmClosing ? " vote-confirm-modal--closing" : ""
+              }`}
+            onClick={(event) => {
+              if (event.target === event.currentTarget) closeVoteConfirmation();
+            }}
+          >
+            <section
+              className="vote-confirm-card"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="vote-confirm-title"
+              aria-describedby="vote-confirm-note"
+            >
+              <span className="home__mesh home__mesh--top" aria-hidden="true">
+                <span className="home__mesh-pattern" />
+              </span>
+              <span className="home__mesh home__mesh--bottom" aria-hidden="true">
+                <span className="home__mesh-pattern" />
+              </span>
+              <div className="vote-confirm-card__content">
+                <div>
+                  <h2 id="vote-confirm-title">
+                    <span>投票を続行しますか？</span>
+                  </h2>
+                  <p id="vote-confirm-note">
+                    ※投票期間中は、あとから投票先を変更できます
+                  </p>
+                  {voteError ? (
+                    <p className="vote-confirm-card__error" role="alert">
+                      {voteError}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="vote-confirm-card__actions">
+                  <button
+                    ref={continueButtonRef}
+                    className={`vote-confirm-card__continue home-reel-trigger${voteHoldActive ? " vote-confirm-card__continue--holding" : ""
+                      }`}
+                    type="button"
+                    disabled={voteSubmitting}
+                    aria-label="続行する。長押ししてください"
+                    onPointerDown={(event) => {
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                      startVoteHold();
+                    }}
+                    onPointerUp={cancelVoteHold}
+                    onPointerCancel={cancelVoteHold}
+                    onPointerLeave={cancelVoteHold}
+                    onKeyDown={(event) => {
+                      if ((event.key === " " || event.key === "Enter") && !event.repeat) {
+                        event.preventDefault();
+                        startVoteHold();
+                      }
+                    }}
+                    onKeyUp={(event) => {
+                      if (event.key === " " || event.key === "Enter") {
+                        event.preventDefault();
+                        cancelVoteHold();
+                      }
+                    }}
+                    onContextMenu={(event) => event.preventDefault()}
+                  >
+                    <VoteReelText label={voteSubmitting ? "保存中" : "続行する"} />
+                  </button>
+                  <button
+                    className="vote-confirm-card__cancel home-reel-trigger"
+                    type="button"
+                    disabled={voteSubmitting}
+                    onClick={closeVoteConfirmation}
+                  >
+                    <VoteReelText label="キャンセル" />
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        ) : null}
+        {pendingReportEntry ? (
+          <div
+            className="vote-confirm-modal"
+            onClick={(event) => {
+              if (event.target === event.currentTarget && !reportSubmitting) {
+                setPendingReportEntry(null);
+              }
+            }}
+          >
+            <section
+              className="vote-confirm-card"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="vote-report-title"
+            >
+              <span className="home__mesh home__mesh--top" aria-hidden="true">
+                <span className="home__mesh-pattern" />
+              </span>
+              <span className="home__mesh home__mesh--bottom" aria-hidden="true">
+                <span className="home__mesh-pattern" />
+              </span>
+              <div className="vote-confirm-card__content">
+                <div>
+                  <h2 id="vote-report-title">
+                    <span>通報の確認</span>
+                  </h2>
+                  <p id="vote-report-note" style={{ marginTop: "0.6rem", fontSize: "0.95rem", opacity: 0.85 }}>
+                    この作品の通報を確定しますか？（長押しで確定）
+                  </p>
+                </div>
+                <div className="vote-confirm-card__actions" style={{ gap: "0.8rem", marginTop: "1.2rem" }}>
+                  <button
+                    className={`vote-confirm-card__continue home-reel-trigger${reportHoldActive ? " vote-confirm-card__continue--holding" : ""
+                      }`}
+                    type="button"
+                    disabled={reportSubmitting}
+                    aria-label="通報を確定する。長押ししてください"
+                    onPointerDown={(event) => {
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                      startReportHold();
+                    }}
+                    onPointerUp={cancelReportHold}
+                    onPointerCancel={cancelReportHold}
+                    onPointerLeave={cancelReportHold}
+                    onKeyDown={(event) => {
+                      if ((event.key === " " || event.key === "Enter") && !event.repeat) {
+                        event.preventDefault();
+                        startReportHold();
+                      }
+                    }}
+                    onKeyUp={(event) => {
+                      if (event.key === " " || event.key === "Enter") {
+                        event.preventDefault();
+                        cancelReportHold();
+                      }
+                    }}
+                    onContextMenu={(event) => event.preventDefault()}
+                    style={{ background: "#f63049", color: "#fff" }}
+                  >
+                    <VoteReelText label={reportSubmitting ? "送信中..." : "長押しで確定"} />
+                  </button>
+                  <button
+                    className="vote-confirm-card__cancel home-reel-trigger"
+                    type="button"
+                    disabled={reportSubmitting}
+                    onClick={() => setPendingReportEntry(null)}
+                  >
+                    <VoteReelText label="キャンセル" />
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+        ) : null}
+
+        {reportToastVisible ? (
+          <div
+            style={{
+              position: "fixed",
+              zIndex: 1100,
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              style={{
+                background: "#ffffff",
+                color: "#111111",
+                padding: "1rem 2.2rem",
+                borderRadius: "0.85rem",
+                fontWeight: 800,
+                fontSize: "1.15rem",
+                boxShadow: "0 0.8rem 2.5rem rgba(0,0,0,0.35)",
+                animation: "vote-confirm-card-in 220ms ease-out both",
+              }}
+            >
+              {reportToastMessage}
+            </div>
+          </div>
+        ) : null}
+      </main>
     </>
   );
 }
