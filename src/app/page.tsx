@@ -1658,7 +1658,7 @@ export default function Home() {
                   、<strong>白縁取り</strong>を使うと本人動画のようになります!!
                 </li> */}
               </ul>
-              <a
+              {/* <a
                 className="home-font-modal__font-link home-reel-trigger"
                 href="https://myfont.jp/fonts/16"
                 target="_blank"
@@ -1666,7 +1666,7 @@ export default function Home() {
                 aria-label="源ノ角ゴシックのダウンロードページを開く"
               >
                 <ReelText label="源ノ角ゴシックをダウンロード　→" />
-              </a>
+              </a> */}
             </section>
 
             <section className="home-font-modal__section home-font-modal__section--optional">
