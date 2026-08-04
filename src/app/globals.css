@@ -1529,7 +1529,7 @@ a {
   --home-about-wave-height: clamp(13rem, 22vw, 22rem);
   position: relative;
   z-index: 1;
-  margin-top: calc(-1 * clamp(4rem, 7.2vw, 8rem));
+  margin-top: calc(-1 * clamp(9rem, 15vw, 17rem));
   transform: translate3d(0, var(--home-wave-y), 0);
   will-change: transform;
 }
@@ -2905,7 +2905,8 @@ a {
 .home-about > .home__equipment-flow--diagonal {
   z-index: 1;
   inset: 0;
-  background: #000;
+  background: rgba(0, 0, 0, 0.88);
+  opacity: 0.92;
   pointer-events: none;
   -webkit-mask-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 280' preserveAspectRatio='none'%3E%3Cpath fill='white' d='M0 206C166 82 326-16 530 28C735 72 820 205 1054 224C1222 238 1340 198 1440 142V280H0Z'/%3E%3C/svg%3E"),
