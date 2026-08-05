@@ -1313,18 +1313,41 @@ export default function VotePage() {
             )}
           </div>
         </section>
-        <footer className="relative z-[100] bg-black border-t-0 pt-16 pb-20 px-6 text-center text-white flex flex-col items-center gap-6">
+        <footer
+          style={{
+            position: "relative",
+            zIndex: 100,
+            backgroundColor: "#000000",
+            borderTop: "none",
+            padding: "4rem 1.5rem 5rem",
+            textAlign: "center",
+            color: "#ffffff",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "1.5rem",
+          }}
+        >
           <Image
             src="/logo/logo.png"
             alt="やまかわ動画編集大会"
             width={540}
             height={180}
-            className="w-[clamp(300px,50vw,540px)] h-auto block"
+            style={{
+              height: "auto",
+              width: "clamp(300px, 50vw, 540px)",
+              display: "block",
+            }}
           />
-          <div className="flex gap-6 items-center justify-center">
+          <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", justifyContent: "center" }}>
             <Link
               href="/policy"
-              className="text-white underline text-[0.95rem] opacity-85 hover:opacity-100 transition-opacity"
+              style={{
+                color: "#ffffff",
+                textDecoration: "underline",
+                fontSize: "0.95rem",
+                opacity: 0.85,
+              }}
             >
               プライバシーポリシー
             </Link>
@@ -1332,7 +1355,12 @@ export default function VotePage() {
               href="https://github.com/y-exe/votesites"
               target="_blank"
               rel="noreferrer"
-              className="text-white underline text-[0.95rem] opacity-85 hover:opacity-100 transition-opacity"
+              style={{
+                color: "#ffffff",
+                textDecoration: "underline",
+                fontSize: "0.95rem",
+                opacity: 0.85,
+              }}
             >
               OSS
             </a>
@@ -1468,13 +1496,13 @@ export default function VotePage() {
                   <h2 id="vote-report-title">
                     <span>通報の確認</span>
                   </h2>
-                  <p id="vote-report-note" className="mt-2.5 text-[0.95rem] opacity-85">
+                  <p id="vote-report-note" style={{ marginTop: "0.6rem", fontSize: "0.95rem", opacity: 0.85 }}>
                     この作品の通報を確定しますか？（長押しで確定）
                   </p>
                 </div>
-                <div className="vote-confirm-card__actions gap-3 mt-5">
+                <div className="vote-confirm-card__actions" style={{ gap: "0.8rem", marginTop: "1.2rem" }}>
                   <button
-                    className={`vote-confirm-card__continue home-reel-trigger !bg-[#f63049] !text-white${reportHoldActive ? " vote-confirm-card__continue--holding" : ""
+                    className={`vote-confirm-card__continue home-reel-trigger${reportHoldActive ? " vote-confirm-card__continue--holding" : ""
                       }`}
                     type="button"
                     disabled={reportSubmitting}
@@ -1499,6 +1527,7 @@ export default function VotePage() {
                       }
                     }}
                     onContextMenu={(event) => event.preventDefault()}
+                    style={{ background: "#f63049", color: "#fff" }}
                   >
                     <VoteReelText label={reportSubmitting ? "送信中..." : "長押しで確定"} />
                   </button>
@@ -1517,8 +1546,28 @@ export default function VotePage() {
         ) : null}
 
         {reportToastVisible ? (
-          <div className="fixed inset-0 z-[1100] grid place-items-center pointer-events-none">
-            <div className="bg-white text-[#111111] px-9 py-4 rounded-xl font-extrabold text-[1.15rem] shadow-[0_0.8rem_2.5rem_rgba(0,0,0,0.35)] animate-[vote-confirm-card-in_220ms_ease-out_both]">
+          <div
+            style={{
+              position: "fixed",
+              zIndex: 1100,
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
+              pointerEvents: "none",
+            }}
+          >
+            <div
+              style={{
+                background: "#ffffff",
+                color: "#111111",
+                padding: "1rem 2.2rem",
+                borderRadius: "0.85rem",
+                fontWeight: 800,
+                fontSize: "1.15rem",
+                boxShadow: "0 0.8rem 2.5rem rgba(0,0,0,0.35)",
+                animation: "vote-confirm-card-in 220ms ease-out both",
+              }}
+            >
               {reportToastMessage}
             </div>
           </div>

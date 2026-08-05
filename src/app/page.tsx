@@ -1601,18 +1601,39 @@ export default function Home() {
           </div>
         </section>
         </section>
-        <footer className="bg-black border-t border-[#222222] py-12 px-6 text-center text-white flex flex-col items-center gap-5">
+        <footer
+          style={{
+            backgroundColor: "#000000",
+            borderTop: "1px solid #222222",
+            padding: "3rem 1.5rem",
+            textAlign: "center",
+            color: "#ffffff",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "1.2rem",
+          }}
+        >
           <Image
             src="/logo/logo.png"
             alt="やまかわ動画編集大会"
             width={540}
             height={180}
-            className="w-[clamp(300px,50vw,540px)] h-auto block"
+            style={{
+              height: "auto",
+              width: "clamp(300px, 50vw, 540px)",
+              display: "block",
+            }}
           />
-          <div className="flex gap-6 items-center justify-center">
+          <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", justifyContent: "center" }}>
             <Link
               href="/policy"
-              className="text-white underline text-[0.95rem] opacity-85 hover:opacity-100 transition-opacity"
+              style={{
+                color: "#ffffff",
+                textDecoration: "underline",
+                fontSize: "0.95rem",
+                opacity: 0.85,
+              }}
             >
               プライバシーポリシー
             </Link>
@@ -1620,7 +1641,12 @@ export default function Home() {
               href="https://github.com/y-exe/votesites"
               target="_blank"
               rel="noreferrer"
-              className="text-white underline text-[0.95rem] opacity-85 hover:opacity-100 transition-opacity"
+              style={{
+                color: "#ffffff",
+                textDecoration: "underline",
+                fontSize: "0.95rem",
+                opacity: 0.85,
+              }}
             >
               OSS
             </a>
