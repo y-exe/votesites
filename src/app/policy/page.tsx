@@ -8,8 +8,16 @@ const lineSeedExtraBold = localFont({
 });
 
 export const metadata = {
-  title: "プライバシーポリシー | やまかわてるき動画編集大会",
-  description: "やまかわてるき動画編集大会投票サイトのプライバシーポリシーです。",
+  title: "プライバシーポリシー",
+  description: "やまかわ動画編集大会投票サイトのプライバシーポリシー（個人情報の収集・利用目的・免責事項等）です。",
+  alternates: {
+    canonical: "https://event.ymkw.top/policy",
+  },
+  openGraph: {
+    title: "プライバシーポリシー | やまかわ動画編集大会",
+    description: "やまかわ動画編集大会投票サイトのプライバシーポリシーです。",
+    url: "https://event.ymkw.top/policy",
+  },
 };
 
 export default function PolicyPage() {
