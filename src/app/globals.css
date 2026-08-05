@@ -3695,33 +3695,59 @@ a {
 .home-qa__contact-card {
   position: relative;
   z-index: 2;
-  width: min(100%, 54rem);
-  margin-top: 2rem;
-  padding: 1.2rem 1.6rem;
-  border-radius: 1.25rem;
-  background: #0f0f12;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  color: #ffffff;
+  width: min(100%, 58rem);
+  margin-top: 2.5rem;
+  padding: clamp(1.4rem, 2.5vw, 2.2rem) clamp(1.5rem, 3vw, 3rem);
+  border-radius: 1.5rem;
+  background: #ffffff;
+  border: 3px solid #111111;
+  box-shadow: 0.4rem 0.4rem 0 #f63049;
+  color: #111111;
   text-align: center;
 }
 
 .home-qa__contact-note {
   margin: 0;
-  color: rgba(255, 255, 255, 0.95);
-  font-size: clamp(0.9rem, 1.4vw, 1.05rem);
-  font-weight: 500;
-  line-height: 1.7;
+  color: #111111;
+  font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+  font-weight: 700;
+  line-height: 1.95;
   text-wrap: balance;
 }
 
-.home-qa__contact-note a {
-  color: #ff7a78;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.home-qa__x-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.2rem 0.4rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-size: 0.9em;
   font-weight: 700;
+  text-decoration: none !important;
+  vertical-align: middle;
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
-.home-qa__contact-note a:hover {
-  color: #ff9d9b;
+.home-qa__x-button:hover {
+  background: #222222 !important;
+  transform: translateY(-1px);
+}
+
+.home-qa__x-button svg {
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.home-qa__email-link {
+  color: #f63049 !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 800;
+}
+
+.home-qa__email-link:hover {
+  color: #d21b33 !important;
 }

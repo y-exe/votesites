@@ -1572,7 +1572,22 @@ export default function Home() {
 
               <div className="home-qa__contact-card">
                 <p className="home-qa__contact-note">
-                  その他質問がある場合はXの<a href="https://x.com/YamakawaTeruki" target="_blank" rel="noreferrer">やまかわてるき</a>のDM、リプライ、あるいは <a href="mailto:yamakawadayone@gmail.com">yamakawadayone@gmail.com</a> までお願いします。
+                  その他ご質問がある場合は
+                  <a
+                    href="https://x.com/YamakawaTeruki"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="home-qa__x-button"
+                    aria-label="Xのやまかわてるきアカウント"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    <span>やまかわてるき</span>
+                  </a>
+                  のDM、リプライ、
+                  <br />
+                  あるいは <a href="mailto:yamakawadayone@gmail.com" className="home-qa__email-link">yamakawadayone@gmail.com</a> までお願いします。
                 </p>
               </div>
             </div>
