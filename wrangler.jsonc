@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "votesites",
+  "account_id": "d80dcdc5e1ece83d242a1b1b20a96b27",
   "main": ".open-next/worker.js",
   "workers_dev": true,
   "preview_urls": false,
