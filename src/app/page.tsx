@@ -1449,10 +1449,10 @@ export default function Home() {
                 <strong>Discordでログイン</strong>
                 して投票ページにアクセスしてください
               </p>
-              <p className="home-vote__step-note">
+              <p className="m-0 mt-2 text-[#777777] text-[clamp(0.8rem,1.3vw,0.98rem)] font-bold text-center">
                 ※ログインをしなくても閲覧は可能です
               </p>
-              <div className="home-vote__actions">
+              <div className="flex flex-col items-center gap-4 mt-6 w-full max-w-[34rem]">
                 <button
                   className={`home-vote__discord-button home-reel-trigger${
                     discordAuthState === "authenticated"
@@ -1487,7 +1487,7 @@ export default function Home() {
                 </button>
                 {discordAuthState === "anonymous" ? (
                   <a
-                    className="home-vote__browse-link home-reel-trigger"
+                    className="inline-flex items-center justify-center text-[#111111] underline text-[clamp(0.95rem,1.6vw,1.15rem)] font-bold opacity-80 hover:opacity-100 transition-opacity home-reel-trigger"
                     href="/vote"
                     aria-label="ログインせずに閲覧する"
                   >
@@ -1547,21 +1547,24 @@ export default function Home() {
               </span>
             </h2>
 
-            <div className="home-qa__body">
-              <div className="home-qa__list">
+            <div className="relative z-10 w-[min(100%,64rem)] mt-8">
+              <div className="flex flex-col gap-6">
                 {homeQaItems.map((item, index) => (
-                  <article className="home-qa__card" key={item.question}>
-                    <div className="home-qa__question-row">
-                      <span className={`${leagueGothic.className} home-qa__number`}>
+                  <article
+                    className="relative z-10 p-[clamp(1.25rem,2.8vw,2.2rem)] rounded-2xl bg-white border-[3px] border-[#111111] shadow-[0.4rem_0.4rem_0_#f63049] text-[#111111]"
+                    key={item.question}
+                  >
+                    <div className="flex items-baseline gap-3 mb-2">
+                      <span className={`${leagueGothic.className} text-[clamp(1.8rem,3vw,2.6rem)] font-bold text-[#f63049] shrink-0`}>
                         {String(index + 1).padStart(2, "0")}
                       </span>
-                      <h3 className={`${lineSeedExtraBold.className} home-qa__question`}>
-                        <span className={`${leagueGothic.className} home-qa__marker`}>Q</span>
+                      <h3 className={`${lineSeedExtraBold.className} flex items-baseline gap-2 text-[clamp(1.05rem,1.8vw,1.35rem)] font-extrabold leading-snug`}>
+                        <span className={`${leagueGothic.className} text-[1.4em] font-bold text-[#f63049] shrink-0`}>Q</span>
                         {item.question}
                       </h3>
                     </div>
-                    <p className="home-qa__answer">
-                      <span className={`${leagueGothic.className} home-qa__marker home-qa__marker--answer`}>
+                    <p className="flex items-baseline gap-2 mt-2 text-[clamp(0.95rem,1.5vw,1.15rem)] leading-relaxed text-[#222222] font-medium">
+                      <span className={`${leagueGothic.className} text-[1.4em] font-bold text-[#111111] shrink-0`}>
                         A
                       </span>
                       <span>{item.answer}</span>
