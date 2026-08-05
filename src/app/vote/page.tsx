@@ -1518,28 +1518,8 @@ export default function VotePage() {
         ) : null}
 
         {reportToastVisible ? (
-          <div
-            style={{
-              position: "fixed",
-              zIndex: 1100,
-              inset: 0,
-              display: "grid",
-              placeItems: "center",
-              pointerEvents: "none",
-            }}
-          >
-            <div
-              style={{
-                background: "#ffffff",
-                color: "#111111",
-                padding: "1rem 2.2rem",
-                borderRadius: "0.85rem",
-                fontWeight: 800,
-                fontSize: "1.15rem",
-                boxShadow: "0 0.8rem 2.5rem rgba(0,0,0,0.35)",
-                animation: "vote-confirm-card-in 220ms ease-out both",
-              }}
-            >
+          <div className="fixed inset-0 z-[1100] grid place-items-center pointer-events-none">
+            <div className="bg-white text-[#111111] px-9 py-4 rounded-xl font-extrabold text-[1.15rem] shadow-[0_0.8rem_2.5rem_rgba(0,0,0,0.35)] animate-[vote-confirm-card-in_220ms_ease-out_both]">
               {reportToastMessage}
             </div>
           </div>
