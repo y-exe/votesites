@@ -1771,16 +1771,25 @@ export default function Home() {
               <div className="home-download-modal__buttons">
                 <a
                   className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
-                  href="https://drive.google.com/file/d/1miFB-xhQmYBeOoSYAfOapLeMRQcfoDYX/view"
+                  href="https://drive.google.com/file/d/11qLbmj333A-cC2XTCip2_S14ut0gdMEG"
                   target="_blank"
                   rel="noreferrer"
-                  aria-label="GoogleDriveで動画素材をダウンロード"
+                  aria-label="Driveで動画素材をダウンロード"
                 >
-                  <ReelText label="GoogleDrive" />
+                  <ReelText label="Drive" />
                 </a>
                 <a
                   className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
-                  href="https://d.kuku.lu/rxe3gr8ub"
+                  href="https://xgf.nu/tTLaU"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="ギガファイル便で動画素材をダウンロード"
+                >
+                  <ReelText label="ギガファイル便" />
+                </a>
+                <a
+                  className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
+                  href="https://d.kuku.lu/pu4rta848"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="ファイルなうで動画素材をダウンロード"
