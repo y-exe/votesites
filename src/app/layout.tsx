@@ -3,7 +3,7 @@ import Script from "next/script";
 import "lenis/dist/lenis.css";
 import "./globals.css";
 
-const gaId = process.env.NEXT_PUBLIC_GA_ID;
+const gaId = process.env.NEXT_PUBLIC_GA_ID || "G-7CCF8W05WC";
 
 export const metadata: Metadata = {
   title: {
