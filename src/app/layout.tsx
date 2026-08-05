@@ -10,8 +10,7 @@ export const metadata: Metadata = {
     default: "やまかわ動画編集大会 | 投票・エントリーサイト",
     template: "%s | やまかわ動画編集大会",
   },
-  description:
-    "やまかわてるき主催の動画編集大会・切り抜きコンテスト公式サイト。投稿された個性豊かな編集動画を視聴し、応援したい作品に投票しましょう！",
+  description: "やまかわてるきの動画編集大会投票・エントリーサイトです。",
   keywords: [
     "やまかわてるき",
     "動画編集大会",
@@ -38,8 +37,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "やまかわ動画編集大会 | 投票・エントリーサイト",
-    description:
-      "やまかわてるき主催の動画編集大会・切り抜きコンテスト公式サイト。投稿された作品を視聴し、推しの動画に投票しよう！",
+    description: "やまかわてるきの動画編集大会投票・エントリーサイトです。",
     url: "https://event.ymkw.top",
     siteName: "やまかわ動画編集大会",
     images: [
@@ -56,8 +54,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "やまかわ動画編集大会 | 投票・エントリーサイト",
-    description:
-      "やまかわてるき主催の動画編集大会・切り抜きコンテスト公式サイト。投稿された作品を視聴し、推しの動画に投票しよう！",
+    description: "やまかわてるきの動画編集大会投票・エントリーサイトです。",
     images: ["/ogp/ogp.png"],
   },
 };
