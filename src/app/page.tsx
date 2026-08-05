@@ -1569,6 +1569,10 @@ export default function Home() {
                   </article>
                 ))}
               </div>
+
+              <p className="home-qa__contact-note">
+                その他質問がある場合はXの<a href="https://x.com/YamakawaTeruki" target="_blank" rel="noreferrer">やまかわてるき</a>のDM、リプライ、あるいは <a href="mailto:yamakawadayone@gmail.com">yamakawadayone@gmail.com</a> までお願いします。
+              </p>
             </div>
           </div>
         </section>

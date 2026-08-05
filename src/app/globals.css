@@ -3691,3 +3691,24 @@ a {
     flex: 1;
   }
 }
+
+.home-qa__contact-note {
+  margin-top: 2.5rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: clamp(0.9rem, 1.4vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.7;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.home-qa__contact-note a {
+  color: #ff7a78;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 700;
+}
+
+.home-qa__contact-note a:hover {
+  color: #ff9d9b;
+}

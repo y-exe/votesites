@@ -61,7 +61,7 @@ export default function PolicyPage() {
             <ul style={{ paddingLeft: "1.5rem", marginTop: "0.5rem", opacity: 0.85, fontFamily: "inherit" }}>
               <li>Discord連携ログイン時に提供されるアカウント情報（ユーザーID、ユーザー名、アバター画像URL等）</li>
               <li>アクセスログ、IPアドレス、ブラウザ情報</li>
-              <li>アクセス解析ツール（Google アナリティクス）により収集されるトラフィックデータおよびCookie情報</li>
+              <li>GoogleAnalyticsにより収集されるトラフィックデータおよびCookie情報</li>
               <li>投票履歴および通報履歴</li>
             </ul>
           </section>
@@ -104,10 +104,10 @@ export default function PolicyPage() {
               本サイトでは、ログイン状態の維持やコンテンツの適切な提供、およびサイトの利用状況把握のために Cookie およびローカルストレージを使用しています。
             </p>
             <p style={{ opacity: 0.9, marginTop: "0.8rem", fontFamily: "inherit" }}>
-              また、サイトの利用状況の計測・分析のため、Googleによるアクセス解析ツール「Google アナリティクス」を利用しています。Google アナリティクスはデータ収集のためにCookieを使用しています。このデータは匿名で収集されており、個人を特定するものではありません。
+              また、サイトの利用状況の計測・分析のため、GoogleAnalyticsを利用しています。
             </p>
             <p style={{ opacity: 0.9, marginTop: "0.8rem", fontFamily: "inherit" }}>
-              お客様はブラウザの設定によりCookieを無効にすることで、データ収集を拒否することができます。Google アナリティクスのデータ収集・処理の仕組みやプライバシーポリシーの詳細は、
+              お客様はブラウザの設定によりCookieを無効にすることで、データ収集を拒否することができます。GoogleAnalyticsのデータ収集・処理の仕組みやプライバシーポリシーの詳細は、
               <a
                 href="https://policies.google.com/technologies/partner-sites?hl=ja"
                 target="_blank"
@@ -137,7 +137,7 @@ export default function PolicyPage() {
               5. 免責事項
             </h2>
             <p style={{ opacity: 0.9, fontFamily: "inherit" }}>
-              本サイトに掲載されているコンテンツや情報について、可能な限り正確な情報を掲載するよう努めておりますが、正確性や安全性を保証するものではありません。本サイトの利用によって生じた損害等について、運営側は一切の責任を負いかねます。
+              本サイトに掲載されているコンテンツや情報について、可能な限り正確な情報を掲載するよう努めておりますが、正確性や安全性を保証するものではありません。本サイトの利用によって生じた損害等について、運営・管理側は一切の責任を負いかねます。
             </p>
           </section>
 
