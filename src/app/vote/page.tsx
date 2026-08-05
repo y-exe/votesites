@@ -1313,41 +1313,18 @@ export default function VotePage() {
             )}
           </div>
         </section>
-        <footer
-          style={{
-            position: "relative",
-            zIndex: 100,
-            backgroundColor: "#000000",
-            borderTop: "none",
-            padding: "4rem 1.5rem 5rem",
-            textAlign: "center",
-            color: "#ffffff",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "1.5rem",
-          }}
-        >
+        <footer className="relative z-[100] bg-black border-t-0 pt-16 pb-20 px-6 text-center text-white flex flex-col items-center gap-6">
           <Image
             src="/logo/logo.png"
             alt="やまかわ動画編集大会"
             width={540}
             height={180}
-            style={{
-              height: "auto",
-              width: "clamp(300px, 50vw, 540px)",
-              display: "block",
-            }}
+            className="w-[clamp(300px,50vw,540px)] h-auto block"
           />
-          <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", justifyContent: "center" }}>
+          <div className="flex gap-6 items-center justify-center">
             <Link
               href="/policy"
-              style={{
-                color: "#ffffff",
-                textDecoration: "underline",
-                fontSize: "0.95rem",
-                opacity: 0.85,
-              }}
+              className="text-white underline text-[0.95rem] opacity-85 hover:opacity-100 transition-opacity"
             >
               プライバシーポリシー
             </Link>
@@ -1355,12 +1332,7 @@ export default function VotePage() {
               href="https://github.com/y-exe/votesites"
               target="_blank"
               rel="noreferrer"
-              style={{
-                color: "#ffffff",
-                textDecoration: "underline",
-                fontSize: "0.95rem",
-                opacity: 0.85,
-              }}
+              className="text-white underline text-[0.95rem] opacity-85 hover:opacity-100 transition-opacity"
             >
               OSS
             </a>

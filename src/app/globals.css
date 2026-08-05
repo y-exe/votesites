@@ -3642,14 +3642,21 @@ a {
   text-wrap: balance;
 }
 
-.home-download-modal__buttons {
+@utility home-download-modal__buttons {
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
   margin-top: 1.2rem;
 }
 
-.home-download-modal__button {
+@media (min-width: 480px) {
+  .home-download-modal__buttons {
+    flex-direction: row;
+    gap: 1.2rem;
+  }
+}
+
+@utility home-download-modal__button {
   width: 100%;
   margin-top: 0;
   border-color: #f63049;
@@ -3659,20 +3666,26 @@ a {
   text-align: center;
   box-shadow: none !important;
   filter: none !important;
+
+  &:hover {
+    background: #e0243c !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  & span,
+  & svg {
+    filter: none !important;
+  }
 }
 
-.home-download-modal__button:hover {
-  background: #e0243c !important;
-  box-shadow: none !important;
-  filter: none !important;
+@media (min-width: 480px) {
+  .home-download-modal__button {
+    flex: 1;
+  }
 }
 
-.home-download-modal__button span,
-.home-download-modal__button svg {
-  filter: none !important;
-}
-
-.home-download-modal__info {
+@utility home-download-modal__info {
   margin-top: 1.4rem;
   color: #666;
   font-size: clamp(0.9rem, 1.3vw, 1.05rem);
@@ -3681,18 +3694,7 @@ a {
   text-align: center;
 }
 
-@media (min-width: 480px) {
-  .home-download-modal__buttons {
-    flex-direction: row;
-    gap: 1.2rem;
-  }
-
-  .home-download-modal__button {
-    flex: 1;
-  }
-}
-
-.home-qa__contact-card {
+@utility home-qa__contact-card {
   position: relative;
   z-index: 2;
   width: min(100%, 64rem);
@@ -3706,7 +3708,7 @@ a {
   text-align: center;
 }
 
-.home-qa__contact-note {
+@utility home-qa__contact-note {
   margin: 0;
   color: #111111;
   font-size: clamp(1.05rem, 1.7vw, 1.25rem);
@@ -3715,7 +3717,7 @@ a {
   text-wrap: balance;
 }
 
-.home-qa__x-button {
+@utility home-qa__x-button {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -3729,28 +3731,28 @@ a {
   text-decoration: none !important;
   vertical-align: middle;
   transition: background-color 0.15s ease;
+
+  &:hover {
+    background: #222222 !important;
+  }
+
+  & svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: currentColor;
+    flex-shrink: 0;
+  }
 }
 
-.home-qa__x-button:hover {
-  background: #222222 !important;
-}
-
-.home-qa__x-button svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  fill: currentColor;
-  flex-shrink: 0;
-}
-
-.home-qa__email-link {
+@utility home-qa__email-link {
   display: inline-flex;
   align-items: center;
   color: #f63049 !important;
   text-decoration: none !important;
   font-weight: 800;
   vertical-align: middle;
-}
 
-.home-qa__email-link:hover {
-  color: #d21b33 !important;
+  &:hover {
+    color: #d21b33 !important;
+  }
 }

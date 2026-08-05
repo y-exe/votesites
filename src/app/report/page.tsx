@@ -79,72 +79,81 @@ export default function ReportAdminPage() {
 
   if (!authenticated) {
     return (
-      <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-        <h1>通報管理ページ</h1>
-        <p>管理者パスワードを入力してください。</p>
-        <form onSubmit={handleLogin} style={{ marginTop: "1rem" }}>
+      <div className="p-8 font-sans min-h-screen bg-white text-black">
+        <h1 className="text-2xl font-bold mb-2">通報管理ページ</h1>
+        <p className="text-neutral-600">管理者パスワードを入力してください。</p>
+        <form onSubmit={handleLogin} className="mt-4 flex items-center gap-2">
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="パスワード"
-            style={{ padding: "0.5rem", fontSize: "1rem", marginRight: "0.5rem" }}
+            className="p-2 text-base border border-neutral-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
           />
-          <button type="submit" disabled={loading} style={{ padding: "0.5rem 1rem", fontSize: "1rem" }}>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 text-base bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
             {loading ? "確認中..." : "ログイン"}
           </button>
         </form>
-        {error ? <p style={{ color: "red", marginTop: "1rem" }}>{error}</p> : null}
+        {error ? <p className="text-red-600 mt-4 font-semibold">{error}</p> : null}
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "sans-serif", background: "#fff", color: "#000", minHeight: "100vh" }}>
-      <h1>通報管理ダッシュボード</h1>
-      <p>通報された動画の一覧と表示状態の切り替え</p>
+    <div className="p-8 font-sans bg-white text-black min-h-screen">
+      <h1 className="text-2xl font-bold mb-2">通報管理ダッシュボード</h1>
+      <p className="text-neutral-600">通報された動画の一覧と表示状態の切り替え</p>
       {reports.length === 0 ? (
-        <p style={{ marginTop: "2rem" }}>現在、通報されている動画はありません。</p>
+        <p className="mt-8 text-neutral-500">現在、通報されている動画はありません。</p>
       ) : (
-        <table border={1} cellPadding={8} cellSpacing={0} style={{ width: "100%", marginTop: "1.5rem", borderCollapse: "collapse" }}>
+        <table className="w-full mt-6 border-collapse border border-neutral-300">
           <thead>
-            <tr style={{ background: "#eee" }}>
-              <th>YouTube ID</th>
-              <th>通報件数</th>
-              <th>最新通報日時</th>
-              <th>現在の状態</th>
-              <th>操作</th>
+            <tr className="bg-neutral-100 border-b border-neutral-300">
+              <th className="p-3 text-left">YouTube ID</th>
+              <th className="p-3 text-center">通報件数</th>
+              <th className="p-3 text-left">最新通報日時</th>
+              <th className="p-3 text-center">現在の状態</th>
+              <th className="p-3 text-center">操作</th>
             </tr>
           </thead>
           <tbody>
             {reports.map((item) => (
-              <tr key={item.videoId} style={{ background: item.isHidden ? "#ffe6e6" : "#fff" }}>
-                <td>
+              <tr
+                key={item.videoId}
+                className={`border-b border-neutral-200 ${item.isHidden ? "bg-red-50" : "bg-white"}`}
+              >
+                <td className="p-3">
                   <a
                     href={`https://www.youtube.com/watch?v=${item.videoId}`}
                     target="_blank"
                     rel="noreferrer"
+                    className="text-blue-600 hover:underline font-mono"
                   >
                     {item.videoId}
                   </a>
                 </td>
-                <td style={{ textAlign: "center" }}>{item.count}</td>
-                <td>{new Date(item.lastReportedAt).toLocaleString("ja-JP")}</td>
-                <td style={{ textAlign: "center", fontWeight: "bold" }}>
-                  {item.isHidden ? "非表示 (非公開中)" : "表示中"}
+                <td className="p-3 text-center font-bold">{item.count}</td>
+                <td className="p-3">{new Date(item.lastReportedAt).toLocaleString("ja-JP")}</td>
+                <td className="p-3 text-center font-bold">
+                  {item.isHidden ? (
+                    <span className="text-red-600">非表示 (非公開中)</span>
+                  ) : (
+                    <span className="text-green-600">表示中</span>
+                  )}
                 </td>
-                <td style={{ textAlign: "center" }}>
+                <td className="p-3 text-center">
                   <button
                     type="button"
                     onClick={() => void handleToggleHide(item.videoId, item.isHidden)}
-                    style={{
-                      padding: "0.4rem 0.8rem",
-                      cursor: "pointer",
-                      background: item.isHidden ? "#4CAF50" : "#f44336",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "4px",
-                    }}
+                    className={`px-3 py-1.5 rounded text-white font-medium transition-colors ${
+                      item.isHidden
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-red-600 hover:bg-red-700"
+                    }`}
                   >
                     {item.isHidden ? "表示を戻す" : "非表示にする"}
                   </button>
@@ -157,7 +166,7 @@ export default function ReportAdminPage() {
       <button
         type="button"
         onClick={() => setAuthenticated(false)}
-        style={{ marginTop: "2rem", padding: "0.5rem 1rem" }}
+        className="mt-8 px-4 py-2 bg-neutral-200 hover:bg-neutral-300 text-neutral-800 rounded transition-colors font-medium"
       >
         ログアウト
       </button>
