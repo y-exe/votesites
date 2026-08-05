@@ -61,6 +61,7 @@ export default function PolicyPage() {
             <ul style={{ paddingLeft: "1.5rem", marginTop: "0.5rem", opacity: 0.85, fontFamily: "inherit" }}>
               <li>Discord連携ログイン時に提供されるアカウント情報（ユーザーID、ユーザー名、アバター画像URL等）</li>
               <li>アクセスログ、IPアドレス、ブラウザ情報</li>
+              <li>アクセス解析ツール（Google アナリティクス）により収集されるトラフィックデータおよびCookie情報</li>
               <li>投票履歴および通報履歴</li>
             </ul>
           </section>
@@ -76,7 +77,7 @@ export default function PolicyPage() {
             <ul style={{ paddingLeft: "1.5rem", marginTop: "0.5rem", opacity: 0.85, fontFamily: "inherit" }}>
               <li>投票の重複防止および不正投票の監視・防止のため</li>
               <li>エントリー動画への通報機能における重複制限および適切なサイト管理のため</li>
-              <li>サイトの利用状況の把握および保守管理・サービス向上のため</li>
+              <li>サイトのアクセス状況の計測・分析および保守管理・サービス向上のため</li>
             </ul>
           </section>
 
@@ -97,10 +98,34 @@ export default function PolicyPage() {
               className={lineSeedExtraBold.className}
               style={{ fontSize: "1.3rem", marginBottom: "1rem", fontFamily: "inherit" }}
             >
-              4. Cookieおよびローカルストレージの利用
+              4. Cookieおよびアクセス解析ツールの利用
             </h2>
             <p style={{ opacity: 0.9, fontFamily: "inherit" }}>
-              本サイトでは、ログイン状態の維持や適切なサービス提供のため、Cookieおよびローカルストレージを使用しています。ブラウザの設定により拒否することも可能ですが、一部機能がご利用いただけなくなる場合があります。
+              本サイトでは、ログイン状態の維持やコンテンツの適切な提供、およびサイトの利用状況把握のために Cookie およびローカルストレージを使用しています。
+            </p>
+            <p style={{ opacity: 0.9, marginTop: "0.8rem", fontFamily: "inherit" }}>
+              また、サイトの利用状況の計測・分析のため、Googleによるアクセス解析ツール「Google アナリティクス」を利用しています。Google アナリティクスはデータ収集のためにCookieを使用しています。このデータは匿名で収集されており、個人を特定するものではありません。
+            </p>
+            <p style={{ opacity: 0.9, marginTop: "0.8rem", fontFamily: "inherit" }}>
+              お客様はブラウザの設定によりCookieを無効にすることで、データ収集を拒否することができます。Google アナリティクスのデータ収集・処理の仕組みやプライバシーポリシーの詳細は、
+              <a
+                href="https://policies.google.com/technologies/partner-sites?hl=ja"
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: "#ffffff", textDecoration: "underline", margin: "0 0.3rem" }}
+              >
+                Googleポリシーと規約ページ
+              </a>
+              および
+              <a
+                href="https://marketingplatform.google.com/about/analytics/terms/jp/"
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: "#ffffff", textDecoration: "underline", marginLeft: "0.3rem" }}
+              >
+                Google アナリティクス利用規約
+              </a>
+              をご確認ください。
             </p>
           </section>
 
