@@ -1449,10 +1449,10 @@ export default function Home() {
                 <strong>Discordでログイン</strong>
                 して投票ページにアクセスしてください
               </p>
-              <p className="m-0 mt-2 text-[#777777] text-[clamp(0.8rem,1.3vw,0.98rem)] font-bold text-center">
+              <p className="home-vote__step-note">
                 ※ログインをしなくても閲覧は可能です
               </p>
-              <div className="flex flex-col items-center gap-4 mt-6 w-full max-w-[34rem]">
+              <div className="home-vote__actions">
                 <button
                   className={`home-vote__discord-button home-reel-trigger${
                     discordAuthState === "authenticated"
@@ -1487,7 +1487,7 @@ export default function Home() {
                 </button>
                 {discordAuthState === "anonymous" ? (
                   <a
-                    className="inline-flex items-center justify-center text-[#111111] underline text-[clamp(0.95rem,1.6vw,1.15rem)] font-bold opacity-80 hover:opacity-100 transition-opacity home-reel-trigger"
+                    className="home-vote__browse-link home-reel-trigger"
                     href="/vote"
                     aria-label="ログインせずに閲覧する"
                   >
@@ -1547,24 +1547,21 @@ export default function Home() {
               </span>
             </h2>
 
-            <div className="relative z-10 w-[min(100%,64rem)] mt-8">
-              <div className="flex flex-col gap-6">
+            <div className="home-qa__body">
+              <div className="home-qa__list">
                 {homeQaItems.map((item, index) => (
-                  <article
-                    className="relative z-10 p-[clamp(1.25rem,2.8vw,2.2rem)] rounded-2xl bg-white border-[3px] border-[#111111] shadow-[0.4rem_0.4rem_0_#f63049] text-[#111111]"
-                    key={item.question}
-                  >
-                    <div className="flex items-baseline gap-3 mb-2">
-                      <span className={`${leagueGothic.className} text-[clamp(1.8rem,3vw,2.6rem)] font-bold text-[#f63049] shrink-0`}>
+                  <article className="home-qa__card" key={item.question}>
+                    <div className="home-qa__question-row">
+                      <span className={`${leagueGothic.className} home-qa__number`}>
                         {String(index + 1).padStart(2, "0")}
                       </span>
-                      <h3 className={`${lineSeedExtraBold.className} flex items-baseline gap-2 text-[clamp(1.05rem,1.8vw,1.35rem)] font-extrabold leading-snug`}>
-                        <span className={`${leagueGothic.className} text-[1.4em] font-bold text-[#f63049] shrink-0`}>Q</span>
+                      <h3 className={`${lineSeedExtraBold.className} home-qa__question`}>
+                        <span className={`${leagueGothic.className} home-qa__marker`}>Q</span>
                         {item.question}
                       </h3>
                     </div>
-                    <p className="flex items-baseline gap-2 mt-2 text-[clamp(0.95rem,1.5vw,1.15rem)] leading-relaxed text-[#222222] font-medium">
-                      <span className={`${leagueGothic.className} text-[1.4em] font-bold text-[#111111] shrink-0`}>
+                    <p className="home-qa__answer">
+                      <span className={`${leagueGothic.className} home-qa__marker home-qa__marker--answer`}>
                         A
                       </span>
                       <span>{item.answer}</span>
@@ -1573,17 +1570,17 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="relative z-20 w-[min(100%,64rem)] mt-11 p-[clamp(1.8rem,3.2vw,2.8rem)_clamp(2rem,4vw,3.5rem)] rounded-3xl bg-white border-[3.5px] border-[#111111] shadow-[0.5rem_0.5rem_0_#f63049] text-[#111111] text-center">
-                <p className="m-0 text-[#111111] font-bold leading-[2.1] text-balance text-[clamp(1.05rem,1.7vw,1.25rem)]">
+              <div className="home-qa__contact-card">
+                <p className="home-qa__contact-note">
                   その他ご質問がある場合は
                   <a
                     href="https://x.com/YamakawaTeruki"
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-[0.45rem] my-1 mx-2 px-[1.05rem] py-[0.4rem] rounded-lg bg-black !bg-black text-white !text-white text-[0.9em] font-bold no-underline align-middle transition-colors duration-150 hover:!bg-[#222222] home-reel-trigger"
+                    className="home-qa__x-button home-reel-trigger"
                     aria-label="Xのやまかわてるきアカウント"
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="w-[1.25rem] h-[1.25rem] fill-current shrink-0" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                     </svg>
                     <ReelText label="やまかわてるき" />
@@ -1593,7 +1590,7 @@ export default function Home() {
                   あるいは{" "}
                   <a
                     href="mailto:yamakawadayone@gmail.com"
-                    className="inline-flex items-center text-[#f63049] !text-[#f63049] no-underline font-extrabold align-middle hover:!text-[#d21b33] home-reel-trigger"
+                    className="home-qa__email-link home-reel-trigger"
                   >
                     <ReelText label="yamakawadayone@gmail.com" />
                   </a>{" "}
@@ -1773,9 +1770,9 @@ export default function Home() {
                 ファイルの内容に違いはございませんので、あらかじめご了承ください。
               </p>
 
-              <div className="flex flex-col min-[480px]:flex-row gap-4 mt-5">
+              <div className="home-download-modal__buttons">
                 <a
-                  className="home-font-modal__font-link home-reel-trigger w-full min-[480px]:flex-1 border-[#f63049] bg-[#f63049] !bg-[#f63049] text-white !text-white justify-center text-center shadow-none !shadow-none filter-none hover:!bg-[#e0243c]"
+                  className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
                   href="https://drive.google.com/file/d/160S_WRSavAyTwqK3ZN6KwFGWGvMwm69a/view"
                   target="_blank"
                   rel="noreferrer"
@@ -1784,7 +1781,7 @@ export default function Home() {
                   <ReelText label="Drive" />
                 </a>
                 <a
-                  className="home-font-modal__font-link home-reel-trigger w-full min-[480px]:flex-1 border-[#f63049] bg-[#f63049] !bg-[#f63049] text-white !text-white justify-center text-center shadow-none !shadow-none filter-none hover:!bg-[#e0243c]"
+                  className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
                   href="https://89.gigafile.nu/0810-i184d9e19974800f27918c43be0a5b50a"
                   target="_blank"
                   rel="noreferrer"
@@ -1793,7 +1790,7 @@ export default function Home() {
                   <ReelText label="ギガファイル便" />
                 </a>
                 <a
-                  className="home-font-modal__font-link home-reel-trigger w-full min-[480px]:flex-1 border-[#f63049] bg-[#f63049] !bg-[#f63049] text-white !text-white justify-center text-center shadow-none !shadow-none filter-none hover:!bg-[#e0243c]"
+                  className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
                   href="https://d.kuku.lu/fghkfabwz"
                   target="_blank"
                   rel="noreferrer"
@@ -1803,7 +1800,7 @@ export default function Home() {
                 </a>
               </div>
 
-              <p className="mt-6 text-[#666] text-center font-bold tracking-wide text-[clamp(0.9rem,1.3vw,1.05rem)]">
+              <p className="home-download-modal__info">
                 サイズ: 2.46 GB ファイル数: 4
               </p>
             </div>
