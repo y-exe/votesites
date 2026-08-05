@@ -1570,17 +1570,17 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="home-qa__contact-card">
-                <p className="home-qa__contact-note">
+              <div className="relative z-20 w-[min(100%,64rem)] mt-11 p-[clamp(1.8rem,3.2vw,2.8rem)_clamp(2rem,4vw,3.5rem)] rounded-3xl bg-white border-[3.5px] border-[#111111] shadow-[0.5rem_0.5rem_0_#f63049] text-[#111111] text-center">
+                <p className="m-0 text-[#111111] font-bold leading-[2.1] text-balance text-[clamp(1.05rem,1.7vw,1.25rem)]">
                   その他ご質問がある場合は
                   <a
                     href="https://x.com/YamakawaTeruki"
                     target="_blank"
                     rel="noreferrer"
-                    className="home-qa__x-button home-reel-trigger"
+                    className="inline-flex items-center gap-[0.45rem] my-1 mx-2 px-[1.05rem] py-[0.4rem] rounded-lg bg-black !bg-black text-white !text-white text-[0.9em] font-bold no-underline align-middle transition-colors duration-150 hover:!bg-[#222222] home-reel-trigger"
                     aria-label="Xのやまかわてるきアカウント"
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="w-[1.25rem] h-[1.25rem] fill-current shrink-0" aria-hidden="true">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                     </svg>
                     <ReelText label="やまかわてるき" />
@@ -1590,7 +1590,7 @@ export default function Home() {
                   あるいは{" "}
                   <a
                     href="mailto:yamakawadayone@gmail.com"
-                    className="home-qa__email-link home-reel-trigger"
+                    className="inline-flex items-center text-[#f63049] !text-[#f63049] no-underline font-extrabold align-middle hover:!text-[#d21b33] home-reel-trigger"
                   >
                     <ReelText label="yamakawadayone@gmail.com" />
                   </a>{" "}
@@ -1770,9 +1770,9 @@ export default function Home() {
                 ファイルの内容に違いはございませんので、あらかじめご了承ください。
               </p>
 
-              <div className="home-download-modal__buttons">
+              <div className="flex flex-col min-[480px]:flex-row gap-4 mt-5">
                 <a
-                  className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
+                  className="home-font-modal__font-link home-reel-trigger w-full min-[480px]:flex-1 border-[#f63049] bg-[#f63049] !bg-[#f63049] text-white !text-white justify-center text-center shadow-none !shadow-none filter-none hover:!bg-[#e0243c]"
                   href="https://drive.google.com/file/d/160S_WRSavAyTwqK3ZN6KwFGWGvMwm69a/view"
                   target="_blank"
                   rel="noreferrer"
@@ -1781,7 +1781,7 @@ export default function Home() {
                   <ReelText label="Drive" />
                 </a>
                 <a
-                  className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
+                  className="home-font-modal__font-link home-reel-trigger w-full min-[480px]:flex-1 border-[#f63049] bg-[#f63049] !bg-[#f63049] text-white !text-white justify-center text-center shadow-none !shadow-none filter-none hover:!bg-[#e0243c]"
                   href="https://89.gigafile.nu/0810-i184d9e19974800f27918c43be0a5b50a"
                   target="_blank"
                   rel="noreferrer"
@@ -1790,7 +1790,7 @@ export default function Home() {
                   <ReelText label="ギガファイル便" />
                 </a>
                 <a
-                  className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
+                  className="home-font-modal__font-link home-reel-trigger w-full min-[480px]:flex-1 border-[#f63049] bg-[#f63049] !bg-[#f63049] text-white !text-white justify-center text-center shadow-none !shadow-none filter-none hover:!bg-[#e0243c]"
                   href="https://d.kuku.lu/fghkfabwz"
                   target="_blank"
                   rel="noreferrer"
@@ -1800,7 +1800,7 @@ export default function Home() {
                 </a>
               </div>
 
-              <p className="home-download-modal__info">
+              <p className="mt-6 text-[#666] text-center font-bold tracking-wide text-[clamp(0.9rem,1.3vw,1.05rem)]">
                 サイズ: 2.46 GB ファイル数: 4
               </p>
             </div>
