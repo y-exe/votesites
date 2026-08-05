@@ -1144,13 +1144,13 @@ export default function VotePage() {
           ) : null}
         </section>
         <section className="vote-line-field" aria-labelledby="vote-entries-title">
-          <div className="vote-entries">
-            <h2 id="vote-entries-title" className="vote-entries__title">
+          <div className="relative w-[min(88%,78rem)] mx-auto pt-[clamp(1.5rem,4svh,3rem)] pb-0 max-sm:w-[calc(100%-2.5rem)] max-sm:pt-6">
+            <h2 id="vote-entries-title" className="relative z-[2] w-max mx-auto mb-[clamp(1.25rem,2.5vw,2rem)] px-[0.32em] py-[0.18em] text-white bg-[#0b0b0b] text-[clamp(2.2rem,7vw,6.5rem)] leading-none tracking-[0.02em]">
               ENTRY VIDEOS
             </h2>
             {entries.length > 0 ? (
               <>
-                <div className="vote-entries__grid">
+                <div className="relative z-[2] grid grid-cols-2 gap-[clamp(0.8rem,1.7vw,1.5rem)] max-sm:grid-cols-1 max-sm:gap-4">
                   {entries.map((entry, index) => (
                     <article className="vote-entry-item" key={entry.id}>
                       <button
@@ -1263,15 +1263,15 @@ export default function VotePage() {
                 <VoteEntryEnding />
               </>
             ) : entriesState === "loading" ? (
-              <div className="vote-entries__grid" role="status" aria-busy="true">
-                <span className="vote-sr-only">応募作品を読み込んでいます</span>
+              <div className="relative z-[2] grid grid-cols-2 gap-[clamp(0.8rem,1.7vw,1.5rem)] max-sm:grid-cols-1 max-sm:gap-4" role="status" aria-busy="true">
+                <span className="sr-only">応募作品を読み込んでいます</span>
                 {Array.from({ length: ENTRY_LOADING_PLACEHOLDERS }, (_, index) => (
                   <span className="vote-entry-skeleton" aria-hidden="true" key={index} />
                 ))}
               </div>
             ) : (
               <>
-                <div className="vote-entries__grid">
+                <div className="relative z-[2] grid grid-cols-2 gap-[clamp(0.8rem,1.7vw,1.5rem)] max-sm:grid-cols-1 max-sm:gap-4">
                   {Array.from({ length: 2 }, (_, index) => (
                     <article className="vote-entry-item" key={index}>
                       <div className="vote-entry" style={{ cursor: "default" }}>
@@ -1368,19 +1368,20 @@ export default function VotePage() {
         </footer>
         {selectedEntry ? (
           <div
-            className="vote-video-modal"
+            className="fixed z-[1000] inset-0 grid place-items-center p-[clamp(1rem,4vw,3rem)] bg-[rgb(0_0_0_/_82%)] backdrop-blur-[10px]"
             onClick={(event) => {
               if (event.target === event.currentTarget) setSelectedEntry(null);
             }}
           >
             <div
-              className="vote-video-modal__dialog"
+              className="relative w-[min(92vw,74rem)]"
               role="dialog"
               aria-modal="true"
               aria-label="エントリー動画"
             >
-              <div className="vote-video-modal__video">
+              <div className="relative w-full aspect-video overflow-hidden rounded-[clamp(0.9rem,2vw,1.7rem)] bg-black shadow-[0_1.5rem_5rem_rgb(0_0_0_/_55%)]">
                 <iframe
+                  className="absolute inset-0 w-full h-full border-0"
                   src={`https://www.youtube-nocookie.com/embed/${selectedEntry.youtubeId}?autoplay=1`}
                   title="エントリー動画"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

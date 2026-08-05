@@ -1,5 +1,5 @@
 export default function DiscordLogo({
-  className = "home-vote__discord-icon",
+  className = "flex-none w-[1.75em] h-auto",
 }: {
   className?: string;
 }) {

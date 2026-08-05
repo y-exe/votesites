@@ -215,7 +215,7 @@ let browserRows: typeof initialRows | undefined;
 function YouTubeLogo() {
   return (
     <svg
-      className="home-about__youtube-svg"
+      className="home-about__youtube-svg w-[1.38em] h-auto flex-none"
       viewBox="0 0 28 20"
       aria-hidden="true"
     >
@@ -276,8 +276,8 @@ function EntryVideoTitle({ videos }: { videos: string[] }) {
   const mediaMode = useAmbientMediaMode();
 
   return (
-    <div className="home-about__entry-video-title" aria-hidden="true">
-      <svg viewBox="0 0 1200 620" preserveAspectRatio="xMidYMid meet">
+    <div className="absolute z-0 inset-0 grid place-items-center overflow-hidden opacity-[0.52] pointer-events-none max-sm:hidden" aria-hidden="true">
+      <svg className="w-[128%] h-[116%] overflow-visible max-sm:w-auto max-sm:max-w-none max-sm:h-full max-sm:aspect-[1200/620] max-sm:scale-[1.35] max-sm:origin-center" viewBox="0 0 1200 620" preserveAspectRatio="xMidYMid meet">
         <defs>
           {letters.map((letter, index) => (
             <clipPath id={`entry-video-letter-${index}`} key={letter}>
@@ -1180,7 +1180,7 @@ export default function Home() {
         ref={aboutSectionRef}
       >
         <svg
-          className="home-about__wave"
+          className="home-about__wave relative z-0 block w-full h-[var(--home-about-wave-height)] pointer-events-none"
           viewBox="0 0 1440 280"
           preserveAspectRatio="none"
           aria-hidden="true"
@@ -1210,7 +1210,7 @@ export default function Home() {
               <span>「良い編集者を見つける」を目的で始めたイベントです。</span>
             </p>
 
-            <article className="home-about__card">
+            <article className="home-about__card grid justify-items-center w-[min(100%,68rem)] mt-[clamp(2.5rem,5vw,4rem)] p-0 rounded-[clamp(1.5rem,3vw,2.75rem)] bg-white text-[#111] text-center overflow-hidden max-sm:mt-9">
               <VideoRow
                 key={`about-top-${rows.top.join("|")}`}
                 videos={rows.top}
@@ -1219,30 +1219,30 @@ export default function Home() {
                 scrollReactive
               />
 
-              <div className="home-about__card-content">
-                <h3 className="home-about__label">応募動画</h3>
-                <p className="home-about__card-title">
+              <div className="home-about__card-content grid justify-items-center w-full p-[clamp(2rem,3.5vw,3.25rem)_clamp(1.5rem,5vw,5rem)] max-sm:p-8 max-sm:px-5">
+                <h3 className="home-about__label inline-flex items-center justify-center min-w-[9.5rem] min-h-[2.75rem] m-0 px-[1.35rem] py-[0.35rem] rounded-full bg-[#f63049] text-white text-[clamp(1.2rem,2vw,1.8rem)] font-extrabold leading-[1.1] whitespace-nowrap">応募動画</h3>
+                <p className="home-about__card-title mt-[clamp(1.25rem,2.5vw,2rem)] text-[clamp(1.35rem,2.35vw,2.2rem)] leading-[1.6] text-balance">
                   指定された動画素材を、あなたの世界観で自由に編集してください!!
                 </p>
-                <p className="home-about__card-note">
+                <p className="home-about__card-note mt-[0.65rem] text-[#555] text-[clamp(0.95rem,1.55vw,1.35rem)] leading-[1.7]">
                   YouTube風・MADなど、条件を満たしていれば表現方法は自由です
                 </p>
-                <p className="home-about__software-note">
+                <p className="home-about__software-note mt-[clamp(1.5rem,3vw,2.25rem)] text-[#222] text-[clamp(0.9rem,1.35vw,1.15rem)] leading-[1.6]">
                   ※編集ソフトに指定はありません
                 </p>
                 <div
-                  className="home-about__app-icons"
+                  className="home-about__app-icons flex flex-wrap justify-center gap-[clamp(0.55rem,1.2vw,0.9rem)] mt-4"
                   aria-label="対応する動画編集ソフトの例"
                 >
                   {editingAppIcons.map(({ name, image }) => (
-                    <span className="home-about__app-icon" key={name}>
-                      <Image src={image} alt={name} width={64} height={64} />
+                    <span className="home-about__app-icon grid w-[clamp(2.6rem,4.5vw,3.75rem)] aspect-square overflow-hidden rounded-[0.7rem] bg-[#f2f2f2]" key={name}>
+                      <Image src={image} alt={name} width={64} height={64} className="block w-full h-full object-cover" />
                     </span>
                   ))}
                 </div>
-                <div className="home-about__resources" aria-label="応募用資料">
+                <div className="home-about__resources flex flex-wrap justify-center gap-[0.9rem] mt-[clamp(1.25rem,2.5vw,2rem)]" aria-label="応募用資料">
                   <button
-                    className="home-about__label home-about__label--small home-reel-trigger"
+                    className="home-about__label home-about__label--small home-reel-trigger inline-flex items-center justify-center min-w-0 min-h-[2.35rem] m-0 px-[1.35rem] py-[0.35rem] rounded-full bg-[#d02752] text-white text-[clamp(0.9rem,1.35vw,1.1rem)] font-extrabold leading-[1.1] whitespace-nowrap border-0 [font:inherit] cursor-pointer no-underline"
                     type="button"
                     aria-label="応募条件と素材説明を確認する"
                     onClick={() => setFontGuideOpen(true)}
@@ -1250,7 +1250,7 @@ export default function Home() {
                     <ReelText label="応募条件・素材説明" />
                   </button>
                   <button
-                    className="home-about__label home-about__label--small home-reel-trigger"
+                    className="home-about__label home-about__label--small home-reel-trigger inline-flex items-center justify-center min-w-0 min-h-[2.35rem] m-0 px-[1.35rem] py-[0.35rem] rounded-full bg-[#d02752] text-white text-[clamp(0.9rem,1.35vw,1.1rem)] font-extrabold leading-[1.1] whitespace-nowrap border-0 [font:inherit] cursor-pointer no-underline"
                     type="button"
                     aria-label="素材ダウンロードを開く"
                     onClick={() => setMaterialDownloadOpen(true)}
@@ -1269,43 +1269,43 @@ export default function Home() {
               />
             </article>
 
-            <section className="home-about__details" aria-label="開催情報">
-              <div className="home-about__overview">
-                <h3 className="home-about__label">開催概要</h3>
-                <dl className="home-about__dates">
-                  <div>
-                    <dt>応募締め切り：</dt>
-                    <dd>2026年8月28日 23:59</dd>
+            <section className="home-about__details grid w-[min(100%,68rem)] gap-[clamp(2rem,4vw,3.5rem)] mt-[clamp(3rem,6vw,5.5rem)] text-white" aria-label="開催情報">
+              <div className="home-about__overview grid grid-cols-[auto_1fr] items-start gap-[clamp(1.5rem,4vw,4rem)] max-sm:justify-items-center max-sm:grid-cols-1">
+                <h3 className="home-about__label inline-flex items-center justify-center min-w-[9.5rem] min-h-[2.75rem] m-0 px-[1.35rem] py-[0.35rem] rounded-full bg-[#f63049] text-white text-[clamp(1.2rem,2vw,1.8rem)] font-extrabold leading-[1.1] whitespace-nowrap">開催概要</h3>
+                <dl className="home-about__dates grid gap-4 m-0 text-[clamp(1rem,1.8vw,1.6rem)] leading-[1.5] max-sm:w-full">
+                  <div className="grid grid-cols-[10.5em_1fr] max-sm:grid-cols-[8.5em_1fr]">
+                    <dt className="m-0">応募締め切り：</dt>
+                    <dd className="m-0">2026年8月28日 23:59</dd>
                   </div>
-                  <div>
-                    <dt>投票期間：</dt>
-                    <dd>2026年8月29日 20:00 ～ 9月4日 23:59</dd>
+                  <div className="grid grid-cols-[10.5em_1fr] max-sm:grid-cols-[8.5em_1fr]">
+                    <dt className="m-0">投票期間：</dt>
+                    <dd className="m-0">2026年8月29日 20:00 ～ 9月4日 23:59</dd>
                   </div>
-                  <div>
-                    <dt>結果生放送：</dt>
-                    <dd>2026年9月5日 21:00</dd>
+                  <div className="grid grid-cols-[10.5em_1fr] max-sm:grid-cols-[8.5em_1fr]">
+                    <dt className="m-0">結果生放送：</dt>
+                    <dd className="m-0">2026年9月5日 21:00</dd>
                   </div>
                 </dl>
               </div>
 
-              <div className="home-about__prize">
-                <h3 className="home-about__label">賞金</h3>
-                <p>10,000円</p>
+              <div className="home-about__prize flex items-center gap-[clamp(1.5rem,4vw,4rem)] max-sm:flex-col max-sm:justify-center max-sm:gap-[0.9rem]">
+                <h3 className="home-about__label inline-flex items-center justify-center min-w-[9.5rem] min-h-[2.75rem] m-0 px-[1.35rem] py-[0.35rem] rounded-full bg-[#f63049] text-white text-[clamp(1.2rem,2vw,1.8rem)] font-extrabold leading-[1.1] whitespace-nowrap">賞金</h3>
+                <p className="m-0 text-[clamp(2.5rem,6vw,5.5rem)] leading-none">10,000円</p>
               </div>
             </section>
 
             <section
-              className="home-about__entry-card"
+              className="home-about__entry-card relative isolate justify-self-center w-[min(calc(100%+4rem),82rem)] mt-[clamp(3rem,6vw,5.5rem)] overflow-hidden rounded-[clamp(1.5rem,3vw,2.75rem)_clamp(1.5rem,3vw,2.75rem)_0_0] text-[#171117] bg-white max-sm:w-[calc(100%+2vw)] max-sm:mt-12"
               aria-labelledby="entry-card-title"
             >
               <EntryVideoTitle videos={rows.top} />
-              <div className="home-about__entry-content">
-                <h3 id="entry-card-title" className="home-about__label">
+              <div className="home-about__entry-content relative z-[1] grid justify-items-center w-full p-[clamp(2.8rem,5vw,4.5rem)_clamp(1.5rem,6vw,6rem)] text-center max-sm:p-[2.8rem_1.25rem]">
+                <h3 id="entry-card-title" className="home-about__label inline-flex items-center justify-center min-w-[9.5rem] min-h-[2.75rem] m-0 px-[1.35rem] py-[0.35rem] rounded-full bg-[#f63049] text-white text-[clamp(1.2rem,2vw,1.8rem)] font-extrabold leading-[1.1] whitespace-nowrap">
                   エントリー
                 </h3>
-                <p className="home-about__entry-heading">事前に準備すること</p>
-                <p className="home-about__entry-copy">
-                  <span className="home-about__youtube-name">
+                <p className="home-about__entry-heading mt-[clamp(1.7rem,3vw,2.6rem)] text-[clamp(1.45rem,2.8vw,2.5rem)] leading-[1.3]">事前に準備すること</p>
+                <p className="home-about__entry-copy max-w-[58rem] mt-[clamp(1.2rem,2.2vw,1.8rem)] text-[clamp(1.05rem,2vw,1.75rem)] leading-[1.9] text-balance max-sm:max-w-[26rem]">
+                  <span className="home-about__youtube-name inline-flex flex-row items-center gap-[0.34em] [direction:ltr] whitespace-nowrap">
                     <YouTubeLogo />
                     YouTube
                   </span>
@@ -1315,12 +1315,12 @@ export default function Home() {
                   </span>
                   でアップロードしURLを取得する
                 </p>
-                <p className="home-about__entry-warning">
+                <p className="home-about__entry-warning mt-[0.4rem] text-[#777] text-[clamp(0.78rem,1.25vw,1rem)] leading-[1.6]">
                   ※非公開動画ではエントリー不可能です
                 </p>
 
                 <a
-                  className="home-about__entry-cta home-reel-trigger"
+                  className="home-about__entry-cta home-reel-trigger flex items-center justify-center gap-[clamp(0.65rem,1.4vw,1rem)] w-[min(100%,39rem)] mt-[clamp(2rem,4vw,3.3rem)] p-[clamp(0.7rem,1.35vw,1rem)_clamp(1rem,2.4vw,2rem)] border-0 rounded-full text-white bg-[#f63049] cursor-pointer text-[clamp(1.25rem,2.5vw,2.2rem)] leading-[1.2] no-underline max-sm:gap-[0.55rem] max-sm:w-[min(96%,25rem)]"
                   href="https://forms.gle/gPpYALDNRB7av6iP6"
                   target="_blank"
                   rel="noreferrer"
@@ -1340,7 +1340,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="home-about__closing-videos">
+        <div className="home-about__closing-videos relative z-[2] w-full mt-[clamp(-1.25rem,-1.4vw,-0.75rem)] overflow-hidden bg-white">
           <VideoRow
             key={`closing-${rows.bottom.join("|")}`}
             videos={rows.bottom.filter(
@@ -1360,17 +1360,17 @@ export default function Home() {
         <MovingGrid />
         <div className="home-vote__curve" aria-hidden="true" />
         <div
-          className={`${leagueGothic.className} home-vote__word-ring`}
+          className={`${leagueGothic.className} home-vote__word-ring absolute right-[clamp(-14rem,-9vw,-6rem)] top-[clamp(50rem,70vw,68rem)] bottom-auto z-[2] w-[clamp(32rem,50vw,58rem)] aspect-square text-white pointer-events-none animate-[home-vote-word-ring-spin_16s_linear_infinite]`}
           aria-hidden="true"
         >
-          <svg viewBox="0 0 300 300">
+          <svg className="block w-full h-full overflow-visible" viewBox="0 0 300 300">
             <defs>
               <path
                 id="home-vote-word-ring-path"
                 d="M 150,150 m -111,0 a 111,111 0 1,1 222,0 a 111,111 0 1,1 -222,0"
               />
             </defs>
-            <text textLength="696" lengthAdjust="spacing">
+            <text className="fill-current [font-family:inherit] text-[74px] font-normal tracking-[1px]" textLength="696" lengthAdjust="spacing">
               <textPath href="#home-vote-word-ring-path" startOffset="0%">
                 YAMAKAWATERUKI YAMAKAWATERUKI
               </textPath>
@@ -1379,23 +1379,23 @@ export default function Home() {
         </div>
         <h2
           id="home-vote-title"
-          className={`${leagueGothic.className} home-vote__title`}
+          className={`${leagueGothic.className} home-vote__title relative z-[2] grid place-items-center w-max mx-auto pt-[clamp(1.5rem,3.5vw,3.5rem)] text-[#111] text-[clamp(7rem,19vw,18rem)] font-normal leading-[0.82] tracking-[0.01em]`}
         >
           <span className="home-vote__word">VOTE</span>
           <span
-            className={`${lineSeedExtraBold.className} home-vote__title-tag`}
+            className={`${lineSeedExtraBold.className} home-vote__title-tag absolute top-[58%] left-1/2 inline-flex items-center justify-center min-w-[clamp(8.5rem,14vw,13rem)] min-h-[clamp(2rem,3.5vw,3rem)] px-[1.25rem] py-[0.3rem] rounded-full text-white bg-[#f63049] text-[clamp(0.95rem,1.65vw,1.4rem)] font-extrabold leading-none tracking-normal whitespace-nowrap -translate-x-1/2 -translate-y-1/2`}
           >
             投票の流れ
           </span>
         </h2>
 
-        <div className="home-vote__flow">
-          <article className="home-vote__step">
-            <h3 className="home-vote__step-label">
-              <span>1</span>
+        <div className="home-vote__flow relative z-[2] grid gap-[clamp(2.25rem,5vw,4rem)] w-[min(90vw,74rem)] mx-auto mt-[clamp(2rem,4vw,3.5rem)]">
+          <article className="home-vote__step relative p-[clamp(3.5rem,6vw,5rem)_clamp(1.5rem,5vw,4.5rem)_clamp(2rem,4vw,3.5rem)] rounded-[clamp(1.5rem,3vw,2.5rem)] text-[#181218] bg-[rgb(255_255_255_/_94%)] shadow-[0_1rem_2.5rem_rgb(76_10_39_/_16%)]">
+            <h3 className="home-vote__step-label absolute top-0 left-1/2 inline-flex items-center gap-[0.7rem] min-h-[clamp(2.75rem,4.5vw,3.75rem)] m-0 px-[clamp(1.25rem,3vw,2.25rem)] py-[0.45rem] rounded-full text-white bg-[#f63049] text-[clamp(1rem,2vw,1.65rem)] leading-[1.15] whitespace-nowrap -translate-x-1/2 -translate-y-[42%]">
+              <span className="grid place-items-center w-[1.65em] h-[1.65em] rounded-full text-[#f63049] bg-white">1</span>
               Discordアカウントの用意
             </h3>
-            <div className="home-vote__step-body">
+            <div className="home-vote__step-body text-[clamp(0.95rem,1.65vw,1.35rem)] font-extrabold leading-[1.9] text-center">
               <p>
                 重複投票・不正投票対策として
                 <strong>Discordアカウントのログインを必須</strong>
@@ -1417,12 +1417,12 @@ export default function Home() {
             </div>
           </article>
 
-          <article className="home-vote__step">
-            <h3 className="home-vote__step-label">
-              <span>2</span>
+          <article className="home-vote__step relative p-[clamp(3.5rem,6vw,5rem)_clamp(1.5rem,5vw,4.5rem)_clamp(2rem,4vw,3.5rem)] rounded-[clamp(1.5rem,3vw,2.5rem)] text-[#181218] bg-[rgb(255_255_255_/_94%)] shadow-[0_1rem_2.5rem_rgb(76_10_39_/_16%)]">
+            <h3 className="home-vote__step-label absolute top-0 left-1/2 inline-flex items-center gap-[0.7rem] min-h-[clamp(2.75rem,4.5vw,3.75rem)] m-0 px-[clamp(1.25rem,3vw,2.25rem)] py-[0.45rem] rounded-full text-white bg-[#f63049] text-[clamp(1rem,2vw,1.65rem)] leading-[1.15] whitespace-nowrap -translate-x-1/2 -translate-y-[42%]">
+              <span className="grid place-items-center w-[1.65em] h-[1.65em] rounded-full text-[#f63049] bg-white">2</span>
               注意事項の確認
             </h3>
-            <div className="home-vote__step-body">
+            <div className="home-vote__step-body text-[clamp(0.95rem,1.65vw,1.35rem)] font-extrabold leading-[1.9] text-center">
               <ul>
                 <li>
                   <strong>不正投票は禁止</strong>とします
@@ -1439,24 +1439,24 @@ export default function Home() {
             </div>
           </article>
 
-          <article className="home-vote__step">
-            <h3 className="home-vote__step-label">
-              <span>3</span>
+          <article className="home-vote__step relative p-[clamp(3.5rem,6vw,5rem)_clamp(1.5rem,5vw,4.5rem)_clamp(2rem,4vw,3.5rem)] rounded-[clamp(1.5rem,3vw,2.5rem)] text-[#181218] bg-[rgb(255_255_255_/_94%)] shadow-[0_1rem_2.5rem_rgb(76_10_39_/_16%)]">
+            <h3 className="home-vote__step-label absolute top-0 left-1/2 inline-flex items-center gap-[0.7rem] min-h-[clamp(2.75rem,4.5vw,3.75rem)] m-0 px-[clamp(1.25rem,3vw,2.25rem)] py-[0.45rem] rounded-full text-white bg-[#f63049] text-[clamp(1rem,2vw,1.65rem)] leading-[1.15] whitespace-nowrap -translate-x-1/2 -translate-y-[42%]">
+              <span className="grid place-items-center w-[1.65em] h-[1.65em] rounded-full text-[#f63049] bg-white">3</span>
               Discordでログイン
             </h3>
-            <div className="home-vote__step-body">
+            <div className="home-vote__step-body text-[clamp(0.95rem,1.65vw,1.35rem)] font-extrabold leading-[1.9] text-center">
               <p>
                 <strong>Discordでログイン</strong>
                 して投票ページにアクセスしてください
               </p>
-              <p className="home-vote__step-note">
+              <p className="home-vote__step-note text-[#777] text-[0.82em]">
                 ※ログインをしなくても閲覧は可能です
               </p>
-              <div className="home-vote__actions">
+              <div className="home-vote__actions grid justify-items-center gap-4 mt-[clamp(1.5rem,3vw,2.5rem)]">
                 <button
-                  className={`home-vote__discord-button home-reel-trigger${
+                  className={`home-vote__discord-button home-reel-trigger inline-flex items-center justify-center gap-3 min-w-[min(100%,23rem)] px-8 py-[0.9rem] border-0 rounded-full text-white bg-[#5865f2] [font:inherit] cursor-pointer disabled:opacity-100 disabled:cursor-wait${
                     discordAuthState === "authenticated"
-                      ? " home-vote__discord-button--authenticated"
+                      ? " !bg-[#a8df3b] !text-[#142000] !cursor-pointer"
                       : ""
                   }`}
                   type="button"
@@ -1487,7 +1487,7 @@ export default function Home() {
                 </button>
                 {discordAuthState === "anonymous" ? (
                   <a
-                    className="home-vote__browse-link home-reel-trigger"
+                    className="home-vote__browse-link home-reel-trigger text-[#4b2637]! text-[0.9em]"
                     href="/vote"
                     aria-label="ログインせずに閲覧する"
                   >
@@ -1500,9 +1500,9 @@ export default function Home() {
         </div>
 
         <section className="home-qa" aria-labelledby="home-qa-title">
-          <div className="home-qa__surface">
+          <div className="home-qa__surface relative overflow-hidden">
             <svg
-              className="home-qa__wave"
+              className="home-qa__wave relative z-0 block w-full h-[var(--home-qa-wave-height)]"
               viewBox="0 0 1440 280"
               preserveAspectRatio="none"
               aria-hidden="true"
@@ -1539,29 +1539,29 @@ export default function Home() {
 
             <h2
               id="home-qa-title"
-              className={`${leagueGothic.className} home-qa__title`}
+              className={`${leagueGothic.className} home-qa__title absolute z-[3] top-[clamp(2.4rem,4.5vw,5rem)] left-[clamp(1.5rem,5vw,6rem)] m-0 text-[#111] text-[clamp(6rem,16vw,15rem)] font-normal leading-[0.82] tracking-[0.015em] uppercase max-sm:top-[1vw] max-sm:left-4 max-sm:text-[22vw]`}
             >
               <span className="home-qa__word">Q&amp;A</span>
-              <span className={`${lineSeedExtraBold.className} home-qa__title-tag`}>
+              <span className={`${lineSeedExtraBold.className} home-qa__title-tag absolute top-1/2 left-1/2 inline-flex items-center justify-center min-w-[clamp(8.5rem,15vw,13rem)] min-h-[clamp(2rem,3.5vw,3rem)] px-[1.2rem] py-[0.25rem] rounded-full text-white bg-[#f63049] text-[clamp(0.85rem,1.6vw,1.35rem)] font-extrabold leading-none tracking-normal whitespace-nowrap -translate-x-1/2 -translate-y-1/2`}>
                 よくある質問
               </span>
             </h2>
 
-            <div className="home-qa__body">
-              <div className="home-qa__list">
+            <div className="home-qa__body relative grid place-items-center min-h-[55svh] -mt-px p-[clamp(1.25rem,2.5vw,2.5rem)_1.5rem_clamp(6rem,11vw,10rem)] bg-white max-sm:p-[clamp(4rem,14vw,6.5rem)_1rem_6rem]">
+              <div className="home-qa__list relative z-[2] grid grid-cols-2 gap-[clamp(1rem,2vw,1.75rem)] w-[min(90vw,82rem)] mx-auto max-sm:grid-cols-1 max-sm:gap-4 max-sm:w-[min(92vw,34rem)]">
                 {homeQaItems.map((item, index) => (
-                  <article className="home-qa__card" key={item.question}>
-                    <div className="home-qa__question-row">
-                      <span className={`${leagueGothic.className} home-qa__number`}>
+                  <article className="home-qa__card relative min-h-[clamp(13rem,18vw,16rem)] p-[clamp(1.5rem,2.7vw,2.5rem)] border-[1px] border-solid border-[rgb(255_255_255_/_16%)] rounded-[clamp(1rem,1.8vw,1.5rem)] text-white [background:linear-gradient(145deg,rgb(255_255_255_/_7%),transparent_42%)_#050505] shadow-[0_1rem_2.6rem_rgb(0_0_0_/_22%),inset_0_0_0_1px_rgb(0_0_0_/_70%)] overflow-hidden max-sm:min-h-0 max-sm:p-[1.5rem_1.25rem_1.65rem] max-sm:rounded-[1rem]" key={item.question}>
+                    <div className="home-qa__question-row relative z-[1] grid grid-cols-[1fr_auto] items-start gap-4">
+                      <span className={`${leagueGothic.className} home-qa__number col-start-2 row-start-1 text-[rgb(255_255_255_/_25%)] text-[clamp(3.2rem,5.5vw,5.2rem)] leading-[0.8] tracking-[0.04em] max-sm:text-[clamp(2rem,10vw,2.8rem)]`}>
                         {String(index + 1).padStart(2, "0")}
                       </span>
-                      <h3 className={`${lineSeedExtraBold.className} home-qa__question`}>
-                        <span className={`${leagueGothic.className} home-qa__marker`}>Q</span>
+                      <h3 className={`${lineSeedExtraBold.className} home-qa__question col-start-1 row-start-1 grid grid-cols-[auto_1fr] items-center gap-[clamp(0.8rem,1.4vw,1.2rem)] m-0 text-[clamp(1.15rem,1.8vw,1.55rem)] leading-[1.45] tracking-[0.01em] max-sm:text-[clamp(1.05rem,4.7vw,1.3rem)]`}>
+                        <span className={`${leagueGothic.className} home-qa__marker grid place-items-center flex-none w-[clamp(2.8rem,4vw,3.75rem)] aspect-square rounded-[0.12em] text-white bg-[#6bcdf1] shadow-[0_0.35rem_1rem_rgb(0_0_0_/_24%)] text-[clamp(2rem,3vw,2.9rem)] font-normal leading-none`}>Q</span>
                         {item.question}
                       </h3>
                     </div>
-                    <p className="home-qa__answer">
-                      <span className={`${leagueGothic.className} home-qa__marker home-qa__marker--answer`}>
+                    <p className="home-qa__answer relative z-[1] grid grid-cols-[auto_1fr] items-center gap-3 mt-[clamp(1rem,1.8vw,1.5rem)] text-[#e8e8e8] text-[clamp(0.95rem,1.35vw,1.08rem)] font-semibold leading-[1.85] max-sm:text-[clamp(0.9rem,3.8vw,1rem)] max-sm:leading-[1.75]">
+                      <span className={`${leagueGothic.className} home-qa__marker grid place-items-center flex-none w-[clamp(2.8rem,4vw,3.75rem)] aspect-square rounded-[0.12em] text-white bg-[#ff6f7d] shadow-[0_0.35rem_1rem_rgb(0_0_0_/_24%)] text-[clamp(2rem,3vw,2.9rem)] font-normal leading-none`}>
                         A
                       </span>
                       <span>{item.answer}</span>
@@ -1570,17 +1570,17 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="home-qa__contact-card">
-                <p className="home-qa__contact-note">
+              <div className="relative z-[2] w-full max-w-[64rem] mt-[2.8rem] px-[clamp(2rem,4vw,3.5rem)] py-[clamp(1.8rem,3.2vw,2.8rem)] rounded-[1.6rem] bg-white border-[3.5px] border-solid border-[#111111] shadow-[0.5rem_0.5rem_0_#f63049] text-[#111111] text-center">
+                <p className="m-0 text-[#111111] text-[clamp(1.05rem,1.7vw,1.25rem)] font-bold leading-[2.1] text-balance">
                   その他ご質問がある場合は
                   <a
                     href="https://x.com/YamakawaTeruki"
                     target="_blank"
                     rel="noreferrer"
-                    className="home-qa__x-button home-reel-trigger"
+                    className="inline-flex items-center gap-[0.45rem] mx-[0.5rem] my-[0.2rem] px-[1.05rem] py-[0.4rem] rounded-[0.5rem] bg-black text-white text-[0.9em] font-bold no-underline align-middle transition-colors duration-150 hover:bg-[#222222] home-reel-trigger"
                     aria-label="Xのやまかわてるきアカウント"
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <svg className="w-5 h-5 fill-current shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                     </svg>
                     <ReelText label="やまかわてるき" />
@@ -1590,7 +1590,7 @@ export default function Home() {
                   あるいは{" "}
                   <a
                     href="mailto:yamakawadayone@gmail.com"
-                    className="home-qa__email-link home-reel-trigger"
+                    className="inline-flex items-center text-[#f63049] no-underline font-extrabold align-middle hover:text-[#d21b33] home-reel-trigger"
                   >
                     <ReelText label="yamakawadayone@gmail.com" />
                   </a>{" "}
