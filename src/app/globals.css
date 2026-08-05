@@ -615,7 +615,7 @@ a {
   text-align: center;
 }
 
-.vote-video-modal {
+@utility vote-video-modal {
   position: fixed;
   z-index: 1000;
   inset: 0;
@@ -626,12 +626,12 @@ a {
   backdrop-filter: blur(10px);
 }
 
-.vote-video-modal__dialog {
+@utility vote-video-modal__dialog {
   position: relative;
   width: min(92vw, 74rem);
 }
 
-.vote-video-modal__video {
+@utility vote-video-modal__video {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -639,17 +639,17 @@ a {
   border-radius: clamp(0.9rem, 2vw, 1.7rem);
   background: #000;
   box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 55%);
+
+  & iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
 }
 
-.vote-video-modal__video iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
-.vote-confirm-modal {
+@utility vote-confirm-modal {
   position: fixed;
   z-index: 1000;
   inset: 0;
@@ -657,12 +657,20 @@ a {
   place-items: center;
   padding: clamp(1rem, 4vw, 3rem);
   background: rgb(0 0 0 / 72%);
-  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   animation: vote-confirm-backdrop-in 260ms ease-out both;
+
+  &.vote-confirm-modal--closing {
+    pointer-events: none;
+    animation: vote-confirm-backdrop-out 260ms ease-in both;
+
+    & .vote-confirm-card {
+      animation: vote-confirm-card-out 260ms cubic-bezier(0.7, 0, 0.84, 0) both;
+    }
+  }
 }
 
-.vote-confirm-card {
+@utility vote-confirm-card {
   position: relative;
   width: min(94vw, 88svh, 46rem);
   aspect-ratio: 1.16 / 1;
@@ -675,16 +683,7 @@ a {
   animation: vote-confirm-card-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.vote-confirm-modal--closing {
-  pointer-events: none;
-  animation: vote-confirm-backdrop-out 260ms ease-in both;
-}
-
-.vote-confirm-modal--closing .vote-confirm-card {
-  animation: vote-confirm-card-out 260ms cubic-bezier(0.7, 0, 0.84, 0) both;
-}
-
-.vote-confirm-card__content {
+@utility vote-confirm-card__content {
   position: relative;
   z-index: 2;
   display: flex;
@@ -721,14 +720,13 @@ a {
   font-size: clamp(0.85rem, 1.8vw, 1.05rem);
 }
 
-.vote-confirm-card__actions {
+@utility vote-confirm-card__actions {
   display: grid;
   width: min(100%, 37rem);
   gap: 0.75rem;
 }
 
-.vote-confirm-card__continue,
-.vote-confirm-card__cancel {
+@utility vote-confirm-card__continue {
   position: relative;
   min-height: clamp(3.7rem, 7vw, 4.8rem);
   overflow: hidden;
@@ -740,62 +738,81 @@ a {
   font-size: clamp(1.35rem, 3vw, 1.9rem);
   font-weight: 800;
   cursor: pointer;
-}
-
-.vote-confirm-card__continue {
   background: #db5ca5;
   touch-action: none;
   user-select: none;
+
+  &::before {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: #b82c7b;
+    content: "";
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 160ms ease-out;
+  }
+
+  &.vote-confirm-card__continue--holding::before {
+    transform: scaleX(1);
+    transition-duration: 800ms;
+    transition-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  & > span {
+    position: relative;
+    z-index: 2;
+    color: #fff;
+    filter:
+      drop-shadow(0 0 1px #000)
+      drop-shadow(0 0 3px rgb(0 0 0 / 95%))
+      drop-shadow(0 0 7px rgb(0 0 0 / 78%));
+  }
+
+  &:focus-visible {
+    outline: 4px solid #111;
+    outline-offset: 4px;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.72;
+  }
 }
 
-.vote-confirm-card__continue::before {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: #b82c7b;
-  content: "";
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 160ms ease-out;
-}
-
-.vote-confirm-card__continue--holding::before {
-  transform: scaleX(1);
-  transition-duration: 800ms;
-  transition-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
-}
-
-.vote-confirm-card__continue::after,
-.vote-confirm-card__cancel::after {
-  display: none;
-}
-
-.vote-confirm-card__continue > span,
-.vote-confirm-card__cancel > span {
+@utility vote-confirm-card__cancel {
   position: relative;
-  z-index: 2;
+  min-height: clamp(3.7rem, 7vw, 4.8rem);
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  clip-path: polygon(2.5% 0, 100% 0, 97.5% 100%, 0 100%);
   color: #fff;
-  filter:
-    drop-shadow(0 0 1px #000)
-    drop-shadow(0 0 3px rgb(0 0 0 / 95%))
-    drop-shadow(0 0 7px rgb(0 0 0 / 78%));
-}
-
-.vote-confirm-card__cancel {
-  color: #fff;
+  font: inherit;
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+  font-weight: 800;
+  cursor: pointer;
   background: #a8c3f7;
-}
 
-.vote-confirm-card__continue:focus-visible,
-.vote-confirm-card__cancel:focus-visible {
-  outline: 4px solid #111;
-  outline-offset: 4px;
-}
+  & > span {
+    position: relative;
+    z-index: 2;
+    color: #fff;
+    filter:
+      drop-shadow(0 0 1px #000)
+      drop-shadow(0 0 3px rgb(0 0 0 / 95%))
+      drop-shadow(0 0 7px rgb(0 0 0 / 78%));
+  }
 
-.vote-confirm-card__continue:disabled,
-.vote-confirm-card__cancel:disabled {
-  cursor: wait;
-  opacity: 0.72;
+  &:focus-visible {
+    outline: 4px solid #111;
+    outline-offset: 4px;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.72;
+  }
 }
 
 @keyframes vote-confirm-backdrop-in {
