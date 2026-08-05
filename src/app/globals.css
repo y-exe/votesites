@@ -3746,8 +3746,7 @@ a {
   display: inline-flex;
   align-items: center;
   color: #f63049 !important;
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration: none !important;
   font-weight: 800;
   vertical-align: middle;
 }
