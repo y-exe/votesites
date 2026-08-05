@@ -1468,13 +1468,13 @@ export default function VotePage() {
                   <h2 id="vote-report-title">
                     <span>通報の確認</span>
                   </h2>
-                  <p id="vote-report-note" style={{ marginTop: "0.6rem", fontSize: "0.95rem", opacity: 0.85 }}>
+                  <p id="vote-report-note" className="mt-2.5 text-[0.95rem] opacity-85">
                     この作品の通報を確定しますか？（長押しで確定）
                   </p>
                 </div>
-                <div className="vote-confirm-card__actions" style={{ gap: "0.8rem", marginTop: "1.2rem" }}>
+                <div className="vote-confirm-card__actions gap-3 mt-5">
                   <button
-                    className={`vote-confirm-card__continue home-reel-trigger${reportHoldActive ? " vote-confirm-card__continue--holding" : ""
+                    className={`vote-confirm-card__continue home-reel-trigger !bg-[#f63049] !text-white${reportHoldActive ? " vote-confirm-card__continue--holding" : ""
                       }`}
                     type="button"
                     disabled={reportSubmitting}
@@ -1499,7 +1499,6 @@ export default function VotePage() {
                       }
                     }}
                     onContextMenu={(event) => event.preventDefault()}
-                    style={{ background: "#f63049", color: "#fff" }}
                   >
                     <VoteReelText label={reportSubmitting ? "送信中..." : "長押しで確定"} />
                   </button>
