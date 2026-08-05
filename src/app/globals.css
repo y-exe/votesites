@@ -3533,4 +3533,67 @@ a {
   text-align: center;
 }
 
+.home-qa__contact-card {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 64rem);
+  margin-top: 2.8rem;
+  padding: clamp(1.8rem, 3.2vw, 2.8rem) clamp(2rem, 4vw, 3.5rem);
+  border-radius: 1.6rem;
+  background: #ffffff;
+  border: 3.5px solid #111111;
+  box-shadow: 0.5rem 0.5rem 0 #f63049;
+  color: #111111;
+  text-align: center;
+}
+
+.home-qa__contact-note {
+  margin: 0;
+  color: #111111;
+  font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+  font-weight: 700;
+  line-height: 2.1;
+  text-wrap: balance;
+}
+
+.home-qa__x-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.2rem 0.5rem;
+  padding: 0.4rem 1.05rem;
+  border-radius: 0.5rem;
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-size: 0.9em;
+  font-weight: 700;
+  text-decoration: none !important;
+  vertical-align: middle;
+  transition: background-color 0.15s ease;
+}
+
+.home-qa__x-button:hover {
+  background: #222222 !important;
+}
+
+.home-qa__x-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.home-qa__email-link {
+  display: inline-flex;
+  align-items: center;
+  color: #f63049 !important;
+  text-decoration: none !important;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
+.home-qa__email-link:hover {
+  color: #d21b33 !important;
+}
+
 
