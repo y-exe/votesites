@@ -1799,7 +1799,7 @@ export default function Home() {
               </div>
 
               <p className="home-download-modal__info">
-                サイズ: 18.4 GB ファイル数: 5
+                サイズ: 1.79 GB ファイル数: 5
               </p>
             </div>
           </section>
