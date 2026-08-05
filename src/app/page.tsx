@@ -1799,7 +1799,7 @@ export default function Home() {
               <div className="home-download-modal__buttons">
                 <a
                   className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
-                  href="https://drive.google.com/file/d/11qLbmj333A-cC2XTCip2_S14ut0gdMEG"
+                  href="https://drive.google.com/file/d/160S_WRSavAyTwqK3ZN6KwFGWGvMwm69a/view"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Driveで動画素材をダウンロード"
@@ -1808,7 +1808,7 @@ export default function Home() {
                 </a>
                 <a
                   className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
-                  href="https://xgf.nu/tTLaU"
+                  href="https://89.gigafile.nu/0810-i184d9e19974800f27918c43be0a5b50a"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="ギガファイル便で動画素材をダウンロード"
@@ -1817,7 +1817,7 @@ export default function Home() {
                 </a>
                 <a
                   className="home-font-modal__font-link home-reel-trigger home-download-modal__button"
-                  href="https://d.kuku.lu/pu4rta848"
+                  href="https://d.kuku.lu/fghkfabwz"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="ファイルなうで動画素材をダウンロード"
@@ -1827,7 +1827,7 @@ export default function Home() {
               </div>
 
               <p className="home-download-modal__info">
-                サイズ: 1.79 GB ファイル数: 4
+                サイズ: 2.46 GB ファイル数: 4
               </p>
             </div>
           </section>
