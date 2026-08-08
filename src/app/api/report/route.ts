@@ -7,7 +7,6 @@ import {
 
 export const runtime = "nodejs";
 
-// SHA-256 hash of "ymkwdev1130"
 const EXPECTED_PASSWORD_HASH =
   "2f11bf70add2518a3c218295612a992132459445ffd2e375db85402341b3d5f3";
 
