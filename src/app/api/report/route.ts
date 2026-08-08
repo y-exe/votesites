@@ -4,6 +4,7 @@ import {
   toggleHideEntry,
   isValidYouTubeId,
 } from "@/lib/reports";
+import { getRemovalSummaries } from "@/lib/removals";
 
 export const runtime = "nodejs";
 
@@ -52,8 +53,11 @@ export async function POST(request: Request) {
     const action = payload.action;
 
     if (action === "list") {
-      const reports = await getReportSummaries(database);
-      return Response.json({ success: true, reports });
+      const [reports, removals] = await Promise.all([
+        getReportSummaries(database),
+        getRemovalSummaries(database),
+      ]);
+      return Response.json({ success: true, reports, removals });
     }
 
     if (action === "toggle-hide") {
@@ -75,8 +79,11 @@ export async function POST(request: Request) {
         );
       }
 
-      const reports = await getReportSummaries(database);
-      return Response.json({ success: true, reports });
+      const [reports, removals] = await Promise.all([
+        getReportSummaries(database),
+        getRemovalSummaries(database),
+      ]);
+      return Response.json({ success: true, reports, removals });
     }
 
     return Response.json(

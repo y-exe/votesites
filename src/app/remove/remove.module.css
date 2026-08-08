@@ -1,0 +1,79 @@
+.page {
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  line-height: 1.6;
+}
+
+.page h1 {
+  margin: 0 0 1.5rem;
+  font-size: 1.75rem;
+}
+
+.page h2 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field,
+.help {
+  margin: 0;
+}
+
+.field {
+  font-weight: 700;
+}
+
+.input {
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-weight: 400;
+}
+
+.codeInput {
+  max-width: 12rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.button {
+  width: fit-content;
+  padding: 0.65rem 1rem;
+  border: 1px solid #222;
+  border-radius: 4px;
+  background: #222;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.list {
+  display: grid;
+  gap: 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.link {
+  margin-left: 0.5rem;
+}
+
+.error {
+  color: #b00020;
+}
