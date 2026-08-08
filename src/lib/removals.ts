@@ -1,12 +1,18 @@
+import "server-only";
+import { timingSafeEqual } from "node:crypto";
 import { isValidYouTubeId } from "./reports";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 const CODE_TTL_MS = 10 * 60 * 1000;
 const SESSION_TTL_MS = 10 * 60 * 1000;
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const EMAIL_COOLDOWN_MS = 60 * 1000;
-const MAX_IP_REQUESTS = 5;
+const EMAIL_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const IP_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const IP_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
+const MAX_EMAIL_REQUESTS_PER_HOUR = 3;
+const MAX_IP_REQUESTS_PER_WINDOW = 5;
+const MAX_IP_REQUESTS_PER_DAY = 20;
 const MAX_ATTEMPTS = 5;
 
 type RemovalRequestRow = {
@@ -32,6 +38,36 @@ export type RemovalSummary = {
   isHidden: boolean;
 };
 
+async function sendRemovalCodeWithResend(args: {
+  apiKey: string;
+  from: string;
+  to: string;
+  code: string;
+  requestId: string;
+}): Promise<void> {
+  const { apiKey, from, to, code, requestId } = args;
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": `removal-code/${requestId}`,
+      "User-Agent": "ymkw-vote/0.1.0",
+    },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject: "動画削除申請の確認コード",
+      text: `確認コード: ${code}\n有効期限: 10分`,
+    }),
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Resend returned ${response.status}`);
+  }
+}
+
 export function normalizeEmail(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const email = value.trim().toLowerCase();
@@ -55,13 +91,13 @@ async function hmac(secret: string, value: string): Promise<string> {
   return bytesToHex(new Uint8Array(signature));
 }
 
-function constantTimeEqual(left: string, right: string): boolean {
-  if (left.length !== right.length) return false;
-  let mismatch = 0;
-  for (let index = 0; index < left.length; index += 1) {
-    mismatch |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  }
-  return mismatch === 0;
+async function constantTimeEqual(left: string, right: string): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const [leftHash, rightHash] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(left)),
+    crypto.subtle.digest("SHA-256", encoder.encode(right)),
+  ]);
+  return timingSafeEqual(new Uint8Array(leftHash), new Uint8Array(rightHash));
 }
 
 function createCode(): string {
@@ -134,28 +170,50 @@ async function isRateLimited(
   const row = await database
     .prepare(
       `SELECT
-         SUM(CASE WHEN email_hash = ?1 AND created_at > ?3 THEN 1 ELSE 0 END) AS email_count,
-         SUM(CASE WHEN requested_ip = ?2 AND created_at > ?4 THEN 1 ELSE 0 END) AS ip_count
-       FROM removal_requests
-       WHERE created_at > ?4`,
+         (SELECT COUNT(*) FROM removal_requests
+          WHERE email_hash = ?1 AND created_at > ?3) AS email_cooldown_count,
+         (SELECT COUNT(*) FROM removal_requests
+          WHERE email_hash = ?1 AND created_at > ?4) AS email_window_count,
+         (SELECT COUNT(*) FROM removal_requests
+          WHERE requested_ip = ?2 AND created_at > ?5) AS ip_window_count,
+         (SELECT COUNT(*) FROM removal_requests
+          WHERE requested_ip = ?2 AND created_at > ?6) AS ip_daily_count`,
     )
-    .bind(emailHash, ip, now - EMAIL_COOLDOWN_MS, now - RATE_LIMIT_WINDOW_MS)
-    .first<{ email_count: number | null; ip_count: number | null }>();
+    .bind(
+      emailHash,
+      ip,
+      now - EMAIL_COOLDOWN_MS,
+      now - EMAIL_RATE_LIMIT_WINDOW_MS,
+      now - IP_RATE_LIMIT_WINDOW_MS,
+      now - IP_DAILY_WINDOW_MS,
+    )
+    .first<{
+      email_cooldown_count: number | null;
+      email_window_count: number | null;
+      ip_window_count: number | null;
+      ip_daily_count: number | null;
+    }>();
 
-  return Number(row?.email_count || 0) >= 1 || Number(row?.ip_count || 0) >= MAX_IP_REQUESTS;
+  return (
+    Number(row?.email_cooldown_count || 0) >= 1 ||
+    Number(row?.email_window_count || 0) >= MAX_EMAIL_REQUESTS_PER_HOUR ||
+    Number(row?.ip_window_count || 0) >= MAX_IP_REQUESTS_PER_WINDOW ||
+    Number(row?.ip_daily_count || 0) >= MAX_IP_REQUESTS_PER_DAY
+  );
 }
 
 export async function createRemovalRequest(args: {
   database: D1Database;
-  emailBinding: CloudflareEnv["EMAIL"];
+  resendApiKey: string;
   email: string;
   ip: string;
   secret: string;
   from: string;
 }): Promise<{ requestId: string; rateLimited: boolean }> {
-  const { database, emailBinding, email, ip, secret, from } = args;
+  const { database, resendApiKey, email, ip, secret, from } = args;
   const now = Date.now();
   const emailHash = await hmac(secret, `email:${email}`);
+  const ipHash = await hmac(secret, `ip:${ip}`);
   const requestId = crypto.randomUUID();
 
   await database
@@ -167,7 +225,7 @@ export async function createRemovalRequest(args: {
     .bind(now)
     .run();
 
-  if (await isRateLimited(database, emailHash, ip, now)) {
+  if (await isRateLimited(database, emailHash, ipHash, now)) {
     return { requestId, rateLimited: true };
   }
 
@@ -181,21 +239,27 @@ export async function createRemovalRequest(args: {
        (id, email_hash, code_hash, video_ids, created_at, expires_at, attempts, requested_ip)
        VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7)`,
     )
-    .bind(requestId, emailHash, codeHash, JSON.stringify(videoIds), now, now + CODE_TTL_MS, ip)
+    .bind(
+      requestId,
+      emailHash,
+      codeHash,
+      JSON.stringify(videoIds),
+      now,
+      now + CODE_TTL_MS,
+      ipHash,
+    )
     .run();
 
-  if (videoIds.length > 0) {
-    try {
-      await emailBinding.send({
-        to: email,
-        from: { email: from, name: "動画編集大会" },
-        subject: "動画削除申請の確認コード",
-        text: `動画削除申請の確認コードは ${code} です。\n有効期限は10分です。心当たりがない場合は、このメールを無視してください。`,
-        html: `<p>動画削除申請の確認コードは次のとおりです。</p><p style="font-size:28px;font-weight:bold;letter-spacing:0.2em">${code}</p><p>有効期限は10分です。心当たりがない場合は、このメールを無視してください。</p>`,
-      });
-    } catch (error) {
-      console.error("Failed to send removal verification email", error);
-    }
+  try {
+    await sendRemovalCodeWithResend({
+      apiKey: resendApiKey,
+      to: email,
+      from,
+      code,
+      requestId,
+    });
+  } catch (error) {
+    console.error("Failed to send removal verification email", error);
   }
 
   return { requestId, rateLimited: false };
@@ -209,6 +273,16 @@ export async function verifyRemovalCode(args: {
 }): Promise<{ success: true; sessionToken: string; videoIds: string[] } | { success: false }> {
   const { database, requestId, code, secret } = args;
   const now = Date.now();
+  const attempt = await database
+    .prepare(
+      `UPDATE removal_requests
+       SET attempts = attempts + 1
+       WHERE id = ?1 AND used_at IS NULL AND expires_at >= ?2 AND attempts < ?3`,
+    )
+    .bind(requestId, now, MAX_ATTEMPTS)
+    .run();
+  if (attempt.meta.changes !== 1) return { success: false };
+
   const row = await database
     .prepare(
       `SELECT id, email_hash, code_hash, video_ids, expires_at, attempts, used_at
@@ -217,36 +291,32 @@ export async function verifyRemovalCode(args: {
     .bind(requestId)
     .first<RemovalRequestRow>();
 
-  if (!row || row.used_at || row.expires_at < now || row.attempts >= MAX_ATTEMPTS) {
+  if (!row || row.used_at || row.expires_at < now) {
     return { success: false };
   }
 
   const providedHash = await hmac(secret, `code:${requestId}:${code.toUpperCase()}`);
-  if (!constantTimeEqual(row.code_hash, providedHash)) {
-    await database
-      .prepare("UPDATE removal_requests SET attempts = attempts + 1 WHERE id = ?1")
-      .bind(requestId)
-      .run();
+  if (!(await constantTimeEqual(row.code_hash, providedHash))) {
     return { success: false };
   }
 
   const videoIds = await excludeHiddenVideoIds(database, parseVideoIds(row.video_ids));
-  if (videoIds.length === 0) return { success: false };
-
   const sessionToken = createToken();
   const tokenHash = await hmac(secret, `session:${sessionToken}`);
-  await database.batch([
-    database
-      .prepare("UPDATE removal_requests SET used_at = ?1 WHERE id = ?2 AND used_at IS NULL")
-      .bind(now, requestId),
-    database
-      .prepare(
-        `INSERT INTO removal_sessions
-         (token_hash, email_hash, video_ids, created_at, expires_at)
-         VALUES (?1, ?2, ?3, ?4, ?5)`,
-      )
-      .bind(tokenHash, row.email_hash, JSON.stringify(videoIds), now, now + SESSION_TTL_MS),
-  ]);
+  const claim = await database
+    .prepare("UPDATE removal_requests SET used_at = ?1 WHERE id = ?2 AND used_at IS NULL")
+    .bind(now, requestId)
+    .run();
+  if (claim.meta.changes !== 1) return { success: false };
+
+  await database
+    .prepare(
+      `INSERT INTO removal_sessions
+       (token_hash, email_hash, video_ids, created_at, expires_at)
+       VALUES (?1, ?2, ?3, ?4, ?5)`,
+    )
+    .bind(tokenHash, row.email_hash, JSON.stringify(videoIds), now, now + SESSION_TTL_MS)
+    .run();
 
   return { success: true, sessionToken, videoIds };
 }
@@ -275,6 +345,16 @@ export async function confirmRemoval(args: {
   );
   if (selected.length === 0 || selected.length !== new Set(videoIds).size) return false;
 
+  const claim = await database
+    .prepare(
+      `UPDATE removal_sessions
+       SET used_at = ?1
+       WHERE token_hash = ?2 AND used_at IS NULL AND expires_at >= ?1`,
+    )
+    .bind(now, tokenHash)
+    .run();
+  if (claim.meta.changes !== 1) return false;
+
   const statements = selected.flatMap((videoId) => [
     database
       .prepare("INSERT OR IGNORE INTO hidden_entries (video_id, created_at) VALUES (?1, ?2)")
@@ -285,11 +365,6 @@ export async function confirmRemoval(args: {
       )
       .bind(videoId, row.email_hash, now),
   ]);
-  statements.push(
-    database
-      .prepare("UPDATE removal_sessions SET used_at = ?1 WHERE token_hash = ?2 AND used_at IS NULL")
-      .bind(now, tokenHash),
-  );
   await database.batch(statements);
   return true;
 }

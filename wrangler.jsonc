@@ -25,14 +25,8 @@
       "migrations_dir": "migrations"
     }
   ],
-  "send_email": [
-    {
-      "name": "EMAIL",
-      "allowed_sender_addresses": ["noreply@ymkw.top"]
-    }
-  ],
   "vars": {
-    "REMOVE_EMAIL_FROM": "noreply@ymkw.top"
+    "RESEND_EMAIL_FROM": "event@ymkw.top"
   },
   "observability": {
     "enabled": true
