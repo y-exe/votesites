@@ -1,7 +1,36 @@
 const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
+const LOOKUP_RATE_LIMIT_SECONDS = 60;
+const LOOKUP_RATE_LIMIT_MAX_REQUESTS = 5;
 
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function constantTimeEquals(left, right) {
+  const leftBytes = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    String(left),
+  );
+  const rightBytes = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    String(right),
+  );
+  let difference = 0;
+  for (let index = 0; index < leftBytes.length; index += 1) {
+    difference |= leftBytes[index] ^ rightBytes[index];
+  }
+  return difference === 0;
+}
+
+function consumeLookupRateLimit(email) {
+  const emailHash = Utilities.base64EncodeWebSafe(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, email),
+  );
+  const cache = CacheService.getScriptCache();
+  const key = `lookup-rate:${emailHash}`;
+  const count = Number(cache.get(key) || "0") + 1;
+  cache.put(key, String(count), LOOKUP_RATE_LIMIT_SECONDS);
+  return count <= LOOKUP_RATE_LIMIT_MAX_REQUESTS;
 }
 
 function getResponseData() {
@@ -64,17 +93,24 @@ function doPost(event) {
       "ENTRY_LOOKUP_SECRET",
     );
 
-    if (!expectedSecret || payload.secret !== expectedSecret || payload.action !== "lookupByEmail") {
+    if (
+      !expectedSecret ||
+      !constantTimeEquals(String(payload.secret || ""), expectedSecret) ||
+      payload.action !== "lookupByEmail"
+    ) {
       return jsonResponse({ success: false, error: "unauthorized" });
     }
 
     const email = normalizeEmail(payload.email);
+    if (!email || !consumeLookupRateLimit(email)) {
+      return jsonResponse({ success: false, error: "rate_limited" });
+    }
     const { headers, rows } = getResponseData();
     const emailColumn = headers.findIndex((header) =>
       /メール|mail|e-mail/i.test(String(header)),
     );
 
-    if (!email || emailColumn < 0) {
+    if (emailColumn < 0) {
       return jsonResponse({ success: true, videoIds: [] });
     }
 

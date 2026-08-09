@@ -4,6 +4,7 @@ import { readLimitedJsonObject } from "@/lib/request-json";
 import { assertSameOrigin, getTrustedClientIp } from "@/lib/security";
 
 export const runtime = "nodejs";
+const RESPONSE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 
 export async function POST(request: Request) {
   let payload: Record<string, unknown>;
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   } catch {
     return Response.json(
       { success: false, error: "invalid_request" },
-      { status: 400, headers: { "Cache-Control": "no-store" } },
+      { status: 400, headers: RESPONSE_HEADERS },
     );
   }
 
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
     if (!email) {
       return Response.json(
         { success: false, error: "invalid_email" },
-        { status: 400, headers: { "Cache-Control": "no-store" } },
+        { status: 400, headers: RESPONSE_HEADERS },
       );
     }
 
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
       console.error("Removal email settings are not configured");
       return Response.json(
         { success: false, error: "service_unavailable" },
-        { status: 503, headers: { "Cache-Control": "no-store" } },
+        { status: 503, headers: RESPONSE_HEADERS },
       );
     }
 
@@ -50,19 +51,19 @@ export async function POST(request: Request) {
     if (result.rateLimited) {
       return Response.json(
         { success: false, error: "rate_limited" },
-        { status: 429, headers: { "Cache-Control": "no-store", "Retry-After": "60" } },
+        { status: 429, headers: { ...RESPONSE_HEADERS, "Retry-After": "60" } },
       );
     }
 
     return Response.json(
       { success: true, requestId: result.requestId },
-      { headers: { "Cache-Control": "no-store" } },
+      { headers: RESPONSE_HEADERS },
     );
   } catch (error) {
     console.error("Failed to create removal request", error);
     return Response.json(
       { success: false, error: "service_unavailable" },
-      { status: 503, headers: { "Cache-Control": "no-store" } },
+      { status: 503, headers: RESPONSE_HEADERS },
     );
   }
 }

@@ -2,7 +2,7 @@ import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { isValidYouTubeId } from "./reports";
 import { readLimitedJsonResponse } from "./request-json";
-import { consumeFixedWindowRateLimit, pruneExpiredSecurityRows } from "./security";
+import { consumeSlidingWindowRateLimit, pruneExpiredSecurityRows } from "./security";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -174,7 +174,7 @@ async function isRateLimited(
   now: number,
 ): Promise<boolean> {
   const limits = [
-    await consumeFixedWindowRateLimit({
+    await consumeSlidingWindowRateLimit({
       database,
       scope: "removal-email-minute",
       keyHash: emailHash,
@@ -182,7 +182,7 @@ async function isRateLimited(
       windowMs: EMAIL_COOLDOWN_MS,
       now,
     }),
-    await consumeFixedWindowRateLimit({
+    await consumeSlidingWindowRateLimit({
       database,
       scope: "removal-email-hour",
       keyHash: emailHash,
@@ -190,7 +190,7 @@ async function isRateLimited(
       windowMs: EMAIL_RATE_LIMIT_WINDOW_MS,
       now,
     }),
-    await consumeFixedWindowRateLimit({
+    await consumeSlidingWindowRateLimit({
       database,
       scope: "removal-ip-window",
       keyHash: ip,
@@ -198,7 +198,7 @@ async function isRateLimited(
       windowMs: IP_RATE_LIMIT_WINDOW_MS,
       now,
     }),
-    await consumeFixedWindowRateLimit({
+    await consumeSlidingWindowRateLimit({
       database,
       scope: "removal-ip-day",
       keyHash: ip,

@@ -10,7 +10,7 @@ import { readLimitedJsonObject } from "@/lib/request-json";
 import {
   assertSameOrigin,
   constantTimeEqual,
-  consumeFixedWindowRateLimit,
+  consumeSlidingWindowRateLimit,
   createSecureToken,
   getTrustedClientIp,
   hmacHex,
@@ -45,18 +45,112 @@ async function sha256Hex(value: string): Promise<string> {
   ).join("");
 }
 
-async function verifyPassword(providedPassword: unknown): Promise<boolean> {
-  const expectedHash = process.env.REPORT_PASSWORD_HASH;
+const REPORT_PASSWORD_ITERATIONS = 100_000;
+
+function toBase64Url(bytes: Uint8Array): string {
+  return Buffer.from(bytes).toString("base64url");
+}
+
+async function createPasswordVerifier(password: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      hash: "SHA-256",
+      salt,
+      iterations: REPORT_PASSWORD_ITERATIONS,
+    },
+    key,
+    256,
+  );
+  return `pbkdf2-sha256$${REPORT_PASSWORD_ITERATIONS}$${toBase64Url(salt)}$${toBase64Url(new Uint8Array(bits))}`;
+}
+
+async function verifyPasswordVerifier(password: string, verifier: string): Promise<boolean> {
+  const [algorithm, iterationsText, saltText, expected] = verifier.split("$");
+  const iterations = Number(iterationsText);
   if (
-    typeof providedPassword !== "string" ||
-    !providedPassword ||
-    providedPassword.length > 256 ||
-    !expectedHash ||
-    !/^[0-9a-f]{64}$/i.test(expectedHash)
+    algorithm !== "pbkdf2-sha256" ||
+    !Number.isInteger(iterations) ||
+    iterations < 100_000 ||
+    iterations > 2_000_000 ||
+    !saltText ||
+    !expected
   ) {
     return false;
   }
-  return constantTimeEqual(await sha256Hex(providedPassword), expectedHash.toLowerCase());
+  try {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(password),
+      "PBKDF2",
+      false,
+      ["deriveBits"],
+    );
+    const bits = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        hash: "SHA-256",
+        salt: Buffer.from(saltText, "base64url"),
+        iterations,
+      },
+      key,
+      256,
+    );
+    return constantTimeEqual(toBase64Url(new Uint8Array(bits)), expected);
+  } catch {
+    return false;
+  }
+}
+
+async function getPasswordVerifier(database: D1Database): Promise<string | null> {
+  const row = await database
+    .prepare("SELECT verifier FROM report_admin_credentials WHERE id = 1")
+    .first<{ verifier: string }>();
+  return row?.verifier ?? null;
+}
+
+async function verifyPassword(
+  database: D1Database,
+  providedPassword: unknown,
+): Promise<{ valid: boolean; requiresUpgrade: boolean }> {
+  if (
+    typeof providedPassword !== "string" ||
+    !providedPassword ||
+    providedPassword.length > 256
+  ) {
+    return { valid: false, requiresUpgrade: false };
+  }
+
+  const verifier = await getPasswordVerifier(database);
+  if (verifier) {
+    return {
+      valid: await verifyPasswordVerifier(providedPassword, verifier),
+      requiresUpgrade: false,
+    };
+  }
+
+  const expectedHash = process.env.REPORT_PASSWORD_HASH;
+  if (
+    !expectedHash ||
+    !/^[0-9a-f]{64}$/i.test(expectedHash)
+  ) {
+    return { valid: false, requiresUpgrade: false };
+  }
+  return {
+    valid: await constantTimeEqual(
+      await sha256Hex(providedPassword),
+      expectedHash.toLowerCase(),
+    ),
+    requiresUpgrade: true,
+  };
 }
 
 async function getAuthorizedSession(
@@ -99,7 +193,7 @@ export async function POST(request: NextRequest) {
         secret,
         `report-admin-ip:${getTrustedClientIp(request)}`,
       );
-      const rateLimit = await consumeFixedWindowRateLimit({
+      const rateLimit = await consumeSlidingWindowRateLimit({
         database,
         scope: "report-admin-login",
         keyHash: ipHash,
@@ -115,7 +209,8 @@ export async function POST(request: NextRequest) {
           },
         );
       }
-      if (!(await verifyPassword(payload.password))) {
+      const passwordResult = await verifyPassword(database, payload.password);
+      if (!passwordResult.valid) {
         return json({ success: false, error: "unauthorized" }, { status: 401 });
       }
 
@@ -130,7 +225,11 @@ export async function POST(request: NextRequest) {
         .bind(tokenHash, now, now + REPORT_SESSION_MAX_AGE * 1000)
         .run();
 
-      const response = json({ success: true, ...(await getDashboardData(database)) });
+      const response = json({
+        success: true,
+        requiresPasswordUpgrade: passwordResult.requiresUpgrade,
+        ...(await getDashboardData(database)),
+      });
       response.cookies.set(REPORT_SESSION_COOKIE, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -159,7 +258,27 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "list") {
-      return json({ success: true, ...(await getDashboardData(database)) });
+      return json({
+        success: true,
+        requiresPasswordUpgrade: !(await getPasswordVerifier(database)),
+        ...(await getDashboardData(database)),
+      });
+    }
+
+    if (action === "upgrade-password") {
+      const newPassword = payload.newPassword;
+      if (typeof newPassword !== "string" || newPassword.length < 11 || newPassword.length > 256) {
+        return json({ success: false, error: "invalid_password" }, { status: 400 });
+      }
+      await database
+        .prepare(
+          `INSERT INTO report_admin_credentials (id, verifier, updated_at)
+           VALUES (1, ?1, ?2)
+           ON CONFLICT(id) DO UPDATE SET verifier = excluded.verifier, updated_at = excluded.updated_at`,
+        )
+        .bind(await createPasswordVerifier(newPassword), Date.now())
+        .run();
+      return json({ success: true, requiresPasswordUpgrade: false, ...(await getDashboardData(database)) });
     }
 
     if (action === "toggle-hide") {

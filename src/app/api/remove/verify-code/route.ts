@@ -4,6 +4,7 @@ import { readLimitedJsonObject } from "@/lib/request-json";
 import { assertSameOrigin } from "@/lib/security";
 
 export const runtime = "nodejs";
+const RESPONSE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 
 export async function POST(request: Request) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
     if (!secret || secret.length < 32) {
       return Response.json(
         { success: false, error: "service_unavailable" },
-        { status: 503, headers: { "Cache-Control": "no-store" } },
+        { status: 503, headers: RESPONSE_HEADERS },
       );
     }
     if (
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     ) {
       return Response.json(
         { success: false, error: "invalid_code" },
-        { status: 400, headers: { "Cache-Control": "no-store" } },
+        { status: 400, headers: RESPONSE_HEADERS },
       );
     }
 
@@ -40,15 +41,15 @@ export async function POST(request: Request) {
     if (!result.success) {
       return Response.json(
         { success: false, error: "invalid_code" },
-        { status: 400, headers: { "Cache-Control": "no-store" } },
+        { status: 400, headers: RESPONSE_HEADERS },
       );
     }
 
-    return Response.json(result, { headers: { "Cache-Control": "no-store" } });
+    return Response.json(result, { headers: RESPONSE_HEADERS });
   } catch {
     return Response.json(
       { success: false, error: "invalid_request" },
-      { status: 400, headers: { "Cache-Control": "no-store" } },
+      { status: 400, headers: RESPONSE_HEADERS },
     );
   }
 }

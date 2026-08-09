@@ -2,10 +2,16 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest } from "next/server";
 import {
   DISCORD_SESSION_COOKIE,
-  verifyDiscordSession,
+  getDiscordSession,
 } from "@/lib/discord-auth";
 import { fetchContestEntries, isYouTubeId } from "@/lib/entries";
 import { getVotingPhase } from "@/data/schedule";
+import {
+  consumeSlidingWindowRateLimit,
+  hmacHex,
+  pruneExpiredSecurityRows,
+  requireSecuritySecret,
+} from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -32,8 +38,9 @@ function json(body: unknown, init?: ResponseInit) {
   });
 }
 
-function getSession(request: NextRequest) {
-  return verifyDiscordSession(
+async function getSession(request: NextRequest) {
+  return getDiscordSession(
+    getVotesDatabase(),
     request.cookies.get(DISCORD_SESSION_COOKIE)?.value,
   );
 }
@@ -76,7 +83,7 @@ function getVotesDatabase() {
 }
 
 export async function GET(request: NextRequest) {
-  const session = getSession(request);
+  const session = await getSession(request);
   if (!session) return json({ error: "authentication_required" }, { status: 401 });
 
   try {
@@ -105,7 +112,7 @@ export async function POST(request: NextRequest) {
     return json({ error: "invalid_content_type" }, { status: 415 });
   }
 
-  const session = getSession(request);
+  const session = await getSession(request);
   if (!session) return json({ error: "authentication_required" }, { status: 401 });
 
   const votingPhase = getVotingPhase();
@@ -113,6 +120,22 @@ export async function POST(request: NextRequest) {
     return json(
       { error: "voting_not_open", phase: votingPhase },
       { status: 403 },
+    );
+  }
+
+  const database = getVotesDatabase();
+  const secret = requireSecuritySecret();
+  const rateLimit = await consumeSlidingWindowRateLimit({
+    database,
+    scope: "vote-user-minute",
+    keyHash: await hmacHex(secret, `vote-user:${session.user.id}`),
+    limit: 30,
+    windowMs: 60 * 1000,
+  });
+  if (!rateLimit.allowed) {
+    return json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } },
     );
   }
 
@@ -137,7 +160,6 @@ export async function POST(request: NextRequest) {
       return json({ error: "entry_not_found" }, { status: 404 });
     }
 
-    const database = getVotesDatabase();
     const currentVote = await database
       .prepare("SELECT video_id FROM votes WHERE discord_user_id = ?1")
       .bind(session.user.id)
@@ -169,5 +191,7 @@ export async function POST(request: NextRequest) {
       }),
     );
     return json({ error: "vote_write_failed" }, { status: 500 });
+  } finally {
+    await pruneExpiredSecurityRows(database);
   }
 }

@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 
 export const DISCORD_SESSION_COOKIE = "ymkw_discord_session";
 export const DISCORD_OAUTH_STATE_COOKIE = "ymkw_discord_oauth_state";
@@ -27,49 +27,44 @@ function sign(value: string) {
   return createHmac("sha256", getAuthSecret()).update(value).digest("base64url");
 }
 
-export function createDiscordSession(user: DiscordSession["user"]) {
-  const payload: DiscordSession = {
-    user,
-    expiresAt: Math.floor(Date.now() / 1000) + DISCORD_SESSION_MAX_AGE,
-  };
-  const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  return `${encoded}.${sign(encoded)}`;
+export function createDiscordSessionToken() {
+  return randomBytes(32).toString("base64url");
 }
 
-export function verifyDiscordSession(token: string | undefined): DiscordSession | null {
-  if (!token) return null;
+export function hashDiscordSessionToken(token: string): string {
+  return sign(`discord-session:${token}`);
+}
 
-  const [encoded, suppliedSignature, ...rest] = token.split(".");
-  if (!encoded || !suppliedSignature || rest.length > 0) return null;
+export async function getDiscordSession(
+  database: D1Database,
+  token: string | undefined,
+): Promise<DiscordSession | null> {
+  if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
 
-  const supplied = Buffer.from(suppliedSignature);
-  let expected: Buffer;
-  try {
-    expected = Buffer.from(sign(encoded));
-  } catch {
-    return null;
-  }
-  if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
-    return null;
-  }
+  const row = await database
+    .prepare(
+      `SELECT discord_user_id, username, global_name, avatar, expires_at
+       FROM discord_sessions WHERE token_hash = ?1 AND expires_at >= ?2`,
+    )
+    .bind(hashDiscordSessionToken(token), Date.now())
+    .first<{
+      discord_user_id: string;
+      username: string;
+      global_name: string | null;
+      avatar: string | null;
+      expires_at: number;
+    }>();
+  if (!row) return null;
 
-  try {
-    const payload = JSON.parse(
-      Buffer.from(encoded, "base64url").toString("utf8"),
-    ) as DiscordSession;
-    if (
-      !payload?.user ||
-      typeof payload.user.id !== "string" ||
-      typeof payload.user.username !== "string" ||
-      typeof payload.expiresAt !== "number" ||
-      payload.expiresAt <= Math.floor(Date.now() / 1000)
-    ) {
-      return null;
-    }
-    return payload;
-  } catch {
-    return null;
-  }
+  return {
+    user: {
+      id: row.discord_user_id,
+      username: row.username,
+      globalName: row.global_name,
+      avatar: row.avatar,
+    },
+    expiresAt: Math.floor(row.expires_at / 1000),
+  };
 }
 
 export function safeReturnPath(value: string | null | undefined) {

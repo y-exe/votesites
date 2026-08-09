@@ -1,14 +1,16 @@
 import { timingSafeEqual } from "node:crypto";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextRequest, NextResponse } from "next/server";
 import {
   authCookieOptions,
-  createDiscordSession,
+  createDiscordSessionToken,
   DISCORD_OAUTH_RETURN_COOKIE,
   DISCORD_OAUTH_STATE_COOKIE,
   DISCORD_SESSION_COOKIE,
   DISCORD_SESSION_MAX_AGE,
   discordRedirectUri,
   safeReturnPath,
+  hashDiscordSessionToken,
 } from "@/lib/discord-auth";
 import { readLimitedJsonResponse } from "@/lib/request-json";
 
@@ -96,12 +98,24 @@ export async function GET(request: NextRequest) {
     )) as DiscordUserResponse;
     if (!user.id || !user.username) return errorRedirect("invalid_profile");
 
-    const sessionToken = createDiscordSession({
-      id: user.id,
-      username: user.username,
-      globalName: user.global_name ?? null,
-      avatar: user.avatar ?? null,
-    });
+    const sessionToken = createDiscordSessionToken();
+    const now = Date.now();
+    await getCloudflareContext().env.VOTES_DB
+      .prepare(
+        `INSERT INTO discord_sessions
+         (token_hash, discord_user_id, username, global_name, avatar, created_at, expires_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
+      )
+      .bind(
+        hashDiscordSessionToken(sessionToken),
+        user.id,
+        user.username,
+        user.global_name ?? null,
+        user.avatar ?? null,
+        now,
+        now + DISCORD_SESSION_MAX_AGE * 1000,
+      )
+      .run();
     const response = NextResponse.redirect(new URL(returnTo, request.url));
     response.cookies.set(DISCORD_SESSION_COOKIE, sessionToken, {
       ...authCookieOptions,

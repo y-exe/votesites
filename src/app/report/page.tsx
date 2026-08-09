@@ -17,6 +17,7 @@ type RemovalSummary = {
 
 type AdminResponse = {
   success?: boolean;
+  requiresPasswordUpgrade?: boolean;
   reports?: ReportSummary[];
   removals?: RemovalSummary[];
   error?: string;
@@ -29,10 +30,15 @@ export default function ReportAdminPage() {
   const [removals, setRemovals] = useState<RemovalSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [requiresPasswordUpgrade, setRequiresPasswordUpgrade] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
 
   function applyResponse(data: AdminResponse) {
     if (Array.isArray(data.reports)) setReports(data.reports);
     if (Array.isArray(data.removals)) setRemovals(data.removals);
+    if (typeof data.requiresPasswordUpgrade === "boolean") {
+      setRequiresPasswordUpgrade(data.requiresPasswordUpgrade);
+    }
   }
 
   useEffect(() => {
@@ -122,6 +128,30 @@ export default function ReportAdminPage() {
     }
   }
 
+  async function handlePasswordUpgrade(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const response = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "upgrade-password", newPassword }),
+      });
+      const data = (await response.json()) as AdminResponse;
+      if (!response.ok || !data.success) {
+        setError("新しいパスワードは11文字以上で入力してください。");
+        return;
+      }
+      setNewPassword("");
+      applyResponse(data);
+    } catch {
+      setError("パスワードを更新できませんでした。");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   if (!authenticated) {
     return (
       <main className="min-h-screen bg-white p-8 font-sans text-black">
@@ -152,6 +182,27 @@ export default function ReportAdminPage() {
     <main className="min-h-screen bg-white p-8 font-sans text-black">
       <h1 className="mb-2 text-2xl font-bold">通報管理ダッシュボード</h1>
       <p className="text-neutral-600">通報された動画の一覧と表示状態を切り替えます。</p>
+
+      {requiresPasswordUpgrade && (
+        <section className="mt-6 border border-amber-400 bg-amber-50 p-4">
+          <h2 className="font-bold">管理パスワードを更新してください</h2>
+          <p className="mt-1 text-sm">安全な保存方式へ移行するため、11文字以上の新しいパスワードを設定してください。</p>
+          <form onSubmit={handlePasswordUpgrade} className="mt-3 flex items-center gap-2">
+            <input
+              type="password"
+              autoComplete="new-password"
+              minLength={11}
+              required
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              className="rounded border border-neutral-300 p-2 text-base"
+            />
+            <button type="submit" disabled={loading} className="rounded bg-amber-700 px-4 py-2 text-white disabled:opacity-50">
+              更新する
+            </button>
+          </form>
+        </section>
+      )}
 
       <section className="mt-6 overflow-x-auto">
         {reports.length === 0 ? (

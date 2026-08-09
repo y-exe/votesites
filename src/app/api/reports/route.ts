@@ -4,7 +4,7 @@ import { recordReport, isValidYouTubeId } from "@/lib/reports";
 import { readLimitedJsonObject } from "@/lib/request-json";
 import {
   assertSameOrigin,
-  consumeFixedWindowRateLimit,
+  consumeSlidingWindowRateLimit,
   getTrustedClientIp,
   hmacHex,
   pruneExpiredSecurityRows,
@@ -48,14 +48,14 @@ export async function POST(request: Request) {
       `report-ip:${getTrustedClientIp(request)}`,
     );
     const [hourly, daily] = await Promise.all([
-      consumeFixedWindowRateLimit({
+      consumeSlidingWindowRateLimit({
         database,
         scope: "report-hour",
         keyHash: ipHash,
         limit: 10,
         windowMs: 60 * 60 * 1000,
       }),
-      consumeFixedWindowRateLimit({
+      consumeSlidingWindowRateLimit({
         database,
         scope: "report-day",
         keyHash: ipHash,

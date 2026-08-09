@@ -55,7 +55,7 @@ export function assertSameOrigin(request: Request): void {
   }
 }
 
-export async function consumeFixedWindowRateLimit(args: {
+export async function consumeSlidingWindowRateLimit(args: {
   database: D1Database;
   scope: string;
   keyHash: string;
@@ -65,22 +65,26 @@ export async function consumeFixedWindowRateLimit(args: {
 }): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
   const { database, scope, keyHash, limit, windowMs } = args;
   const now = args.now ?? Date.now();
-  const bucket = Math.floor(now / windowMs);
-  const expiresAt = (bucket + 1) * windowMs;
+  const expiresAt = now + windowMs;
+  const eventId = crypto.randomUUID();
 
   const row = await database
     .prepare(
-      `INSERT INTO api_rate_limits (scope, key_hash, bucket, count, expires_at)
-       VALUES (?1, ?2, ?3, 1, ?4)
-       ON CONFLICT(scope, key_hash, bucket) DO UPDATE SET count = count + 1
-       RETURNING count`,
+      `INSERT INTO api_rate_limit_events (id, scope, key_hash, created_at, expires_at)
+       SELECT ?1, ?2, ?3, ?4, ?5
+       WHERE (
+         SELECT COUNT(*)
+         FROM api_rate_limit_events
+         WHERE scope = ?2 AND key_hash = ?3 AND created_at > ?6
+       ) < ?7
+       RETURNING id`,
     )
-    .bind(scope, keyHash, bucket, expiresAt)
-    .first<{ count: number }>();
+    .bind(eventId, scope, keyHash, now, expiresAt, now - windowMs, limit)
+    .first<{ id: string }>();
 
   return {
-    allowed: Number(row?.count ?? limit + 1) <= limit,
-    retryAfterSeconds: Math.max(1, Math.ceil((expiresAt - now) / 1000)),
+    allowed: Boolean(row?.id),
+    retryAfterSeconds: Math.max(1, Math.ceil(windowMs / 1000)),
   };
 }
 
@@ -90,6 +94,7 @@ export async function pruneExpiredSecurityRows(
 ): Promise<void> {
   await database.batch([
     database.prepare("DELETE FROM api_rate_limits WHERE expires_at < ?1").bind(now),
+    database.prepare("DELETE FROM api_rate_limit_events WHERE expires_at < ?1").bind(now),
     database.prepare("DELETE FROM report_admin_sessions WHERE expires_at < ?1").bind(now),
   ]);
 }

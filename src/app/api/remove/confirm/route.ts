@@ -4,6 +4,7 @@ import { readLimitedJsonObject } from "@/lib/request-json";
 import { assertSameOrigin } from "@/lib/security";
 
 export const runtime = "nodejs";
+const RESPONSE_HEADERS = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 
 export async function POST(request: Request) {
   try {
@@ -18,13 +19,13 @@ export async function POST(request: Request) {
     if (!secret || secret.length < 32) {
       return Response.json(
         { success: false, error: "service_unavailable" },
-        { status: 503, headers: { "Cache-Control": "no-store" } },
+        { status: 503, headers: RESPONSE_HEADERS },
       );
     }
     if (!/^[A-Za-z0-9_-]{43}$/.test(sessionToken) || videoIds.length === 0 || videoIds.length > 20) {
       return Response.json(
         { success: false, error: "invalid_request" },
-        { status: 400, headers: { "Cache-Control": "no-store" } },
+        { status: 400, headers: RESPONSE_HEADERS },
       );
     }
 
@@ -37,18 +38,18 @@ export async function POST(request: Request) {
     if (!success) {
       return Response.json(
         { success: false, error: "invalid_session" },
-        { status: 400, headers: { "Cache-Control": "no-store" } },
+        { status: 400, headers: RESPONSE_HEADERS },
       );
     }
 
     return Response.json(
       { success: true, removedCount: videoIds.length },
-      { headers: { "Cache-Control": "no-store" } },
+      { headers: RESPONSE_HEADERS },
     );
   } catch {
     return Response.json(
       { success: false, error: "invalid_request" },
-      { status: 400, headers: { "Cache-Control": "no-store" } },
+      { status: 400, headers: RESPONSE_HEADERS },
     );
   }
 }
