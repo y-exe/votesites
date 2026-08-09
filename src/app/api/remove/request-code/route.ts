@@ -1,17 +1,14 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { createRemovalRequest, normalizeEmail } from "@/lib/removals";
 import { readLimitedJsonObject } from "@/lib/request-json";
+import { assertSameOrigin, getTrustedClientIp } from "@/lib/security";
 
 export const runtime = "nodejs";
-
-function getClientIp(request: Request): string {
-  const cloudflareIp = request.headers.get("cf-connecting-ip");
-  return cloudflareIp?.trim() || "unknown";
-}
 
 export async function POST(request: Request) {
   let payload: Record<string, unknown>;
   try {
+    assertSameOrigin(request);
     payload = await readLimitedJsonObject(request);
   } catch {
     return Response.json(
@@ -45,7 +42,7 @@ export async function POST(request: Request) {
       database: env.VOTES_DB,
       resendApiKey,
       email,
-      ip: getClientIp(request),
+      ip: getTrustedClientIp(request),
       secret,
       from,
     });

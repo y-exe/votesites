@@ -1,5 +1,4 @@
 import localFont from "next/font/local";
-import Image from "next/image";
 import Link from "next/link";
 
 const lineSeedExtraBold = localFont({
@@ -47,6 +46,7 @@ export default function PolicyPage() {
               <li>アクセスログ、IPアドレス、ブラウザ情報</li>
               <li>GoogleAnalyticsにより収集されるトラフィックデータおよびCookie情報</li>
               <li>投票履歴および通報履歴</li>
+              <li>動画削除申請に使用するメールアドレスおよび削除申請履歴</li>
             </ul>
           </section>
 
@@ -60,6 +60,7 @@ export default function PolicyPage() {
             <ul className="pl-6 mt-2 opacity-85 font-inherit list-disc">
               <li>投票の重複防止および不正投票の監視・防止のため</li>
               <li>エントリー動画への通報機能における重複制限および適切なサイト管理のため</li>
+              <li>応募者本人の確認および動画削除申請の処理・監査のため</li>
               <li>サイトのアクセス状況の計測・分析および保守管理・サービス向上のため</li>
             </ul>
           </section>
@@ -71,7 +72,13 @@ export default function PolicyPage() {
               3. データの安全管理と第三者提供
             </h2>
             <p className="opacity-90 font-inherit">
-              取得した個人情報およびアクセスデータは、漏洩や不正アクセスの防止に努め、厳重に管理します。法令に基づく場合を除き、事前の同意を得ることなく第三者に提供することはありません。
+              取得した個人情報およびアクセスデータは、漏洩や不正アクセスの防止に努め、厳重に管理します。通報の重複制限に使用するIPアドレスは、サイト側で復元困難な形式に変換して保存します。
+            </p>
+            <p className="opacity-90 mt-3 font-inherit">
+              サービス提供に必要な範囲で、Cloudflare（配信・データ保存）、Discord（ログイン）、Google（フォーム・アクセス解析）、Resend（確認メール送信）へ情報が送信される場合があります。各事業者はそれぞれのプライバシーポリシーに基づいて情報を取り扱います。
+            </p>
+            <p className="opacity-90 mt-3 font-inherit">
+              確認コードおよび一時セッションには短い有効期限を設定し、期限切れデータは順次削除します。法令上または運営上の保存が必要な記録を除き、利用目的に照らして不要となった情報は適切に削除または匿名化します。
             </p>
           </section>
 
@@ -82,7 +89,7 @@ export default function PolicyPage() {
               4. Cookieおよびアクセス解析ツールの利用
             </h2>
             <p className="opacity-90 font-inherit">
-              本サイトでは、ログイン状態の維持やコンテンツの適切な提供、およびサイトの利用状況把握のために Cookie およびローカルストレージを使用しています。
+              本サイトでは、ログイン状態の維持やコンテンツの適切な提供、およびサイトの利用状況把握のためにCookieを使用しています。
             </p>
             <p className="opacity-90 mt-3 font-inherit">
               また、サイトの利用状況の計測・分析のため、GoogleAnalyticsを利用しています。

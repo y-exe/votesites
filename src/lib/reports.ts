@@ -18,7 +18,7 @@ export type RecordReportResult =
 export async function recordReport(
   database: D1Database,
   videoId: string,
-  ip: string,
+  ipHash: string,
 ): Promise<RecordReportResult> {
   if (!isValidYouTubeId(videoId)) {
     return { success: false, error: "invalid_video_id" };
@@ -30,7 +30,7 @@ export async function recordReport(
       .prepare(
         "INSERT INTO reports (video_id, created_at, ip) VALUES (?1, ?2, ?3)",
       )
-      .bind(videoId, now, ip)
+      .bind(videoId, now, ipHash)
       .run();
     return { success: true };
   } catch (error) {
@@ -44,15 +44,11 @@ export async function recordReport(
 }
 
 export async function getHiddenVideoIds(database: D1Database): Promise<Set<string>> {
-  try {
-    const { results } = await database
-      .prepare("SELECT video_id FROM hidden_entries")
-      .all<{ video_id: string }>();
+  const { results } = await database
+    .prepare("SELECT video_id FROM hidden_entries")
+    .all<{ video_id: string }>();
 
-    return new Set((results || []).map((row) => row.video_id));
-  } catch {
-    return new Set();
-  }
+  return new Set((results || []).map((row) => row.video_id));
 }
 
 export async function getReportSummaries(database: D1Database): Promise<ReportSummary[]> {

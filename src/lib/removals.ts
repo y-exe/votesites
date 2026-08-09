@@ -1,6 +1,8 @@
 import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { isValidYouTubeId } from "./reports";
+import { readLimitedJsonResponse } from "./request-json";
+import { consumeFixedWindowRateLimit, pruneExpiredSecurityRows } from "./security";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -139,7 +141,11 @@ async function lookupVideoIds(email: string): Promise<string[]> {
   });
   if (!response.ok) throw new Error(`Entry lookup returned ${response.status}`);
 
-  const payload = (await response.json()) as { success?: unknown; videoIds?: unknown };
+  const value = await readLimitedJsonResponse(response, 32 * 1024);
+  const payload =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as { success?: unknown; videoIds?: unknown })
+      : {};
   if (payload.success !== true || !Array.isArray(payload.videoIds)) {
     throw new Error("Entry lookup returned an invalid response");
   }
@@ -167,39 +173,41 @@ async function isRateLimited(
   ip: string,
   now: number,
 ): Promise<boolean> {
-  const row = await database
-    .prepare(
-      `SELECT
-         (SELECT COUNT(*) FROM removal_requests
-          WHERE email_hash = ?1 AND created_at > ?3) AS email_cooldown_count,
-         (SELECT COUNT(*) FROM removal_requests
-          WHERE email_hash = ?1 AND created_at > ?4) AS email_window_count,
-         (SELECT COUNT(*) FROM removal_requests
-          WHERE requested_ip = ?2 AND created_at > ?5) AS ip_window_count,
-         (SELECT COUNT(*) FROM removal_requests
-          WHERE requested_ip = ?2 AND created_at > ?6) AS ip_daily_count`,
-    )
-    .bind(
-      emailHash,
-      ip,
-      now - EMAIL_COOLDOWN_MS,
-      now - EMAIL_RATE_LIMIT_WINDOW_MS,
-      now - IP_RATE_LIMIT_WINDOW_MS,
-      now - IP_DAILY_WINDOW_MS,
-    )
-    .first<{
-      email_cooldown_count: number | null;
-      email_window_count: number | null;
-      ip_window_count: number | null;
-      ip_daily_count: number | null;
-    }>();
-
-  return (
-    Number(row?.email_cooldown_count || 0) >= 1 ||
-    Number(row?.email_window_count || 0) >= MAX_EMAIL_REQUESTS_PER_HOUR ||
-    Number(row?.ip_window_count || 0) >= MAX_IP_REQUESTS_PER_WINDOW ||
-    Number(row?.ip_daily_count || 0) >= MAX_IP_REQUESTS_PER_DAY
-  );
+  const limits = [
+    await consumeFixedWindowRateLimit({
+      database,
+      scope: "removal-email-minute",
+      keyHash: emailHash,
+      limit: 1,
+      windowMs: EMAIL_COOLDOWN_MS,
+      now,
+    }),
+    await consumeFixedWindowRateLimit({
+      database,
+      scope: "removal-email-hour",
+      keyHash: emailHash,
+      limit: MAX_EMAIL_REQUESTS_PER_HOUR,
+      windowMs: EMAIL_RATE_LIMIT_WINDOW_MS,
+      now,
+    }),
+    await consumeFixedWindowRateLimit({
+      database,
+      scope: "removal-ip-window",
+      keyHash: ip,
+      limit: MAX_IP_REQUESTS_PER_WINDOW,
+      windowMs: IP_RATE_LIMIT_WINDOW_MS,
+      now,
+    }),
+    await consumeFixedWindowRateLimit({
+      database,
+      scope: "removal-ip-day",
+      keyHash: ip,
+      limit: MAX_IP_REQUESTS_PER_DAY,
+      windowMs: IP_DAILY_WINDOW_MS,
+      now,
+    }),
+  ];
+  return limits.some((limit) => !limit.allowed);
 }
 
 export async function createRemovalRequest(args: {
@@ -216,6 +224,7 @@ export async function createRemovalRequest(args: {
   const ipHash = await hmac(secret, `ip:${ip}`);
   const requestId = crypto.randomUUID();
 
+  await pruneExpiredSecurityRows(database, now);
   await database
     .prepare("DELETE FROM removal_requests WHERE expires_at < ?1 AND created_at < ?2")
     .bind(now, now - 24 * 60 * 60 * 1000)

@@ -59,8 +59,58 @@ const homeQaItems = [
   { question: "編集ソフトに指定はありますか？", answer: "ありません。普段お使いの編集ソフトで制作できます。" },
   { question: "動画の公開設定は？", answer: "公開または限定公開で投稿してください。非公開動画は応募できません。" },
   { question: "どうやって応募しますか？", answer: "YouTubeへ動画を投稿し、そのURLをGoogleフォームから送信してください。" },
-  { question: "応募締切はいつですか？", answer: "2026年8月28日 23:59です。余裕をもって送信してください。" },
-  { question: "投票期間はいつですか？", answer: "2026年8月29日 20:00から9月4日 23:59までです。" },
+  {
+    question: "やまかわがよく使うフォントは？",
+    answer: (
+      <>
+        <a
+          href="https://fonts.google.com/specimen/Mochiy+Pop+One"
+          target="_blank"
+          rel="noreferrer"
+          className="home-reel-trigger"
+          aria-label="Mochiy Pop One"
+        >
+          <ReelText label="Mochiy Pop One" />
+        </a>
+        {" , "}
+        <a
+          href="https://github.com/adobe-fonts/source-han-sans/releases/tag/2.005R"
+          target="_blank"
+          rel="noreferrer"
+          className="home-reel-trigger"
+          aria-label="Source Han Sans"
+        >
+          <ReelText label="Source Han Sans" />
+        </a>
+        {" , "}
+        <a
+          href="https://fonts.google.com/noto/specimen/Noto+Serif+JP"
+          target="_blank"
+          rel="noreferrer"
+          className="home-reel-trigger"
+          aria-label="Noto Serif Japanese"
+        >
+          <ReelText label="Noto Serif Japanese" />
+        </a>
+        {" です！"}
+      </>
+    ),
+  },
+  {
+    question: "応募した動画を削除したいです。",
+    answer: (
+      <>
+        <a
+          href="https://event.ymkw.top/remove"
+          className="home-reel-trigger"
+          aria-label="https://event.ymkw.top/remove"
+        >
+          <ReelText label="https://event.ymkw.top/remove" />
+        </a>
+        から、Googleフォームで送信したメールアドレスを使って削除できます。
+      </>
+    ),
+  },
   { question: "投票にDiscordは必要ですか？", answer: "重複・不正投票を防ぐため、Discordでのログインが必要です。" },
   { question: "投票先は変更できますか？", answer: "投票期間中であれば、別の作品へ投票を移行できます。" },
   { question: "結果はいつ分かりますか？", answer: "途中順位は非公開です。9月5日 21:00の生放送で発表します。" },

@@ -73,8 +73,15 @@ export function verifyDiscordSession(token: string | undefined): DiscordSession 
 }
 
 export function safeReturnPath(value: string | null | undefined) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/vote";
-  return value;
+  if (!value || value.includes("\\") || /[\r\n]/.test(value)) return "/vote";
+  try {
+    const base = new URL("https://return-path.invalid");
+    const target = new URL(value, base);
+    if (target.origin !== base.origin) return "/vote";
+    return `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return "/vote";
+  }
 }
 
 export function discordRedirectUri(requestUrl: string) {

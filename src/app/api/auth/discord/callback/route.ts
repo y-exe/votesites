@@ -10,6 +10,7 @@ import {
   discordRedirectUri,
   safeReturnPath,
 } from "@/lib/discord-auth";
+import { readLimitedJsonResponse } from "@/lib/request-json";
 
 export const runtime = "nodejs";
 
@@ -75,7 +76,10 @@ export async function GET(request: NextRequest) {
     });
     if (!tokenResponse.ok) return errorRedirect("token_exchange_failed");
 
-    const token = (await tokenResponse.json()) as DiscordTokenResponse;
+    const token = (await readLimitedJsonResponse(
+      tokenResponse,
+      16 * 1024,
+    )) as DiscordTokenResponse;
     if (!token.access_token || token.token_type?.toLowerCase() !== "bearer") {
       return errorRedirect("invalid_token_response");
     }
@@ -86,7 +90,10 @@ export async function GET(request: NextRequest) {
     });
     if (!userResponse.ok) return errorRedirect("profile_fetch_failed");
 
-    const user = (await userResponse.json()) as DiscordUserResponse;
+    const user = (await readLimitedJsonResponse(
+      userResponse,
+      32 * 1024,
+    )) as DiscordUserResponse;
     if (!user.id || !user.username) return errorRedirect("invalid_profile");
 
     const sessionToken = createDiscordSession({

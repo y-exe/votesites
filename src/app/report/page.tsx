@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type ReportSummary = {
   videoId: string;
@@ -35,6 +35,28 @@ export default function ReportAdminPage() {
     if (Array.isArray(data.removals)) setRemovals(data.removals);
   }
 
+  useEffect(() => {
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch("/api/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "list" }),
+          signal: controller.signal,
+        });
+        const data = (await response.json()) as AdminResponse;
+        if (response.ok && data.success && Array.isArray(data.reports)) {
+          setAuthenticated(true);
+          applyResponse(data);
+        }
+      } catch {
+        // An absent or expired session is the normal logged-out state.
+      }
+    })();
+    return () => controller.abort();
+  }, []);
+
   async function handleLogin(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
@@ -43,14 +65,21 @@ export default function ReportAdminPage() {
       const response = await fetch("/api/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "list", password }),
+        body: JSON.stringify({ action: "login", password }),
       });
       const data = (await response.json()) as AdminResponse;
       if (response.ok && data.success && Array.isArray(data.reports)) {
         setAuthenticated(true);
+        setPassword("");
         applyResponse(data);
       } else {
-        setError(data.error === "unauthorized" ? "パスワードが違います。" : "エラーが発生しました。");
+        setError(
+          data.error === "unauthorized"
+            ? "パスワードが違います。"
+            : data.error === "rate_limited"
+              ? "試行回数が多すぎます。しばらく待ってから再試行してください。"
+              : "エラーが発生しました。",
+        );
       }
     } catch {
       setError("通信エラーが発生しました。");
@@ -67,7 +96,6 @@ export default function ReportAdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "toggle-hide",
-          password,
           videoId,
           hide: !currentHidden,
         }),
@@ -77,6 +105,20 @@ export default function ReportAdminPage() {
       else window.alert("操作に失敗しました。");
     } catch {
       window.alert("通信エラーが発生しました。");
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "logout" }),
+      });
+    } finally {
+      setAuthenticated(false);
+      setReports([]);
+      setRemovals([]);
     }
   }
 
@@ -177,7 +219,7 @@ export default function ReportAdminPage() {
 
       <button
         type="button"
-        onClick={() => setAuthenticated(false)}
+        onClick={() => void handleLogout()}
         className="mt-8 rounded bg-neutral-200 px-4 py-2 font-medium text-neutral-800 transition-colors hover:bg-neutral-300"
       >
         ログアウト

@@ -1,11 +1,13 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { confirmRemoval } from "@/lib/removals";
 import { readLimitedJsonObject } from "@/lib/request-json";
+import { assertSameOrigin } from "@/lib/security";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
+    assertSameOrigin(request);
     const payload = await readLimitedJsonObject(request);
     const sessionToken = typeof payload.sessionToken === "string" ? payload.sessionToken : "";
     const videoIds = Array.isArray(payload.videoIds)

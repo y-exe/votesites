@@ -1,11 +1,13 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { verifyRemovalCode } from "@/lib/removals";
 import { readLimitedJsonObject } from "@/lib/request-json";
+import { assertSameOrigin } from "@/lib/security";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
+    assertSameOrigin(request);
     const payload = await readLimitedJsonObject(request);
     const requestId = typeof payload.requestId === "string" ? payload.requestId : "";
     const code = typeof payload.code === "string" ? payload.code.trim().toUpperCase() : "";

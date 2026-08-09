@@ -103,10 +103,10 @@ export default function RemovePage() {
       <h1>動画削除申請</h1>
 
       {step === "email" && (
-        <form onSubmit={requestCode} className={styles.form}>
-          <p className={styles.field}>
+        <form onSubmit={requestCode}>
+          <p>
             <label htmlFor="email">
-              Googleフォームで送信したメールアドレスを入力してください
+              <strong>Googleフォームで送信したメールアドレスを入力してください</strong>
               <br />
               <input
                 id="email"
@@ -115,20 +115,19 @@ export default function RemovePage() {
                 required
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className={styles.input}
                 placeholder="name@example.com"
               />
             </label>
           </p>
-          <p className={styles.help}>5文字の確認コードをメールで送ります。</p>
+          <p>5文字の確認コードをメールで送ります。</p>
           <SubmitButton loading={loading}>確認コードを送信</SubmitButton>
         </form>
       )}
 
       {step === "code" && (
-        <form onSubmit={verifyCode} className={styles.form}>
-          <p className={styles.help}>確認コードを送りました。コードは10分間有効です。</p>
-          <p className={styles.field}>
+        <form onSubmit={verifyCode}>
+          <p>確認コードを送りました。コードは10分間有効です。</p>
+          <p>
             <label htmlFor="code">
               5文字の確認コード
               <br />
@@ -140,7 +139,6 @@ export default function RemovePage() {
                 required
                 value={code}
                 onChange={(event) => setCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-                className={`${styles.input} ${styles.codeInput}`}
               />
             </label>
           </p>
@@ -149,10 +147,10 @@ export default function RemovePage() {
       )}
 
       {step === "select" && (
-        <form onSubmit={confirmRemoval} className={styles.form}>
+        <form onSubmit={confirmRemoval}>
           <h2>削除する動画を選択</h2>
           <p>削除した動画は投票画面に表示されなくなります。</p>
-          <ul className={styles.list}>
+          <ul>
             {videoIds.map((videoId) => (
               <li key={videoId}>
                 <label>
@@ -173,7 +171,6 @@ export default function RemovePage() {
                   href={`https://www.youtube.com/watch?v=${videoId}`}
                   target="_blank"
                   rel="noreferrer"
-                  className={styles.link}
                 >
                   YouTubeで確認
                 </a>
@@ -200,7 +197,7 @@ export default function RemovePage() {
         </div>
       )}
 
-      {error && <p role="alert" className={styles.error}>{error}</p>}
+      {error && <p role="alert">{error}</p>}
     </main>
   );
 }
@@ -215,7 +212,7 @@ function SubmitButton({
   disabled?: boolean;
 }) {
   return (
-    <button type="submit" disabled={loading || disabled} className={styles.button}>
+    <button type="submit" disabled={loading || disabled}>
       {loading ? "処理中…" : children}
     </button>
   );

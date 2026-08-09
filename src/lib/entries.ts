@@ -1,3 +1,7 @@
+import "server-only";
+
+import { readLimitedJsonResponse } from "./request-json";
+
 export type ContestEntry = {
   id: string;
   youtubeId: string;
@@ -20,10 +24,6 @@ type EntryFeedResult = {
   entries: ContestEntry[];
   configured: boolean;
 };
-
-let lastSuccessfulResult: EntryFeedResult | null = null;
-let lastSuccessfulAt = 0;
-let pendingRequest: Promise<EntryFeedResult> | null = null;
 
 export function isYouTubeId(value: unknown): value is string {
   return typeof value === "string" && YOUTUBE_ID_PATTERN.test(value);
@@ -103,7 +103,11 @@ async function requestContestEntries(feedUrl: string): Promise<EntryFeedResult> 
     throw new Error(`Entry feed returned ${response.status}`);
   }
 
-  const payload = (await response.json()) as { entries?: FeedEntry[] };
+  const value = await readLimitedJsonResponse(response, 512 * 1024);
+  const payload =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as { entries?: FeedEntry[] })
+      : {};
   const entries = normalizeEntries(payload);
 
   return { entries, configured: true };
@@ -133,35 +137,17 @@ export async function fetchContestEntries(
   if (!feedUrl) return { entries: [], configured: false };
 
   const now = Date.now();
-  if (lastSuccessfulResult && now - lastSuccessfulAt < ENTRY_CACHE_TTL_MS) {
-    return filterHiddenEntries(database, lastSuccessfulResult);
-  }
-
   const databaseCache = database ? await readDatabaseCache(database) : null;
   if (databaseCache && now - databaseCache.updatedAt < ENTRY_CACHE_TTL_MS) {
-    lastSuccessfulResult = databaseCache.result;
-    lastSuccessfulAt = databaseCache.updatedAt;
     return filterHiddenEntries(database, databaseCache.result);
   }
 
-  pendingRequest ??= requestContestEntries(feedUrl)
-    .then(async (result) => {
-      const updatedAt = Date.now();
-      lastSuccessfulResult = result;
-      lastSuccessfulAt = updatedAt;
-      if (database) await writeDatabaseCache(database, result, updatedAt);
-      return result;
-    })
-    .finally(() => {
-      pendingRequest = null;
-    });
-
   try {
-    const rawResult = await pendingRequest;
-    return filterHiddenEntries(database, rawResult);
+    const result = await requestContestEntries(feedUrl);
+    if (database) await writeDatabaseCache(database, result, Date.now());
+    return filterHiddenEntries(database, result);
   } catch (error) {
     if (databaseCache) return filterHiddenEntries(database, databaseCache.result);
-    if (lastSuccessfulResult) return filterHiddenEntries(database, lastSuccessfulResult);
     throw error;
   }
 }
