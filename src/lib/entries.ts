@@ -5,10 +5,14 @@ import { readLimitedJsonResponse } from "./request-json";
 export type ContestEntry = {
   id: string;
   youtubeId: string;
+  submittedAt?: string;
+  viewCount?: number;
 };
 
 type FeedEntry = {
   youtubeId?: unknown;
+  submittedAt?: unknown;
+  viewCount?: unknown;
 };
 
 type EntryCacheRow = {
@@ -39,9 +43,95 @@ function normalizeEntries(payload: { entries?: FeedEntry[] }): ContestEntry[] {
       if (!isYouTubeId(youtubeId) || seen.has(youtubeId)) return [];
 
       seen.add(youtubeId);
-      return [{ id: youtubeId, youtubeId }];
+      const submittedAt =
+        typeof entry.submittedAt === "string" &&
+        Number.isFinite(Date.parse(entry.submittedAt))
+          ? entry.submittedAt
+          : undefined;
+      const parsedViewCount =
+        typeof entry.viewCount === "number" || typeof entry.viewCount === "string"
+          ? Number(entry.viewCount)
+          : Number.NaN;
+      const viewCount =
+        Number.isSafeInteger(parsedViewCount) && parsedViewCount >= 0
+          ? parsedViewCount
+          : undefined;
+
+      return [{ id: youtubeId, youtubeId, submittedAt, viewCount }];
     })
     .slice(0, 200);
+}
+
+type YouTubeVideoResource = {
+  id?: unknown;
+  snippet?: { publishedAt?: unknown };
+  statistics?: { viewCount?: unknown };
+};
+
+async function enrichWithYouTubeMetadata(
+  entries: ContestEntry[],
+): Promise<ContestEntry[]> {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey || entries.length === 0) return entries;
+
+  const metadata = new Map<
+    string,
+    { publishedAt?: string; viewCount?: number }
+  >();
+  const batches = Array.from(
+    { length: Math.ceil(entries.length / 50) },
+    (_, index) => entries.slice(index * 50, (index + 1) * 50),
+  );
+
+  const results = await Promise.allSettled(
+    batches.map(async (batch) => {
+      const endpoint = new URL("https://www.googleapis.com/youtube/v3/videos");
+      endpoint.searchParams.set("part", "snippet,statistics");
+      endpoint.searchParams.set("id", batch.map((entry) => entry.youtubeId).join(","));
+      endpoint.searchParams.set("key", apiKey);
+      const response = await fetch(endpoint, {
+        next: { revalidate: 300 },
+        signal: AbortSignal.timeout(ENTRY_FETCH_TIMEOUT_MS),
+      });
+      if (!response.ok) throw new Error(`YouTube API returned ${response.status}`);
+
+      const value = await readLimitedJsonResponse(response, 512 * 1024);
+      const items =
+        value && typeof value === "object" && !Array.isArray(value)
+          ? (value as { items?: YouTubeVideoResource[] }).items
+          : undefined;
+      return Array.isArray(items) ? items : [];
+    }),
+  );
+
+  results.forEach((result) => {
+    if (result.status !== "fulfilled") return;
+    result.value.forEach((video) => {
+      if (typeof video.id !== "string") return;
+      const publishedAt =
+        typeof video.snippet?.publishedAt === "string" &&
+        Number.isFinite(Date.parse(video.snippet.publishedAt))
+          ? video.snippet.publishedAt
+          : undefined;
+      const parsedViewCount = Number(video.statistics?.viewCount);
+      const viewCount =
+        Number.isSafeInteger(parsedViewCount) && parsedViewCount >= 0
+          ? parsedViewCount
+          : undefined;
+      metadata.set(video.id, { publishedAt, viewCount });
+    });
+  });
+
+  return entries.map((entry) => {
+    const video = metadata.get(entry.youtubeId);
+    return video
+      ? {
+          ...entry,
+          submittedAt: entry.submittedAt ?? video.publishedAt,
+          viewCount: video.viewCount ?? entry.viewCount,
+        }
+      : entry;
+  });
 }
 
 async function readDatabaseCache(database: D1Database): Promise<{
@@ -108,7 +198,7 @@ async function requestContestEntries(feedUrl: string): Promise<EntryFeedResult> 
     value && typeof value === "object" && !Array.isArray(value)
       ? (value as { entries?: FeedEntry[] })
       : {};
-  const entries = normalizeEntries(payload);
+  const entries = await enrichWithYouTubeMetadata(normalizeEntries(payload));
 
   return { entries, configured: true };
 }
@@ -139,7 +229,11 @@ export async function fetchContestEntries(
   const now = Date.now();
   const databaseCache = database ? await readDatabaseCache(database) : null;
   if (databaseCache && now - databaseCache.updatedAt < ENTRY_CACHE_TTL_MS) {
-    return filterHiddenEntries(database, databaseCache.result);
+    const enrichedResult = {
+      ...databaseCache.result,
+      entries: await enrichWithYouTubeMetadata(databaseCache.result.entries),
+    };
+    return filterHiddenEntries(database, enrichedResult);
   }
 
   try {
@@ -147,7 +241,13 @@ export async function fetchContestEntries(
     if (database) await writeDatabaseCache(database, result, Date.now());
     return filterHiddenEntries(database, result);
   } catch (error) {
-    if (databaseCache) return filterHiddenEntries(database, databaseCache.result);
+    if (databaseCache) {
+      const enrichedResult = {
+        ...databaseCache.result,
+        entries: await enrichWithYouTubeMetadata(databaseCache.result.entries),
+      };
+      return filterHiddenEntries(database, enrichedResult);
+    }
     throw error;
   }
 }

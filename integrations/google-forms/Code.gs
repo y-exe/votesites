@@ -41,8 +41,50 @@ function getResponseData() {
 
   if (!responseSheet) return { headers: [], rows: [] };
 
-  const rows = responseSheet.getDataRange().getDisplayValues();
+  const rows = responseSheet.getDataRange().getValues();
   return { headers: rows.shift() || [], rows };
+}
+
+function findTimestampColumn(headers) {
+  const detected = headers.findIndex((header) =>
+    /タイムスタンプ|timestamp|送信日時|回答日時/i.test(String(header)),
+  );
+  return detected >= 0 ? detected : 0;
+}
+
+function toIsoTimestamp(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString();
+  }
+  const timestamp = Date.parse(String(value || ""));
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
+}
+
+function addYouTubeViewCounts(entries) {
+  try {
+    const counts = new Map();
+    for (let offset = 0; offset < entries.length; offset += 50) {
+      const batch = entries.slice(offset, offset + 50);
+      const response = YouTube.Videos.list("statistics", {
+        id: batch.map((entry) => entry.youtubeId).join(","),
+      });
+      (response.items || []).forEach((video) => {
+        const viewCount = Number(video.statistics && video.statistics.viewCount);
+        if (Number.isSafeInteger(viewCount) && viewCount >= 0) {
+          counts.set(video.id, viewCount);
+        }
+      });
+    }
+    return entries.map((entry) => ({
+      ...entry,
+      ...(counts.has(entry.youtubeId)
+        ? { viewCount: counts.get(entry.youtubeId) }
+        : {}),
+    }));
+  } catch (error) {
+    console.warn("YouTube statistics could not be loaded", error);
+    return entries;
+  }
 }
 
 function findYouTubeColumns(headers) {
@@ -69,6 +111,7 @@ function doGet() {
     return jsonResponse({ entries: [], updatedAt: new Date().toISOString() });
   }
   const candidateColumns = findYouTubeColumns(headers);
+  const timestampColumn = findTimestampColumn(headers);
   const seen = new Set();
   const entries = [];
 
@@ -78,12 +121,16 @@ function doGet() {
       if (!youtubeId || seen.has(youtubeId)) continue;
 
       seen.add(youtubeId);
-      entries.push({ youtubeId });
+      const submittedAt = toIsoTimestamp(row[timestampColumn]);
+      entries.push({ youtubeId, ...(submittedAt ? { submittedAt } : {}) });
       break;
     }
   });
 
-  return jsonResponse({ entries, updatedAt: new Date().toISOString() });
+  return jsonResponse({
+    entries: addYouTubeViewCounts(entries),
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 function doPost(event) {

@@ -213,12 +213,170 @@ a {
   background: transparent;
 }
 
+.vote-entry-heading {
+  position: relative;
+  z-index: 2;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0.9rem clamp(1rem, 2.3vw, 2rem) 0.75rem;
+  color: #fff;
+  background: #0b0b0b;
+  text-align: center;
+}
+
+.vote-entry-heading h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 5.6vw, 4.6rem);
+  letter-spacing: 0.035em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.vote-entry-heading p {
+  margin: clamp(0.55rem, 1vw, 0.8rem) 0 0;
+  font-size: clamp(0.9rem, 1.55vw, 1.2rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+.vote-entry-heading__count {
+  display: inline-block;
+  padding-inline: 0.08em;
+  background: linear-gradient(transparent 68%, #f63049 68% 94%, transparent 94%);
+  font-size: 1.18em;
+  letter-spacing: 0.03em;
+}
+
+.vote-entry-sort {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  width: min(100%, 42rem);
+  gap: 2px;
+  margin: clamp(1rem, 2vw, 1.6rem) auto clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.vote-entry-sort__button {
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  height: 56px;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 clamp(1rem, 2.4vw, 1.6rem);
+  border: 0;
+  border-radius: 8px;
+  color: #742530;
+  background: #ffd9dd;
+  font: inherit;
+  font-size: clamp(1.1rem, 1.9vw, 1.3rem);
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-radius 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.vote-entry-sort__button:first-child {
+  border-radius: 999px 8px 8px 999px;
+}
+
+.vote-entry-sort__button:last-child {
+  border-radius: 8px 999px 999px 8px;
+}
+
+.vote-entry-sort__button[data-active="true"] {
+  border-radius: 999px;
+  color: #fff;
+  background: #f63049;
+}
+
+.vote-entry-sort__button:active:not(:disabled) {
+  border-radius: 4px;
+}
+
+.vote-entry-sort__button:first-child:active:not(:disabled) {
+  border-radius: 999px 4px 4px 999px;
+}
+
+.vote-entry-sort__button:last-child:active:not(:disabled) {
+  border-radius: 4px 999px 999px 4px;
+}
+
+.vote-entry-sort__button:focus-visible {
+  outline: 4px solid #f63049;
+  outline-offset: 4px;
+}
+
+.vote-entry-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.8rem, 1.7vw, 1.5rem);
+  animation: vote-entry-grid-in 360ms ease-out both;
+}
+
+.vote-entry-status-card {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  place-items: center;
+  border: 0;
+  border-radius: clamp(0.8rem, 1.5vw, 1.35rem);
+  background: #3f3f3f;
+}
+
+.vote-entry-status-card__label {
+  display: inline-block;
+  width: max-content;
+  max-width: calc(100% - 1.5rem);
+  color: #fff;
+  font-size: clamp(0.95rem, 2vw, 1.3rem);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+@keyframes vote-entry-grid-in {
+  from {
+    opacity: 0.65;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+::view-transition-group(*) {
+  animation-duration: 520ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+
 .vote-criteria__rule {
   max-width: 54rem;
   margin: clamp(0.8rem, 1.6vw, 1.2rem) auto 0;
-  font-size: clamp(0.78rem, 1.35vw, 1.05rem);
+  font-size: clamp(1rem, 1.8vw, 1.45rem);
   font-weight: 800;
-  line-height: 1.75;
+  line-height: 1.8;
   text-wrap: balance;
 }
 
@@ -539,26 +697,6 @@ a {
 .vote-entry__report-button:focus-visible {
   outline: 4px solid #f63049;
   outline-offset: 3px;
-}
-
-.vote-entry-skeleton {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: clamp(0.8rem, 1.5vw, 1.35rem);
-  background: linear-gradient(105deg, #cacaca 35%, #dedede 48%, #cacaca 61%);
-  background-size: 220% 100%;
-  animation: vote-thumbnail-loading 1.5s ease-in-out infinite;
-}
-
-@keyframes vote-thumbnail-loading {
-  from {
-    background-position: 100% 0;
-  }
-
-  to {
-    background-position: -100% 0;
-  }
 }
 
 .vote-confirm-modal {
@@ -915,6 +1053,26 @@ a {
 
   .vote-line-field {
     min-height: 0;
+  }
+
+  .vote-entry-heading {
+    padding: 0.75rem 1rem 0.65rem;
+  }
+
+  .vote-entry-sort {
+    width: 100%;
+    gap: 2px;
+  }
+
+  .vote-entry-sort__button {
+    height: 52px;
+    padding-inline: 0.5rem;
+    font-size: clamp(0.9rem, 3.8vw, 1.05rem);
+  }
+
+  .vote-entry-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
   }
 
   .vote-entry-cta-card {
@@ -2365,6 +2523,11 @@ a {
 
   .vote-entry-ending__track {
     animation: none;
+  }
+
+  .vote-entry-grid,
+  ::view-transition-group(*) {
+    animation-duration: 1ms;
   }
 
   .home__mesh-pattern {

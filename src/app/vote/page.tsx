@@ -4,7 +4,15 @@ import localFont from "next/font/local";
 import { Google_Sans, League_Gothic } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { flushSync } from "react-dom";
 import { ReactLenis, type LenisRef } from "lenis/react";
 import DiscordLogo from "../discord-logo";
 import { getVotingPhase, type VotingPhase } from "@/data/schedule";
@@ -46,7 +54,17 @@ type CircuitLayout = {
 type VoteEntry = {
   id: string;
   youtubeId: string;
+  submittedAt?: string;
+  viewCount?: number;
 };
+
+type EntrySort = "newest" | "oldest" | "views";
+
+const entrySortOptions: { value: EntrySort; label: string }[] = [
+  { value: "newest", label: "新しい順" },
+  { value: "oldest", label: "古い順" },
+  { value: "views", label: "再生回数順" },
+];
 
 function YouTubeThumbnail({
   youtubeId,
@@ -612,6 +630,7 @@ export default function VotePage() {
   const [topTrim, setTopTrim] = useState(0);
   const [circuitLayout, setCircuitLayout] = useState<CircuitLayout | null>(null);
   const [entries, setEntries] = useState<VoteEntry[]>([]);
+  const [entrySort, setEntrySort] = useState<EntrySort>("newest");
   const [selectedEntry, setSelectedEntry] = useState<VoteEntry | null>(null);
   const [pendingVoteEntry, setPendingVoteEntry] = useState<VoteEntry | null>(null);
   const [voteHoldActive, setVoteHoldActive] = useState(false);
@@ -639,6 +658,43 @@ export default function VotePage() {
   const [reportToastVisible, setReportToastVisible] = useState(false);
   const [reportHoldActive, setReportHoldActive] = useState(false);
   const reportHoldTimerRef = useRef<number | null>(null);
+
+  const sortedEntries = useMemo(() => {
+    const sourceOrder = new Map(
+      entries.map((entry, index) => [entry.youtubeId, index]),
+    );
+    const entryTime = (entry: VoteEntry) => {
+      const timestamp = entry.submittedAt
+        ? Date.parse(entry.submittedAt)
+        : Number.NaN;
+      return Number.isFinite(timestamp)
+        ? timestamp
+        : sourceOrder.get(entry.youtubeId) ?? 0;
+    };
+
+    return [...entries].sort((left, right) => {
+      if (entrySort === "views") {
+        const viewDifference = (right.viewCount ?? -1) - (left.viewCount ?? -1);
+        if (viewDifference !== 0) return viewDifference;
+      }
+
+      const timeDifference = entryTime(left) - entryTime(right);
+      return entrySort === "oldest" ? timeDifference : -timeDifference;
+    });
+  }, [entries, entrySort]);
+
+  const changeEntrySort = (nextSort: EntrySort) => {
+    if (nextSort === entrySort) return;
+
+    if (entries.length < 2 || !document.startViewTransition) {
+      setEntrySort(nextSort);
+      return;
+    }
+
+    document.startViewTransition(() => {
+      flushSync(() => setEntrySort(nextSort));
+    });
+  };
 
   const startReportHold = () => {
     if (
@@ -809,8 +865,7 @@ export default function VotePage() {
 
         const nextEntries = Array.isArray(payload.entries) ? payload.entries : [];
         setEntries((currentEntries) =>
-          currentEntries.map((entry) => entry.youtubeId).join(",") ===
-            nextEntries.map((entry) => entry.youtubeId).join(",")
+          JSON.stringify(currentEntries) === JSON.stringify(nextEntries)
             ? currentEntries
             : nextEntries,
         );
@@ -1125,9 +1180,6 @@ export default function VotePage() {
                   <strong>投票してください</strong>
                 </p>
                 <p className="vote-criteria__rule">
-                  投票は<strong>一人1票</strong>です。途中経過とランキングは
-                  <strong>結果生放送まで非公開</strong>です。
-                  <br />
                   投票期間：2026年8月29日 20:00 ～ 9月4日 23:59
                 </p>
               </article>
@@ -1145,14 +1197,44 @@ export default function VotePage() {
         </section>
         <section className="vote-line-field" aria-labelledby="vote-entries-title">
           <div className="relative w-[min(88%,78rem)] mx-auto pt-[clamp(1.5rem,4svh,3rem)] pb-0 max-sm:w-[calc(100%-2.5rem)] max-sm:pt-6">
-            <h2 id="vote-entries-title" className="relative z-[2] w-max mx-auto mb-[clamp(1.25rem,2.5vw,2rem)] px-[0.32em] py-[0.18em] text-white bg-[#0b0b0b] text-[clamp(2.2rem,7vw,6.5rem)] leading-none tracking-[0.02em]">
-              ENTRY VIDEOS
-            </h2>
+            <div className="vote-entry-heading">
+              <h2 id="vote-entries-title">エントリー作品一覧</h2>
+              <p aria-live="polite">
+                エントリー作品合計 :{" "}
+                <span className="vote-entry-heading__count">
+                  {entriesState === "loading" ? "—" : `${entries.length}件`}
+                </span>
+              </p>
+            </div>
+            <div
+              className="vote-entry-sort"
+              role="radiogroup"
+              aria-label="エントリー作品の並び順"
+            >
+              {entrySortOptions.map((option) => (
+                <button
+                  className="vote-entry-sort__button home-reel-trigger"
+                  type="button"
+                  role="radio"
+                  data-active={entrySort === option.value}
+                  aria-checked={entrySort === option.value}
+                  aria-label={`${option.label}で並び替え`}
+                  onClick={() => changeEntrySort(option.value)}
+                  key={option.value}
+                >
+                  <VoteReelText label={option.label} />
+                </button>
+              ))}
+            </div>
             {entries.length > 0 ? (
               <>
-                <div className="relative z-[2] grid grid-cols-2 gap-[clamp(0.8rem,1.7vw,1.5rem)] max-sm:grid-cols-1 max-sm:gap-4">
-                  {entries.map((entry, index) => (
-                    <article className="vote-entry-item" key={entry.id}>
+                <div className="vote-entry-grid" key={entrySort}>
+                  {sortedEntries.map((entry, index) => (
+                    <article
+                      className="vote-entry-item"
+                      style={{ viewTransitionName: `vote-entry-${entry.youtubeId}` }}
+                      key={entry.id}
+                    >
                       <button
                         className="vote-entry"
                         type="button"
@@ -1263,49 +1345,40 @@ export default function VotePage() {
                 <VoteEntryEnding />
               </>
             ) : entriesState === "loading" ? (
-              <div className="relative z-[2] grid grid-cols-2 gap-[clamp(0.8rem,1.7vw,1.5rem)] max-sm:grid-cols-1 max-sm:gap-4" role="status" aria-busy="true">
+              <div className="vote-entry-grid" role="status" aria-busy="true">
                 <span className="sr-only">応募作品を読み込んでいます</span>
                 {Array.from({ length: ENTRY_LOADING_PLACEHOLDERS }, (_, index) => (
-                  <span className="vote-entry-skeleton" aria-hidden="true" key={index} />
+                  <span
+                    className="vote-entry-status-card"
+                    aria-hidden="true"
+                    key={index}
+                  >
+                    <span className="vote-entry-status-card__label">
+                      (ºдº≡ºдº)
+                    </span>
+                  </span>
                 ))}
               </div>
             ) : (
               <>
-                <div className="relative z-[2] grid grid-cols-2 gap-[clamp(0.8rem,1.7vw,1.5rem)] max-sm:grid-cols-1 max-sm:gap-4">
+                <div className="vote-entry-grid" role="status">
+                  <span className="sr-only">
+                    {entriesState === "error"
+                      ? "応募作品の読み込みに失敗しました"
+                      : "作品がまだありません"}
+                  </span>
                   {Array.from({ length: 2 }, (_, index) => (
-                    <article className="vote-entry-item" key={index}>
-                      <div className="vote-entry" style={{ cursor: "default" }}>
-                        <span
-                          className="vote-entry__thumbnail"
-                          style={{
-                            background: "#888888",
-                            boxShadow: "none",
-                            display: "block",
-                          }}
-                        />
-                      </div>
-                      <div className="vote-entry__actions">
-                        <button
-                          className="vote-entry__vote-button vote-entry__vote-button--unavailable"
-                          type="button"
-                          disabled
-                          style={{
-                            opacity: 1,
-                            cursor: "not-allowed",
-                            width: "100%",
-                            background: "#666666",
-                          }}
-                        >
-                          <VoteReelText
-                            label={
-                              entriesState === "error"
-                                ? "読み込みに失敗しました"
-                                : "作品がまだありません"
-                            }
-                          />
-                        </button>
-                      </div>
-                    </article>
+                    <span
+                      className="vote-entry-status-card"
+                      aria-hidden="true"
+                      key={index}
+                    >
+                      <span className="vote-entry-status-card__label">
+                        {entriesState === "error"
+                          ? "読み込みに失敗しました"
+                          : "|•́ω•̀ )ﾏﾀﾞﾅｲﾖ"}
+                      </span>
+                    </span>
                   ))}
                 </div>
                 <VoteEntryEnding />

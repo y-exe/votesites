@@ -64,6 +64,7 @@ cp .env.example .env.local
 ```env
 ENTRY_FEED_URL=
 ENTRY_LOOKUP_SECRET=
+YOUTUBE_API_KEY=（任意・YouTube Data API v3）
 REMOVE_CODE_SECRET=（32文字以上のランダムな値）
 RESEND_API_KEY=
 RESEND_EMAIL_FROM=event@ymkw.top
@@ -73,8 +74,6 @@ AUTH_SECRET=（32文字以上のランダムな値）
 REPORT_PASSWORD_HASH=
 DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback
 ```
-
-本番環境では、`RESEND_API_KEY`・`DISCORD_CLIENT_SECRET`・各SECRETをGitに入れず、Cloudflare Secretとして設定してください。
 
 ## Workersへデプロイ
 
