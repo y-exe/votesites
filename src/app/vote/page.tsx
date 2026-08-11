@@ -876,7 +876,7 @@ export default function VotePage() {
     };
 
     void loadEntries();
-    const refreshTimer = window.setInterval(loadEntries, 5 * 60_000);
+    const refreshTimer = window.setInterval(loadEntries, 60 * 60_000);
 
     return () => {
       active = false;

@@ -21,7 +21,7 @@ type EntryCacheRow = {
 };
 
 const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
-const ENTRY_CACHE_TTL_MS = 5 * 60 * 1000;
+const ENTRY_CACHE_TTL_MS = 60 * 60 * 1000;
 const ENTRY_FETCH_TIMEOUT_MS = 7_000;
 
 type EntryFeedResult = {
@@ -74,13 +74,18 @@ async function enrichWithYouTubeMetadata(
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey || entries.length === 0) return entries;
 
+  const entriesNeedingMetadata = entries.filter(
+    (entry) => entry.viewCount === undefined || !entry.submittedAt,
+  );
+  if (entriesNeedingMetadata.length === 0) return entries;
+
   const metadata = new Map<
     string,
     { publishedAt?: string; viewCount?: number }
   >();
   const batches = Array.from(
-    { length: Math.ceil(entries.length / 50) },
-    (_, index) => entries.slice(index * 50, (index + 1) * 50),
+    { length: Math.ceil(entriesNeedingMetadata.length / 50) },
+    (_, index) => entriesNeedingMetadata.slice(index * 50, (index + 1) * 50),
   );
 
   const results = await Promise.allSettled(
@@ -90,7 +95,7 @@ async function enrichWithYouTubeMetadata(
       endpoint.searchParams.set("id", batch.map((entry) => entry.youtubeId).join(","));
       endpoint.searchParams.set("key", apiKey);
       const response = await fetch(endpoint, {
-        next: { revalidate: 300 },
+        next: { revalidate: 3600 },
         signal: AbortSignal.timeout(ENTRY_FETCH_TIMEOUT_MS),
       });
       if (!response.ok) throw new Error(`YouTube API returned ${response.status}`);
@@ -174,9 +179,53 @@ async function writeDatabaseCache(
       )
       .bind(JSON.stringify({ entries: result.entries }), updatedAt)
       .run();
+    return true;
   } catch (error) {
     console.warn(
       "Entry feed cache write failed",
+      error instanceof Error ? error.message : "unknown",
+    );
+    return false;
+  }
+}
+
+async function claimDatabaseRefresh(
+  database: D1Database,
+  cachedAt: number,
+  claimedAt: number,
+) {
+  try {
+    const result = await database
+      .prepare(
+        "UPDATE entry_feed_cache SET updated_at = ?1 WHERE id = 1 AND updated_at = ?2",
+      )
+      .bind(claimedAt, cachedAt)
+      .run();
+    return result.meta.changes === 1;
+  } catch (error) {
+    console.warn(
+      "Entry feed refresh claim failed",
+      error instanceof Error ? error.message : "unknown",
+    );
+    return false;
+  }
+}
+
+async function releaseDatabaseRefresh(
+  database: D1Database,
+  claimedAt: number,
+  cachedAt: number,
+) {
+  try {
+    await database
+      .prepare(
+        "UPDATE entry_feed_cache SET updated_at = ?1 WHERE id = 1 AND updated_at = ?2",
+      )
+      .bind(cachedAt, claimedAt)
+      .run();
+  } catch (error) {
+    console.warn(
+      "Entry feed refresh claim release failed",
       error instanceof Error ? error.message : "unknown",
     );
   }
@@ -184,7 +233,7 @@ async function writeDatabaseCache(
 
 async function requestContestEntries(feedUrl: string): Promise<EntryFeedResult> {
   const response = await fetch(feedUrl, {
-    next: { revalidate: 300 },
+    next: { revalidate: 3600 },
     redirect: "follow",
     signal: AbortSignal.timeout(ENTRY_FETCH_TIMEOUT_MS),
   });
@@ -229,24 +278,45 @@ export async function fetchContestEntries(
   const now = Date.now();
   const databaseCache = database ? await readDatabaseCache(database) : null;
   if (databaseCache && now - databaseCache.updatedAt < ENTRY_CACHE_TTL_MS) {
-    const enrichedResult = {
-      ...databaseCache.result,
-      entries: await enrichWithYouTubeMetadata(databaseCache.result.entries),
-    };
-    return filterHiddenEntries(database, enrichedResult);
+    return filterHiddenEntries(database, databaseCache.result);
+  }
+
+  let refreshClaimedAt: number | null = null;
+  if (database && databaseCache) {
+    refreshClaimedAt = Date.now();
+    const claimed = await claimDatabaseRefresh(
+      database,
+      databaseCache.updatedAt,
+      refreshClaimedAt,
+    );
+    if (!claimed) {
+      return filterHiddenEntries(database, databaseCache.result);
+    }
   }
 
   try {
     const result = await requestContestEntries(feedUrl);
-    if (database) await writeDatabaseCache(database, result, Date.now());
+    if (database) {
+      const written = await writeDatabaseCache(database, result, Date.now());
+      if (!written && databaseCache && refreshClaimedAt !== null) {
+        await releaseDatabaseRefresh(
+          database,
+          refreshClaimedAt,
+          databaseCache.updatedAt,
+        );
+      }
+    }
     return filterHiddenEntries(database, result);
   } catch (error) {
     if (databaseCache) {
-      const enrichedResult = {
-        ...databaseCache.result,
-        entries: await enrichWithYouTubeMetadata(databaseCache.result.entries),
-      };
-      return filterHiddenEntries(database, enrichedResult);
+      if (database && refreshClaimedAt !== null) {
+        await releaseDatabaseRefresh(
+          database,
+          refreshClaimedAt,
+          databaseCache.updatedAt,
+        );
+      }
+      return filterHiddenEntries(database, databaseCache.result);
     }
     throw error;
   }
