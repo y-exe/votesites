@@ -596,12 +596,33 @@ function VoteCircuit({ layout }: { layout: CircuitLayout }) {
     >
       <g className="vote-circuit__paths">
         {layout.paths.map((path, index) => (
-          <path key={index} d={path} pathLength="1" />
+          <path
+            key={index}
+            d={path}
+            pathLength="1"
+            vectorEffect="non-scaling-stroke"
+            style={{ strokeWidth: "var(--vote-circuit-stroke)" }}
+            onAnimationEnd={(event) => {
+              if (event.animationName !== "vote-line-draw") return;
+
+              // The dash is only needed while the line grows. Leaving it on
+              // very long paths can render as visible gaps in mobile Safari.
+              event.currentTarget.style.strokeDasharray = "none";
+              event.currentTarget.style.strokeDashoffset = "0";
+            }}
+          />
         ))}
       </g>
       <g className="vote-circuit__rings">
         {layout.rings.map((ring, index) => (
-          <circle key={index} cx={ring.x} cy={ring.y} r="18" />
+          <circle
+            key={index}
+            cx={ring.x}
+            cy={ring.y}
+            r="18"
+            vectorEffect="non-scaling-stroke"
+            style={{ strokeWidth: "var(--vote-circuit-stroke)" }}
+          />
         ))}
       </g>
       <g className="vote-circuit__labels">
@@ -1040,21 +1061,54 @@ export default function VotePage() {
 
   useLayoutEffect(() => {
     let frame = 0;
-    const updateCircuit = () => {
+    let lastPageWidth = 0;
+    let lastPageHeight = 0;
+    let lastViewportWidth = window.innerWidth;
+
+    const updateCircuit = (force = false) => {
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(() => {
         const page = pageRef.current;
-        if (page) setCircuitLayout(buildCircuit(page));
+        if (!page) return;
+
+        const pageWidth = page.clientWidth;
+        const pageHeight = page.scrollHeight;
+        const sizeChanged =
+          Math.abs(pageWidth - lastPageWidth) >= 1 ||
+          Math.abs(pageHeight - lastPageHeight) >= 1;
+
+        if (!force && !sizeChanged) return;
+
+        lastPageWidth = pageWidth;
+        lastPageHeight = pageHeight;
+        setCircuitLayout(buildCircuit(page));
       });
     };
 
-    updateCircuit();
-    void document.fonts.ready.then(updateCircuit);
-    window.addEventListener("resize", updateCircuit);
+    const handleViewportResize = () => {
+      const viewportWidth = window.innerWidth;
+
+      // Mobile browser chrome continuously changes the viewport height while
+      // scrolling. Rebuilding the full-page SVG for those height-only resizes
+      // can leave transient gaps in Safari, so only react to width changes.
+      if (Math.abs(viewportWidth - lastViewportWidth) < 2) return;
+
+      lastViewportWidth = viewportWidth;
+      updateCircuit(true);
+    };
+
+    updateCircuit(true);
+    void document.fonts.ready.then(() => updateCircuit(true));
+    window.addEventListener("resize", handleViewportResize);
+
+    const resizeObserver = new ResizeObserver(() => updateCircuit());
+    const page = pageRef.current;
+    if (page) resizeObserver.observe(page);
 
     return () => {
       window.cancelAnimationFrame(frame);
-      window.removeEventListener("resize", updateCircuit);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", handleViewportResize);
     };
   }, [entries.length, entriesState]);
 

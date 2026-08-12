@@ -893,6 +893,7 @@ a {
 }
 
 .vote-circuit {
+  --vote-circuit-stroke: clamp(5px, 0.55vw, 10px);
   position: absolute;
   z-index: 1;
   inset: 0;
@@ -916,10 +917,8 @@ a {
 
 .vote-circuit__paths path {
   opacity: 0;
-  stroke-width: clamp(5px, 0.55vw, 10px);
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  vector-effect: non-scaling-stroke;
 }
 
 .vote-page[data-intro="ready"] .vote-circuit__paths path {
@@ -929,11 +928,6 @@ a {
 .vote-circuit__rings {
   fill: #fff;
   stroke: #f63049;
-}
-
-.vote-circuit__rings circle {
-  stroke-width: clamp(5px, 0.55vw, 10px);
-  vector-effect: non-scaling-stroke;
 }
 
 .vote-page[data-intro="idle"] .vote-circuit__rings {
@@ -1105,13 +1099,11 @@ a {
     font-size: clamp(1.6rem, 8vw, 2.5rem);
   }
 
-  .vote-circuit__rings {
-    stroke-width: initial;
-  }
+}
 
-  .vote-circuit__paths path,
-  .vote-circuit__rings circle {
-    stroke-width: 8px;
+@media (max-width: 760px), (hover: none) and (pointer: coarse) {
+  .vote-circuit {
+    --vote-circuit-stroke: 12px;
   }
 }
 
