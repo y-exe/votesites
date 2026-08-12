@@ -62,7 +62,7 @@ export async function consumeSlidingWindowRateLimit(args: {
   limit: number;
   windowMs: number;
   now?: number;
-}): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+}): Promise<{ allowed: boolean; retryAfterSeconds: number; eventId?: string }> {
   const { database, scope, keyHash, limit, windowMs } = args;
   const now = args.now ?? Date.now();
   const expiresAt = now + windowMs;
@@ -85,7 +85,20 @@ export async function consumeSlidingWindowRateLimit(args: {
   return {
     allowed: Boolean(row?.id),
     retryAfterSeconds: Math.max(1, Math.ceil(windowMs / 1000)),
+    ...(row?.id ? { eventId: row.id } : {}),
   };
+}
+
+export async function releaseSlidingWindowRateLimitEvents(
+  database: D1Database,
+  eventIds: string[],
+): Promise<void> {
+  if (eventIds.length === 0) return;
+  await database.batch(
+    eventIds.map((eventId) =>
+      database.prepare("DELETE FROM api_rate_limit_events WHERE id = ?1").bind(eventId),
+    ),
+  );
 }
 
 export async function pruneExpiredSecurityRows(

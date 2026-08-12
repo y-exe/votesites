@@ -2,7 +2,11 @@ import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { isValidYouTubeId } from "./reports";
 import { readLimitedJsonResponse } from "./request-json";
-import { consumeSlidingWindowRateLimit, pruneExpiredSecurityRows } from "./security";
+import {
+  consumeSlidingWindowRateLimit,
+  pruneExpiredSecurityRows,
+  releaseSlidingWindowRateLimitEvents,
+} from "./security";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -168,47 +172,50 @@ async function excludeHiddenVideoIds(
   return videoIds.filter((videoId) => !hidden.has(videoId));
 }
 
-async function isRateLimited(
+async function reserveEmailRateLimits(
   database: D1Database,
   emailHash: string,
   ip: string,
   now: number,
-): Promise<boolean> {
-  const limits = [
-    await consumeSlidingWindowRateLimit({
-      database,
+): Promise<{ rateLimited: boolean; eventIds: string[] }> {
+  const definitions = [
+    {
       scope: "removal-email-minute",
       keyHash: emailHash,
       limit: 1,
       windowMs: EMAIL_COOLDOWN_MS,
-      now,
-    }),
-    await consumeSlidingWindowRateLimit({
-      database,
+    },
+    {
       scope: "removal-email-hour",
       keyHash: emailHash,
       limit: MAX_EMAIL_REQUESTS_PER_HOUR,
       windowMs: EMAIL_RATE_LIMIT_WINDOW_MS,
-      now,
-    }),
-    await consumeSlidingWindowRateLimit({
-      database,
+    },
+    {
       scope: "removal-ip-window",
       keyHash: ip,
       limit: MAX_IP_REQUESTS_PER_WINDOW,
       windowMs: IP_RATE_LIMIT_WINDOW_MS,
-      now,
-    }),
-    await consumeSlidingWindowRateLimit({
-      database,
+    },
+    {
       scope: "removal-ip-day",
       keyHash: ip,
       limit: MAX_IP_REQUESTS_PER_DAY,
       windowMs: IP_DAILY_WINDOW_MS,
-      now,
-    }),
+    },
   ];
-  return limits.some((limit) => !limit.allowed);
+  const eventIds: string[] = [];
+
+  for (const definition of definitions) {
+    const result = await consumeSlidingWindowRateLimit({ database, ...definition, now });
+    if (!result.allowed) {
+      await releaseSlidingWindowRateLimitEvents(database, eventIds);
+      return { rateLimited: true, eventIds: [] };
+    }
+    if (result.eventId) eventIds.push(result.eventId);
+  }
+
+  return { rateLimited: false, eventIds };
 }
 
 export async function createRemovalRequest(args: {
@@ -235,30 +242,31 @@ export async function createRemovalRequest(args: {
     .bind(now)
     .run();
 
-  if (await isRateLimited(database, emailHash, ipHash, now)) {
+  const rateLimit = await reserveEmailRateLimits(database, emailHash, ipHash, now);
+  if (rateLimit.rateLimited) {
     return { requestId, rateLimited: true };
   }
 
-  const code = createCode();
-  const codeHash = await hmac(secret, `code:${requestId}:${code}`);
-  await database
-    .prepare(
-      `INSERT INTO removal_requests
-       (id, email_hash, code_hash, video_ids, created_at, expires_at, attempts, requested_ip)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7)`,
-    )
-    .bind(
-      requestId,
-      emailHash,
-      codeHash,
-      "[]",
-      now,
-      now + CODE_TTL_MS,
-      ipHash,
-    )
-    .run();
-
   try {
+    const code = createCode();
+    const codeHash = await hmac(secret, `code:${requestId}:${code}`);
+    await database
+      .prepare(
+        `INSERT INTO removal_requests
+         (id, email_hash, code_hash, video_ids, created_at, expires_at, attempts, requested_ip)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7)`,
+      )
+      .bind(
+        requestId,
+        emailHash,
+        codeHash,
+        "[]",
+        now,
+        now + CODE_TTL_MS,
+        ipHash,
+      )
+      .run();
+
     await sendRemovalCodeWithResend({
       apiKey: resendApiKey,
       to: email,
@@ -267,7 +275,18 @@ export async function createRemovalRequest(args: {
       requestId,
     });
   } catch (error) {
-    console.error("Failed to send removal verification email", error);
+    console.error("Failed to create or send removal verification email", error);
+    try {
+      await database.batch([
+        database.prepare("DELETE FROM removal_requests WHERE id = ?1").bind(requestId),
+        ...rateLimit.eventIds.map((eventId) =>
+          database.prepare("DELETE FROM api_rate_limit_events WHERE id = ?1").bind(eventId),
+        ),
+      ]);
+    } catch (cleanupError) {
+      console.error("Failed to roll back removal email rate limit", cleanupError);
+    }
+    throw error;
   }
 
   return { requestId, rateLimited: false };
