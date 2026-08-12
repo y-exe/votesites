@@ -910,13 +910,13 @@ a {
 .vote-circuit__paths {
   fill: none;
   stroke: #f63049;
-  stroke-width: clamp(5px, 0.55vw, 10px);
   stroke-linecap: square;
   stroke-linejoin: miter;
 }
 
 .vote-circuit__paths path {
   opacity: 0;
+  stroke-width: clamp(5px, 0.55vw, 10px);
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   vector-effect: non-scaling-stroke;
@@ -929,10 +929,10 @@ a {
 .vote-circuit__rings {
   fill: #fff;
   stroke: #f63049;
-  stroke-width: clamp(5px, 0.55vw, 10px);
 }
 
 .vote-circuit__rings circle {
+  stroke-width: clamp(5px, 0.55vw, 10px);
   vector-effect: non-scaling-stroke;
 }
 
@@ -1106,7 +1106,12 @@ a {
   }
 
   .vote-circuit__rings {
-    stroke-width: 7px;
+    stroke-width: initial;
+  }
+
+  .vote-circuit__paths path,
+  .vote-circuit__rings circle {
+    stroke-width: 8px;
   }
 }
 

@@ -686,13 +686,56 @@ export default function VotePage() {
   const changeEntrySort = (nextSort: EntrySort) => {
     if (nextSort === entrySort) return;
 
-    if (entries.length < 2 || !document.startViewTransition) {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const compactPointer = window.matchMedia(
+      "(max-width: 760px), (hover: none), (pointer: coarse)",
+    ).matches;
+
+    if (entries.length < 2 || reducedMotion) {
       setEntrySort(nextSort);
       return;
     }
 
-    document.startViewTransition(() => {
-      flushSync(() => setEntrySort(nextSort));
+    if (!compactPointer && document.startViewTransition) {
+      document.startViewTransition(() => {
+        flushSync(() => setEntrySort(nextSort));
+      });
+      return;
+    }
+
+    const previousPositions = new Map(
+      Array.from(
+        pageRef.current?.querySelectorAll<HTMLElement>("[data-vote-entry-id]") ?? [],
+      ).map((element) => [
+        element.dataset.voteEntryId ?? "",
+        element.getBoundingClientRect(),
+      ]),
+    );
+
+    flushSync(() => setEntrySort(nextSort));
+
+    window.requestAnimationFrame(() => {
+      pageRef.current
+        ?.querySelectorAll<HTMLElement>("[data-vote-entry-id]")
+        .forEach((element) => {
+          const previous = previousPositions.get(element.dataset.voteEntryId ?? "");
+          if (!previous) return;
+          const current = element.getBoundingClientRect();
+          const offsetX = previous.left - current.left;
+          const offsetY = previous.top - current.top;
+          if (Math.abs(offsetX) < 0.5 && Math.abs(offsetY) < 0.5) return;
+
+          element.animate(
+            [
+              { transform: `translate3d(${offsetX}px, ${offsetY}px, 0)` },
+              { transform: "translate3d(0, 0, 0)" },
+            ],
+            {
+              duration: 480,
+              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+            },
+          );
+        });
     });
   };
 
@@ -1228,10 +1271,11 @@ export default function VotePage() {
             </div>
             {entries.length > 0 ? (
               <>
-                <div className="vote-entry-grid" key={entrySort}>
+                <div className="vote-entry-grid">
                   {sortedEntries.map((entry, index) => (
                     <article
                       className="vote-entry-item"
+                      data-vote-entry-id={entry.youtubeId}
                       style={{ viewTransitionName: `vote-entry-${entry.youtubeId}` }}
                       key={entry.id}
                     >
