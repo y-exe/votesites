@@ -54,14 +54,19 @@ export default function RemovePage() {
       const response = await fetch("/api/remove/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestId, code }),
+        body: JSON.stringify({ requestId, code, email }),
       });
       const data = (await response.json()) as {
         sessionToken?: string;
         videoIds?: string[];
+        error?: string;
       };
       if (!response.ok || !data.sessionToken || !Array.isArray(data.videoIds)) {
-        setError("確認コードが違うか、有効期限が切れています。");
+        setError(
+          data.error === "service_unavailable"
+            ? "応募情報を確認できませんでした。時間をおいて、同じコードでもう一度お試しください。"
+            : "確認コードが違うか、有効期限が切れています。",
+        );
         return;
       }
       setSessionToken(data.sessionToken);

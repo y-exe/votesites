@@ -126,17 +126,18 @@ function parseVideoIds(value: string): string[] {
   }
 }
 
-async function lookupVideoIds(email: string): Promise<string[]> {
-  const feedUrl = process.env.ENTRY_FEED_URL;
-  const lookupSecret = process.env.ENTRY_LOOKUP_SECRET;
-  if (!feedUrl || !lookupSecret) throw new Error("Entry lookup is not configured");
-
+async function lookupVideoIds(args: {
+  email: string;
+  feedUrl: string;
+  lookupSecret: string;
+}): Promise<string[]> {
+  const { email, feedUrl, lookupSecret } = args;
   const response = await fetch(feedUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action: "lookupByEmail", email, secret: lookupSecret }),
     redirect: "follow",
-    signal: AbortSignal.timeout(7_000),
+    signal: AbortSignal.timeout(20_000),
     cache: "no-store",
   });
   if (!response.ok) throw new Error(`Entry lookup returned ${response.status}`);
@@ -240,8 +241,6 @@ export async function createRemovalRequest(args: {
 
   const code = createCode();
   const codeHash = await hmac(secret, `code:${requestId}:${code}`);
-  const videoIds = await excludeHiddenVideoIds(database, await lookupVideoIds(email));
-
   await database
     .prepare(
       `INSERT INTO removal_requests
@@ -252,7 +251,7 @@ export async function createRemovalRequest(args: {
       requestId,
       emailHash,
       codeHash,
-      JSON.stringify(videoIds),
+      "[]",
       now,
       now + CODE_TTL_MS,
       ipHash,
@@ -278,20 +277,13 @@ export async function verifyRemovalCode(args: {
   database: D1Database;
   requestId: string;
   code: string;
+  email: string;
   secret: string;
+  feedUrl: string;
+  lookupSecret: string;
 }): Promise<{ success: true; sessionToken: string; videoIds: string[] } | { success: false }> {
-  const { database, requestId, code, secret } = args;
+  const { database, requestId, code, email, secret, feedUrl, lookupSecret } = args;
   const now = Date.now();
-  const attempt = await database
-    .prepare(
-      `UPDATE removal_requests
-       SET attempts = attempts + 1
-       WHERE id = ?1 AND used_at IS NULL AND expires_at >= ?2 AND attempts < ?3`,
-    )
-    .bind(requestId, now, MAX_ATTEMPTS)
-    .run();
-  if (attempt.meta.changes !== 1) return { success: false };
-
   const row = await database
     .prepare(
       `SELECT id, email_hash, code_hash, video_ids, expires_at, attempts, used_at
@@ -300,21 +292,43 @@ export async function verifyRemovalCode(args: {
     .bind(requestId)
     .first<RemovalRequestRow>();
 
-  if (!row || row.used_at || row.expires_at < now) {
+  if (!row || row.used_at || row.expires_at < now || row.attempts >= MAX_ATTEMPTS) {
     return { success: false };
   }
 
-  const providedHash = await hmac(secret, `code:${requestId}:${code.toUpperCase()}`);
-  if (!(await constantTimeEqual(row.code_hash, providedHash))) {
+  const [providedCodeHash, providedEmailHash] = await Promise.all([
+    hmac(secret, `code:${requestId}:${code.toUpperCase()}`),
+    hmac(secret, `email:${email}`),
+  ]);
+  const [codeMatches, emailMatches] = await Promise.all([
+    constantTimeEqual(row.code_hash, providedCodeHash),
+    constantTimeEqual(row.email_hash, providedEmailHash),
+  ]);
+  if (!codeMatches || !emailMatches) {
+    await database
+      .prepare(
+        `UPDATE removal_requests
+         SET attempts = attempts + 1
+         WHERE id = ?1 AND used_at IS NULL AND expires_at >= ?2 AND attempts < ?3`,
+      )
+      .bind(requestId, now, MAX_ATTEMPTS)
+      .run();
     return { success: false };
   }
 
-  const videoIds = await excludeHiddenVideoIds(database, parseVideoIds(row.video_ids));
+  const videoIds = await excludeHiddenVideoIds(
+    database,
+    await lookupVideoIds({ email, feedUrl, lookupSecret }),
+  );
   const sessionToken = createToken();
   const tokenHash = await hmac(secret, `session:${sessionToken}`);
   const claim = await database
-    .prepare("UPDATE removal_requests SET used_at = ?1 WHERE id = ?2 AND used_at IS NULL")
-    .bind(now, requestId)
+    .prepare(
+      `UPDATE removal_requests
+       SET used_at = ?1, video_ids = ?2
+       WHERE id = ?3 AND used_at IS NULL AND expires_at >= ?1 AND attempts < ?4`,
+    )
+    .bind(now, JSON.stringify(videoIds), requestId, MAX_ATTEMPTS)
     .run();
   if (claim.meta.changes !== 1) return { success: false };
 
