@@ -15,6 +15,7 @@ import {
 import { flushSync } from "react-dom";
 import { ReactLenis, type LenisRef } from "lenis/react";
 import DiscordLogo from "../discord-logo";
+import YouTubeLogo from "../youtube-logo";
 import { getVotingPhase, type VotingPhase } from "@/data/schedule";
 
 const lineSeedExtraBold = localFont({
@@ -849,6 +850,7 @@ export default function VotePage() {
       const payload = (await response.json()) as {
         vote?: { videoId?: string };
         error?: string;
+        message?: string;
         phase?: VotingPhase;
       };
 
@@ -867,7 +869,9 @@ export default function VotePage() {
         );
       }
       if (!response.ok || payload.vote?.videoId !== entry.youtubeId) {
-        throw new Error("投票を保存できませんでした。もう一度お試しください");
+        throw new Error(
+          payload.message ?? "投票を保存できませんでした。もう一度お試しください",
+        );
       }
 
       setCurrentVoteId(entry.youtubeId);
@@ -1302,6 +1306,18 @@ export default function VotePage() {
                   {entriesState === "loading" ? "—" : `${entries.length}件`}
                 </span>
               </p>
+            </div>
+            <div className="vote-entry-playlist-wrap">
+              <a
+                className="vote-entry-playlist-button home-reel-trigger"
+                href="https://www.youtube.com/playlist?list=PLJk526wi3vaA"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="YouTube再生リストを開く"
+              >
+                <YouTubeLogo className="vote-entry-playlist-button__logo" />
+                <VoteReelText label="YouTube再生リスト →" />
+              </a>
             </div>
             <div
               className="vote-entry-sort"

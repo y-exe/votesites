@@ -8,6 +8,8 @@ import { fetchContestEntries, isYouTubeId } from "@/lib/entries";
 import { getVotingPhase } from "@/data/schedule";
 import {
   consumeSlidingWindowRateLimit,
+  evaluateVpnOrProxy,
+  getClientNetworkInfo,
   hmacHex,
   pruneExpiredSecurityRows,
   requireSecuritySecret,
@@ -123,6 +125,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const cf = getCloudflareContext().cf;
+  const networkInfo = getClientNetworkInfo(request, cf);
+  const vpnCheck = evaluateVpnOrProxy(request, networkInfo);
+
   const database = getVotesDatabase();
   const secret = requireSecuritySecret();
   const rateLimit = await consumeSlidingWindowRateLimit({
@@ -169,14 +175,50 @@ export async function POST(request: NextRequest) {
       return json({ vote: { videoId }, action: "unchanged" });
     }
 
+    const now = Date.now();
     await database
       .prepare(
-        `INSERT INTO votes (discord_user_id, video_id)
-         VALUES (?1, ?2)
+        `INSERT INTO votes (
+           discord_user_id,
+           video_id,
+           ip,
+           user_agent,
+           country,
+           as_organization,
+           asn,
+           is_suspicious,
+           suspicious_reason,
+           threat_score,
+           created_at,
+           updated_at
+         )
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
          ON CONFLICT(discord_user_id) DO UPDATE SET
-           video_id = excluded.video_id`,
+           video_id = excluded.video_id,
+           ip = excluded.ip,
+           user_agent = excluded.user_agent,
+           country = excluded.country,
+           as_organization = excluded.as_organization,
+           asn = excluded.asn,
+           is_suspicious = excluded.is_suspicious,
+           suspicious_reason = excluded.suspicious_reason,
+           threat_score = excluded.threat_score,
+           updated_at = excluded.updated_at`,
       )
-      .bind(session.user.id, videoId)
+      .bind(
+        session.user.id,
+        videoId,
+        networkInfo.ip,
+        networkInfo.userAgent,
+        networkInfo.country,
+        networkInfo.asOrganization,
+        networkInfo.asn,
+        vpnCheck.isSuspicious ? 1 : 0,
+        vpnCheck.reason ?? "",
+        networkInfo.threatScore ?? null,
+        now,
+        now,
+      )
       .run();
 
     return json({

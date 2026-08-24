@@ -48,6 +48,162 @@ export function getTrustedClientIp(request: Request): string {
   return value && value.length <= 64 ? value : "unknown";
 }
 
+export type ClientNetworkInfo = {
+  ip: string;
+  userAgent: string;
+  country: string;
+  asOrganization: string;
+  asn: number | null;
+  threatScore?: number;
+};
+
+export function getClientNetworkInfo(
+  request: Request,
+  cf?: IncomingRequestCfProperties,
+): ClientNetworkInfo {
+  const ip = getTrustedClientIp(request);
+  const userAgent = request.headers.get("user-agent")?.trim().slice(0, 512) || "";
+  const headerCountry = request.headers.get("cf-ipcountry")?.trim().toUpperCase() || "";
+  const country =
+    typeof cf?.country === "string" && cf.country
+      ? cf.country.toUpperCase()
+      : headerCountry || "UNKNOWN";
+  const asOrganization =
+    typeof cf?.asOrganization === "string" ? cf.asOrganization.trim() : "";
+  const rawAsn = cf?.asn;
+  const asn = typeof rawAsn === "number" && Number.isSafeInteger(rawAsn) ? rawAsn : null;
+  const threatScore =
+    typeof cf?.threatScore === "number" && Number.isSafeInteger(cf.threatScore)
+      ? cf.threatScore
+      : undefined;
+
+  return {
+    ip,
+    userAgent,
+    country,
+    asOrganization,
+    asn,
+    threatScore,
+  };
+}
+
+const SUSPICIOUS_AS_KEYWORDS = [
+  "amazon",
+  "aws",
+  "google cloud",
+  "google llc",
+  "microsoft",
+  "azure",
+  "digitalocean",
+  "hetzner",
+  "ovh",
+  "vultr",
+  "choopa",
+  "linode",
+  "akamai",
+  "oracle",
+  "alibaba",
+  "tencent",
+  "m247",
+  "datacamp",
+  "leaseweb",
+  "cogent",
+  "zenlayer",
+  "hostinger",
+  "hostkey",
+  "serverius",
+  "datapacket",
+  "tzulo",
+  "clouvider",
+  "contabo",
+  "kamatera",
+  "ipvolume",
+  "packethub",
+  "shadow",
+  "fly.io",
+  "upcloud",
+  "scaleway",
+  "layerhost",
+  "prolocation",
+  "quadranet",
+  "fastly",
+  "cloudflare",
+  "hostwinds",
+  "tierpoint",
+  "hivelocity",
+  "hostpapa",
+  "greencloud",
+  "ionos",
+  "strato",
+  "nordvpn",
+  "expressvpn",
+  "surfshark",
+  "mullvad",
+  "proton",
+  "private internet access",
+  "windscribe",
+  "cyberghost",
+  "hide.me",
+  "ipvanish",
+  "purevpn",
+  "tor exit",
+  "vpn",
+  "proxy",
+  "hosting",
+  "datacenter",
+  "data center",
+];
+
+const PROXY_HEADERS = [
+  "via",
+  "x-forwarded-server",
+  "x-proxy-id",
+  "proxy-connection",
+  "forwarded",
+  "x-client-ip",
+  "x-real-ip",
+];
+
+const AUTOMATED_UA_PATTERN =
+  /curl|python-requests|go-http-client|node-fetch|postman|scrapy|wget|insomnia|axios|libwww|httpclient|java|urllib|aiohttp|headlesschrome|phantomjs|playwright|puppeteer/i;
+
+export function evaluateVpnOrProxy(
+  request: Request,
+  info: ClientNetworkInfo,
+): { isSuspicious: boolean; reason?: string } {
+  if (!info.userAgent || info.userAgent.length < 8) {
+    return { isSuspicious: true, reason: "missing_or_short_user_agent" };
+  }
+  if (AUTOMATED_UA_PATTERN.test(info.userAgent)) {
+    return { isSuspicious: true, reason: "automated_user_agent" };
+  }
+
+  if (info.country === "T1" || info.country === "A1") {
+    return { isSuspicious: true, reason: "tor_or_anon_proxy_country" };
+  }
+
+  if (info.threatScore !== undefined && info.threatScore >= 20) {
+    return { isSuspicious: true, reason: "high_threat_score" };
+  }
+
+  for (const header of PROXY_HEADERS) {
+    if (request.headers.has(header)) {
+      return { isSuspicious: true, reason: `proxy_header_${header}` };
+    }
+  }
+
+  const asOrgLower = info.asOrganization.toLowerCase();
+  if (asOrgLower) {
+    for (const keyword of SUSPICIOUS_AS_KEYWORDS) {
+      if (asOrgLower.includes(keyword)) {
+        return { isSuspicious: true, reason: `hosting_or_vpn_as_${keyword}` };
+      }
+    }
+  }
+
+  return { isSuspicious: false };
+}
+
 export function assertSameOrigin(request: Request): void {
   const origin = request.headers.get("origin");
   if (!origin || origin !== new URL(request.url).origin) {
