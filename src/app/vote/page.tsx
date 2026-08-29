@@ -11,6 +11,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useCallback,
 } from "react";
 import { flushSync } from "react-dom";
 import { ReactLenis, type LenisRef } from "lenis/react";
@@ -57,14 +58,18 @@ type VoteEntry = {
   youtubeId: string;
   submittedAt?: string;
   viewCount?: number;
+  title?: string;
+  channelTitle?: string;
+  description?: string;
+  channelIcon?: string;
 };
 
-type EntrySort = "newest" | "oldest" | "views";
+type EntrySort = "newest" | "oldest" | "random";
 
 const entrySortOptions: { value: EntrySort; label: string }[] = [
   { value: "newest", label: "新しい順" },
   { value: "oldest", label: "古い順" },
-  { value: "views", label: "再生回数順" },
+  { value: "random", label: "ランダム順" },
 ];
 
 function YouTubeThumbnail({
@@ -79,20 +84,78 @@ function YouTubeThumbnail({
   const [resolution, setResolution] = useState<
     "maxresdefault" | "sddefault" | "hqdefault"
   >("maxresdefault");
+  const [isHovered, setIsHovered] = useState(false);
+  const [hasHovered, setHasHovered] = useState(false);
 
   return (
-    <Image
-      src={`https://i.ytimg.com/vi/${youtubeId}/${resolution}.jpg`}
-      alt={alt}
-      fill
-      loading={eager ? "eager" : "lazy"}
-      sizes="(max-width: 640px) calc(100vw - 2.5rem), 44vw"
-      onError={() => {
-        setResolution((current) =>
-          current === "maxresdefault" ? "sddefault" : "hqdefault",
-        );
+    <div
+      className="pv-video-thumb relative w-full h-full overflow-hidden"
+      onMouseEnter={() => {
+        setIsHovered(true);
+        setHasHovered(true);
       }}
-    />
+      onMouseLeave={() => setIsHovered(false)}
+      onPointerDown={() => {
+        setIsHovered(true);
+        setHasHovered(true);
+      }}
+    >
+      <div
+        className="pvt-inner w-full h-full relative"
+        style={{
+          transform: isHovered ? "scale(1.03)" : "scale(1)",
+          transition: "transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        }}
+      >
+        {hasHovered && (
+          <div className="pvt-preview-wrap absolute inset-0 z-0">
+            <iframe
+              className="pvt-preview-iframe-placeholder w-full h-full border-0"
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&controls=0&rel=0&playsinline=1&mute=1`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              style={{
+                pointerEvents: "none",
+                opacity: isHovered ? 1 : 0,
+                transition: "opacity 0.4s",
+              }}
+              title={alt}
+            />
+          </div>
+        )}
+
+        <div
+          className="pvt-cover absolute inset-0 z-10 transition-opacity duration-500"
+          style={{ opacity: isHovered ? 0 : 1 }}
+          aria-hidden="true"
+        >
+          <Image
+            className="pvt-cover-img object-cover"
+            src={`https://i.ytimg.com/vi/${youtubeId}/${resolution}.jpg`}
+            alt={alt}
+            fill
+            loading={eager ? "eager" : "lazy"}
+            sizes="(max-width: 640px) calc(100vw - 2.5rem), 44vw"
+            onError={() => {
+              setResolution((current) =>
+                current === "maxresdefault" ? "sddefault" : "hqdefault",
+              );
+            }}
+          />
+        </div>
+
+        <div
+          className="pvt-playbtn absolute inset-0 z-20 grid place-items-center pointer-events-none transition-transform duration-300"
+          style={{ transform: isHovered ? "scale(1.1)" : "scale(1)" }}
+          aria-hidden="true"
+        >
+          <div className="w-[48px] h-[48px] sm:w-[60px] sm:h-[60px] bg-black/60 rounded-full flex items-center justify-center text-white backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -230,15 +293,31 @@ function toPath(points: CircuitPoint[]) {
     .join("");
 }
 
-function findCircuitIntersections(paths: CircuitPoint[][], minimumY: number, width: number) {
+function findCircuitIntersections(
+  paths: CircuitPoint[][],
+  minimumY: number,
+  width: number,
+) {
   const intersections: CircuitPoint[] = [];
 
-  for (let firstPathIndex = 0; firstPathIndex < paths.length; firstPathIndex += 1) {
+  for (
+    let firstPathIndex = 0;
+    firstPathIndex < paths.length;
+    firstPathIndex += 1
+  ) {
     const firstPath = paths[firstPathIndex];
-    for (let secondPathIndex = firstPathIndex + 1; secondPathIndex < paths.length; secondPathIndex += 1) {
+    for (
+      let secondPathIndex = firstPathIndex + 1;
+      secondPathIndex < paths.length;
+      secondPathIndex += 1
+    ) {
       const secondPath = paths[secondPathIndex];
 
-      for (let firstSegment = 0; firstSegment + 1 < firstPath.length; firstSegment += 1) {
+      for (
+        let firstSegment = 0;
+        firstSegment + 1 < firstPath.length;
+        firstSegment += 1
+      ) {
         const a = firstPath[firstSegment];
         const b = firstPath[firstSegment + 1];
         const firstDx = b.x - a.x;
@@ -253,14 +332,19 @@ function findCircuitIntersections(paths: CircuitPoint[][], minimumY: number, wid
           const d = secondPath[secondSegment + 1];
           const secondDx = d.x - c.x;
           const secondDy = d.y - c.y;
-          const firstVertical = Math.abs(firstDx) < 0.001 && Math.abs(firstDy) > 0.001;
-          const secondVertical = Math.abs(secondDx) < 0.001 && Math.abs(secondDy) > 0.001;
-          const firstDiagonal = Math.abs(firstDx) > 0.001 && Math.abs(firstDy) > 0.001;
-          const secondDiagonal = Math.abs(secondDx) > 0.001 && Math.abs(secondDy) > 0.001;
+          const firstVertical =
+            Math.abs(firstDx) < 0.001 && Math.abs(firstDy) > 0.001;
+          const secondVertical =
+            Math.abs(secondDx) < 0.001 && Math.abs(secondDy) > 0.001;
+          const firstDiagonal =
+            Math.abs(firstDx) > 0.001 && Math.abs(firstDy) > 0.001;
+          const secondDiagonal =
+            Math.abs(secondDx) > 0.001 && Math.abs(secondDy) > 0.001;
 
-          if (
-            !((firstVertical && secondDiagonal) || (firstDiagonal && secondVertical))
-          ) {
+          if (!(
+            (firstVertical && secondDiagonal) ||
+            (firstDiagonal && secondVertical)
+          )) {
             continue;
           }
 
@@ -270,17 +354,25 @@ function findCircuitIntersections(paths: CircuitPoint[][], minimumY: number, wid
 
           const offsetX = c.x - a.x;
           const offsetY = c.y - a.y;
-          const firstProgress = (offsetX * secondDy - offsetY * secondDx) / denominator;
-          const secondProgress = (offsetX * firstDy - offsetY * firstDx) / denominator;
+          const firstProgress =
+            (offsetX * secondDy - offsetY * secondDx) / denominator;
+          const secondProgress =
+            (offsetX * firstDy - offsetY * firstDx) / denominator;
 
           const firstInside = firstProgress > 0.025 && firstProgress < 0.975;
           const secondInside = secondProgress > 0.025 && secondProgress < 0.975;
-          const firstOnSegment = firstProgress >= -0.001 && firstProgress <= 1.001;
-          const secondOnSegment = secondProgress >= -0.001 && secondProgress <= 1.001;
+          const firstOnSegment =
+            firstProgress >= -0.001 && firstProgress <= 1.001;
+          const secondOnSegment =
+            secondProgress >= -0.001 && secondProgress <= 1.001;
 
           // A branch may begin or end on the middle of another line. Ignore
           // only endpoint-to-endpoint contacts, which are ordinary bends.
-          if (!firstOnSegment || !secondOnSegment || (!firstInside && !secondInside)) {
+          if (
+            !firstOnSegment ||
+            !secondOnSegment ||
+            (!firstInside && !secondInside)
+          ) {
             continue;
           }
 
@@ -288,10 +380,12 @@ function findCircuitIntersections(paths: CircuitPoint[][], minimumY: number, wid
             x: a.x + firstProgress * firstDx,
             y: a.y + firstProgress * firstDy,
           };
-          if (point.y <= minimumY || point.x < 30 || point.x > width - 30) continue;
+          if (point.y <= minimumY || point.x < 30 || point.x > width - 30)
+            continue;
 
           const alreadyAdded = intersections.some(
-            (existing) => Math.hypot(existing.x - point.x, existing.y - point.y) < 3,
+            (existing) =>
+              Math.hypot(existing.x - point.x, existing.y - point.y) < 3,
           );
           if (!alreadyAdded) intersections.push(point);
         }
@@ -307,7 +401,9 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
   const pageRect = page.getBoundingClientRect();
   const field = page.querySelector<HTMLElement>(".vote-line-field");
   const selector = mobile ? "[data-circuit-mobile]" : "[data-circuit-desktop]";
-  const sourceElements = Array.from(page.querySelectorAll<HTMLElement>(selector));
+  const sourceElements = Array.from(
+    page.querySelectorAll<HTMLElement>(selector),
+  );
 
   if (!field || sourceElements.length < 2) return null;
 
@@ -322,7 +418,8 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
 
       return {
         x:
-          rect.left - pageRect.left +
+          rect.left -
+          pageRect.left +
           (anchor === "left" ? fontSize * 0.13 : rect.width / 2),
         y: rect.top - pageRect.top + rect.height * 0.6,
       };
@@ -337,7 +434,8 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
   const titleRight = titleRect.right - pageRect.left;
   const safeLeft = Math.max(18, titleLeft + 4);
   const safeRight = Math.min(width - 18, titleRight - 4);
-  const clampToTitle = (x: number) => Math.min(safeRight, Math.max(safeLeft, x));
+  const clampToTitle = (x: number) =>
+    Math.min(safeRight, Math.max(safeLeft, x));
 
   const paths = anchors.map((anchor) => [anchor]);
   const rings: CircuitPoint[] = [];
@@ -345,8 +443,12 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
   let currentX = anchors.map((anchor) => anchor.x);
   const maxAnchorY = Math.max(...anchors.map((anchor) => anchor.y));
 
-  const heroTurnStart = maxAnchorY + Math.max(72, (fieldTop - maxAnchorY) * 0.26);
-  const heroTurnEnd = Math.max(heroTurnStart + 100, fieldTop - (mobile ? 70 : 95));
+  const heroTurnStart =
+    maxAnchorY + Math.max(72, (fieldTop - maxAnchorY) * 0.26);
+  const heroTurnEnd = Math.max(
+    heroTurnStart + 100,
+    fieldTop - (mobile ? 70 : 95),
+  );
   const heroOrdered = currentX
     .map((x, index) => ({ x, index }))
     .sort((a, b) => a.x - b.x);
@@ -373,7 +475,8 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
   const spreadLanes = currentX.map((_, index) =>
     currentX.length === 1
       ? width / 2
-      : spreadLeft + ((spreadRight - spreadLeft) * index) / (currentX.length - 1),
+      : spreadLeft +
+        ((spreadRight - spreadLeft) * index) / (currentX.length - 1),
   );
   const currentOrder = currentX
     .map((x, index) => ({ x, index }))
@@ -398,8 +501,8 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
       activeCount === 1
         ? Math.floor(orderedLineIndices.length / 2)
         : Math.round(
-          (activeIndex * (orderedLineIndices.length - 1)) / (activeCount - 1),
-        );
+            (activeIndex * (orderedLineIndices.length - 1)) / (activeCount - 1),
+          );
     return orderedLineIndices[orderedIndex];
   });
   const inactiveLines = orderedLineIndices.filter(
@@ -414,11 +517,11 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
         ? currentX[activeLineIndex] < lineX
         : currentX[activeLineIndex] > lineX,
     );
-    const targetCandidates = sameSideCandidates.length > 0
-      ? sameSideCandidates
-      : activeLines;
+    const targetCandidates =
+      sameSideCandidates.length > 0 ? sameSideCandidates : activeLines;
     const targetLine = targetCandidates.reduce((nearest, candidate) =>
-      Math.abs(currentX[candidate] - lineX) < Math.abs(currentX[nearest] - lineX)
+      Math.abs(currentX[candidate] - lineX) <
+      Math.abs(currentX[nearest] - lineX)
         ? candidate
         : nearest,
     );
@@ -439,9 +542,7 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
   const fieldHeight = height - fieldTop;
   const laneBoundaries = orderedAtEnd.map((lane, laneIndex) => ({
     minimumX:
-      laneIndex === 0
-        ? 36
-        : (orderedAtEnd[laneIndex - 1].x + lane.x) / 2,
+      laneIndex === 0 ? 36 : (orderedAtEnd[laneIndex - 1].x + lane.x) / 2,
     maximumX:
       laneIndex === orderedAtEnd.length - 1
         ? width - 36
@@ -490,10 +591,7 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
       appendLanePoint(lane, { x: lane.x, y: bendStartY });
 
       const corridorWidth = lane.maximumX - lane.minimumX;
-      const horizontalShift = Math.min(
-        mobile ? 38 : 72,
-        corridorWidth * 0.22,
-      );
+      const horizontalShift = Math.min(mobile ? 38 : 72, corridorWidth * 0.22);
       const inset = Math.min(20, corridorWidth * 0.12);
       const minimumX = lane.minimumX + inset;
       const maximumX = lane.maximumX - inset;
@@ -525,9 +623,10 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
 
   crossingOrder.forEach((laneIndex, crossingIndex) => {
     const lane = lanes[laneIndex];
-    const targetIndex = laneIndex < lanes.length / 2
-      ? Math.min(lanes.length - 1, laneIndex + 1)
-      : Math.max(0, laneIndex - 1);
+    const targetIndex =
+      laneIndex < lanes.length / 2
+        ? Math.min(lanes.length - 1, laneIndex + 1)
+        : Math.max(0, laneIndex - 1);
     const targetLane = lanes[targetIndex];
     const eventSpacing = mobile ? 0.22 : 0.14;
     const turnY = fieldTop + fieldHeight * (0.2 + crossingIndex * eventSpacing);
@@ -554,10 +653,7 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
     const towardTarget = lane.x < targetLane.x ? 1 : -1;
     const replacementX = Math.min(
       lane.maximumX - 12,
-      Math.max(
-        lane.minimumX + 12,
-        lane.x + towardTarget * laneGap * 0.32,
-      ),
+      Math.max(lane.minimumX + 12, lane.x + towardTarget * laneGap * 0.32),
     );
     const replacementSettle = {
       x: replacementX,
@@ -650,38 +746,165 @@ export default function VotePage() {
   const [criteriaReady, setCriteriaReady] = useState(false);
   const [circuitSynced, setCircuitSynced] = useState(true);
   const [topTrim, setTopTrim] = useState(0);
-  const [circuitLayout, setCircuitLayout] = useState<CircuitLayout | null>(null);
+  const [circuitLayout, setCircuitLayout] = useState<CircuitLayout | null>(
+    null,
+  );
   const [entries, setEntries] = useState<VoteEntry[]>([]);
   const [entrySort, setEntrySort] = useState<EntrySort>("newest");
+  const [randomSeed, setRandomSeed] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<VoteEntry | null>(null);
-  const [pendingVoteEntry, setPendingVoteEntry] = useState<VoteEntry | null>(null);
+  const [pendingVoteEntry, setPendingVoteEntry] = useState<VoteEntry | null>(
+    null,
+  );
   const [voteHoldActive, setVoteHoldActive] = useState(false);
   const [voteConfirmClosing, setVoteConfirmClosing] = useState(false);
   const [voteSubmitting, setVoteSubmitting] = useState(false);
   const [voteError, setVoteError] = useState<string | null>(null);
   const [currentVoteId, setCurrentVoteId] = useState<string | null>(null);
-  const [voteState, setVoteState] = useState<"idle" | "loading" | "ready" | "error">(
-    "idle",
-  );
+  const [voteState, setVoteState] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
   const [votingPhase, setVotingPhase] = useState<VotingPhase | "checking">(
     "checking",
   );
   const holdTimerRef = useRef<number | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const continueButtonRef = useRef<HTMLButtonElement>(null);
-  const [authState, setAuthState] = useState<"loading" | "authenticated" | "anonymous">(
-    "loading",
-  );
+  const [authState, setAuthState] = useState<
+    "loading" | "authenticated" | "anonymous"
+  >("loading");
   const [entriesState, setEntriesState] = useState<
     "loading" | "ready" | "unconfigured" | "error"
   >("loading");
-  const [pendingReportEntry, setPendingReportEntry] = useState<VoteEntry | null>(null);
+  const [pendingReportEntry, setPendingReportEntry] =
+    useState<VoteEntry | null>(null);
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportToastVisible, setReportToastVisible] = useState(false);
   const [reportHoldActive, setReportHoldActive] = useState(false);
   const reportHoldTimerRef = useRef<number | null>(null);
 
-  const sortedEntries = useMemo(() => {
+  const [searchFilter, setSearchFilter] = useState("");
+
+  const withGridAnimation = useCallback(
+    (applyChange: () => void) => {
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      const compactPointer = window.matchMedia(
+        "(max-width: 760px), (hover: none), (pointer: coarse)",
+      ).matches;
+
+      if (entries.length < 2 || reducedMotion) {
+        applyChange();
+        return;
+      }
+
+      if (!compactPointer && document.startViewTransition) {
+        document.startViewTransition(() => {
+          flushSync(applyChange);
+        });
+        return;
+      }
+
+      const previousPositions = new Map(
+        Array.from(
+          pageRef.current?.querySelectorAll<HTMLElement>(
+            "[data-vote-entry-id]",
+          ) ?? [],
+        ).map((element) => [
+          element.dataset.voteEntryId ?? "",
+          element.getBoundingClientRect(),
+        ]),
+      );
+
+      flushSync(applyChange);
+
+      window.requestAnimationFrame(() => {
+        pageRef.current
+          ?.querySelectorAll<HTMLElement>("[data-vote-entry-id]")
+          .forEach((element) => {
+            const previous = previousPositions.get(
+              element.dataset.voteEntryId ?? "",
+            );
+            if (!previous) return;
+            const current = element.getBoundingClientRect();
+            const offsetX = previous.left - current.left;
+            const offsetY = previous.top - current.top;
+            if (Math.abs(offsetX) < 0.5 && Math.abs(offsetY) < 0.5) return;
+
+            element.animate(
+              [
+                { transform: `translate3d(${offsetX}px, ${offsetY}px, 0)` },
+                { transform: "translate3d(0, 0, 0)" },
+              ],
+              {
+                duration: 480,
+                easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+              },
+            );
+          });
+      });
+    },
+    [entries.length],
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchFilter !== searchQuery) {
+        withGridAnimation(() => setSearchFilter(searchQuery));
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchFilter, withGridAnimation]);
+
+  const filteredAndSortedEntries = useMemo(() => {
+    let result = [...entries];
+
+    if (searchFilter.trim() !== "") {
+      const lowerQuery = searchFilter.toLowerCase().trim();
+      const extractedId = (() => {
+        const match = lowerQuery.match(
+          /(?:v=|youtu\.be\/|embed\/|\/v\/|shorts\/)([^&?\n\s]+)/,
+        );
+        if (match && match[1] && match[1].length === 11) return match[1];
+        if (/^[A-Za-z0-9_-]{11}$/.test(lowerQuery)) return lowerQuery;
+        return null;
+      })();
+
+      const normalizeForSearch = (str: string) => {
+        return str
+          .normalize("NFKC")
+          .toLowerCase()
+          .replace(/[\u3041-\u3096]/g, (m) =>
+            String.fromCharCode(m.charCodeAt(0) + 0x60),
+          ) // Hiragana to Katakana
+          .replace(/[\s　]+/g, ""); // Remove spaces
+      };
+
+      const normalizedQuery = normalizeForSearch(searchFilter);
+
+      result = result.filter((entry) => {
+        if (
+          extractedId &&
+          entry.youtubeId.toLowerCase() === extractedId.toLowerCase()
+        )
+          return true;
+        if (entry.youtubeId.toLowerCase().includes(lowerQuery)) return true;
+        if (
+          entry.title &&
+          normalizeForSearch(entry.title).includes(normalizedQuery)
+        )
+          return true;
+        if (
+          entry.channelTitle &&
+          normalizeForSearch(entry.channelTitle).includes(normalizedQuery)
+        )
+          return true;
+        return false;
+      });
+    }
+
     const sourceOrder = new Map(
       entries.map((entry, index) => [entry.youtubeId, index]),
     );
@@ -691,74 +914,41 @@ export default function VotePage() {
         : Number.NaN;
       return Number.isFinite(timestamp)
         ? timestamp
-        : sourceOrder.get(entry.youtubeId) ?? 0;
+        : (sourceOrder.get(entry.youtubeId) ?? 0);
     };
 
-    return [...entries].sort((left, right) => {
-      if (entrySort === "views") {
-        const viewDifference = (right.viewCount ?? -1) - (left.viewCount ?? -1);
-        if (viewDifference !== 0) return viewDifference;
-      }
+    if (entrySort === "random") {
+      let currentSeed = randomSeed;
+      const random = () => {
+        const x = Math.sin(currentSeed++) * 10000;
+        return x - Math.floor(x);
+      };
+      result.sort((a, b) => {
+        const hashA = random();
+        const hashB = random();
+        return hashA - hashB;
+      });
+    } else {
+      result.sort((left, right) => {
+        const timeDifference = entryTime(left) - entryTime(right);
+        return entrySort === "oldest" ? timeDifference : -timeDifference;
+      });
+    }
 
-      const timeDifference = entryTime(left) - entryTime(right);
-      return entrySort === "oldest" ? timeDifference : -timeDifference;
-    });
-  }, [entries, entrySort]);
+    return result;
+  }, [entries, entrySort, randomSeed, searchFilter]);
 
   const changeEntrySort = (nextSort: EntrySort) => {
-    if (nextSort === entrySort) return;
+    if (nextSort === entrySort && nextSort !== "random") return;
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const compactPointer = window.matchMedia(
-      "(max-width: 760px), (hover: none), (pointer: coarse)",
-    ).matches;
-
-    if (entries.length < 2 || reducedMotion) {
+    withGridAnimation(() => {
+      if (nextSort === "random") setRandomSeed(Date.now());
       setEntrySort(nextSort);
-      return;
-    }
-
-    if (!compactPointer && document.startViewTransition) {
-      document.startViewTransition(() => {
-        flushSync(() => setEntrySort(nextSort));
-      });
-      return;
-    }
-
-    const previousPositions = new Map(
-      Array.from(
-        pageRef.current?.querySelectorAll<HTMLElement>("[data-vote-entry-id]") ?? [],
-      ).map((element) => [
-        element.dataset.voteEntryId ?? "",
-        element.getBoundingClientRect(),
-      ]),
-    );
-
-    flushSync(() => setEntrySort(nextSort));
-
-    window.requestAnimationFrame(() => {
-      pageRef.current
-        ?.querySelectorAll<HTMLElement>("[data-vote-entry-id]")
-        .forEach((element) => {
-          const previous = previousPositions.get(element.dataset.voteEntryId ?? "");
-          if (!previous) return;
-          const current = element.getBoundingClientRect();
-          const offsetX = previous.left - current.left;
-          const offsetY = previous.top - current.top;
-          if (Math.abs(offsetX) < 0.5 && Math.abs(offsetY) < 0.5) return;
-
-          element.animate(
-            [
-              { transform: `translate3d(${offsetX}px, ${offsetY}px, 0)` },
-              { transform: "translate3d(0, 0, 0)" },
-            ],
-            {
-              duration: 480,
-              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
-            },
-          );
-        });
     });
+  };
+
+  const changeSearchQuery = (query: string) => {
+    setSearchQuery(query);
   };
 
   const startReportHold = () => {
@@ -787,7 +977,8 @@ export default function VotePage() {
     setReportHoldActive(false);
   };
 
-  const [reportToastMessage, setReportToastMessage] = useState("通報を記録しました");
+  const [reportToastMessage, setReportToastMessage] =
+    useState("通報を記録しました");
 
   const submitReport = async (entry: VoteEntry) => {
     setReportSubmitting(true);
@@ -857,7 +1048,9 @@ export default function VotePage() {
       if (response.status === 401) {
         setAuthState("anonymous");
         setCurrentVoteId(null);
-        throw new Error("ログインの有効期限が切れました。再度ログインしてください");
+        throw new Error(
+          "ログインの有効期限が切れました。再度ログインしてください",
+        );
       }
       if (payload.error === "voting_not_open") {
         const nextPhase = payload.phase ?? getVotingPhase();
@@ -870,7 +1063,8 @@ export default function VotePage() {
       }
       if (!response.ok || payload.vote?.videoId !== entry.youtubeId) {
         throw new Error(
-          payload.message ?? "投票を保存できませんでした。もう一度お試しください",
+          payload.message ??
+            "投票を保存できませんでした。もう一度お試しください",
         );
       }
 
@@ -931,13 +1125,17 @@ export default function VotePage() {
           return;
         }
 
-        const nextEntries = Array.isArray(payload.entries) ? payload.entries : [];
+        const nextEntries = Array.isArray(payload.entries)
+          ? payload.entries
+          : [];
         setEntries((currentEntries) =>
           JSON.stringify(currentEntries) === JSON.stringify(nextEntries)
             ? currentEntries
             : nextEntries,
         );
-        setEntriesState(payload.configured === false ? "unconfigured" : "ready");
+        setEntriesState(
+          payload.configured === false ? "unconfigured" : "ready",
+        );
       } catch {
         if (active) setEntriesState("error");
       }
@@ -957,7 +1155,9 @@ export default function VotePage() {
 
     const loadSession = async () => {
       try {
-        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        const response = await fetch("/api/auth/session", {
+          cache: "no-store",
+        });
         const payload = (await response.json()) as { authenticated?: boolean };
         if (active) {
           if (!payload.authenticated) {
@@ -1172,7 +1372,8 @@ export default function VotePage() {
       if (!hero) return;
 
       const heroBottom = hero.getBoundingClientRect().bottom + window.scrollY;
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const maxScroll =
+        document.documentElement.scrollHeight - window.innerHeight;
       const targetY = Math.min(heroBottom + 20, maxScroll);
       const lenis = lenisRef.current?.lenis;
       landingYRef.current = targetY;
@@ -1205,7 +1406,9 @@ export default function VotePage() {
         className={`${lineSeedExtraBold.className} home--blank vote-page`}
         data-intro={introReady ? "ready" : "idle"}
         data-scroll={criteriaReady ? "complete" : "pending"}
-        data-circuit={criteriaReady ? (circuitSynced ? "synced" : "shifting") : "initial"}
+        data-circuit={
+          criteriaReady ? (circuitSynced ? "synced" : "shifting") : "initial"
+        }
         style={{ "--vote-top-trim": `${topTrim}px` } as CSSProperties}
       >
         {circuitLayout ? <VoteCircuit layout={circuitLayout} /> : null}
@@ -1224,12 +1427,20 @@ export default function VotePage() {
                 aria-label="WELCOME TO VOTE!"
               >
                 <span className="vote-hero__word" aria-hidden="true">
-                  <span data-circuit-mobile="true" data-circuit-anchor="center">W</span>
-                  <span data-circuit-desktop="true" data-circuit-anchor="left">E</span>
-                  <span data-circuit-desktop="true" data-circuit-anchor="left">L</span>
+                  <span data-circuit-mobile="true" data-circuit-anchor="center">
+                    W
+                  </span>
+                  <span data-circuit-desktop="true" data-circuit-anchor="left">
+                    E
+                  </span>
+                  <span data-circuit-desktop="true" data-circuit-anchor="left">
+                    L
+                  </span>
                   <span>C</span>
                   <span>O</span>
-                  <span data-circuit-desktop="true" data-circuit-anchor="left">M</span>
+                  <span data-circuit-desktop="true" data-circuit-anchor="left">
+                    M
+                  </span>
                   <span
                     data-circuit-desktop="true"
                     data-circuit-mobile="true"
@@ -1240,12 +1451,19 @@ export default function VotePage() {
                 </span>
                 <span className="vote-hero__title-space" aria-hidden="true" />
                 <span className="vote-hero__word" aria-hidden="true">
-                  <span data-circuit-desktop="true" data-circuit-anchor="center">T</span>
+                  <span
+                    data-circuit-desktop="true"
+                    data-circuit-anchor="center"
+                  >
+                    T
+                  </span>
                   <span>O</span>
                 </span>
                 <span className="vote-hero__title-space" aria-hidden="true" />
                 <span className="vote-hero__word" aria-hidden="true">
-                  <span data-circuit-mobile="true" data-circuit-anchor="center">V</span>
+                  <span data-circuit-mobile="true" data-circuit-anchor="center">
+                    V
+                  </span>
                   <span>O</span>
                   <span
                     data-circuit-desktop="true"
@@ -1269,7 +1487,10 @@ export default function VotePage() {
 
           {criteriaReady ? (
             <>
-              <article className="vote-criteria" aria-labelledby="vote-criteria-title">
+              <article
+                className="vote-criteria"
+                aria-labelledby="vote-criteria-title"
+              >
                 <h2 id="vote-criteria-title" className="vote-criteria__label">
                   評価する基準
                 </h2>
@@ -1296,7 +1517,10 @@ export default function VotePage() {
             </>
           ) : null}
         </section>
-        <section className="vote-line-field" aria-labelledby="vote-entries-title">
+        <section
+          className="vote-line-field"
+          aria-labelledby="vote-entries-title"
+        >
           <div className="relative w-[min(88%,78rem)] mx-auto pt-[clamp(1.5rem,4svh,3rem)] pb-0 max-sm:w-[calc(100%-2.5rem)] max-sm:pt-6">
             <div className="vote-entry-heading">
               <h2 id="vote-entries-title">エントリー作品一覧</h2>
@@ -1307,13 +1531,60 @@ export default function VotePage() {
                 </span>
               </p>
             </div>
-            <div className="vote-entry-playlist-wrap">
+            <div
+              className="vote-entry-playlist-wrap"
+              style={{
+                flexWrap: "wrap-reverse",
+                gap: "clamp(0.6rem, 1.5vw, 1.2rem)",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+              }}
+            >
+              <div
+                style={{
+                  position: "relative",
+                  display: "inline-flex",
+                  alignItems: "center",
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="タイトル、動画リンク、チャンネル名"
+                  value={searchQuery}
+                  onChange={(e) => changeSearchQuery(e.target.value)}
+                  className="vote-entry-search-input"
+                  style={{
+                    paddingLeft: "calc(clamp(1.2rem, 3vw, 1.8rem) + 1.2rem)",
+                  }}
+                />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#0b0b0b"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    position: "absolute",
+                    left: "1.2rem",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </div>
               <a
                 className="vote-entry-playlist-button home-reel-trigger"
                 href="https://www.youtube.com/playlist?list=PLJk526wi3vaA"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="YouTube再生リストを開く"
+                style={{ margin: 0 }}
               >
                 <YouTubeLogo className="vote-entry-playlist-button__logo" />
                 <VoteReelText label="YouTube再生リスト →" />
@@ -1339,14 +1610,16 @@ export default function VotePage() {
                 </button>
               ))}
             </div>
-            {entries.length > 0 ? (
+            {filteredAndSortedEntries.length > 0 ? (
               <>
                 <div className="vote-entry-grid">
-                  {sortedEntries.map((entry, index) => (
+                  {filteredAndSortedEntries.map((entry, index) => (
                     <article
                       className="vote-entry-item"
                       data-vote-entry-id={entry.youtubeId}
-                      style={{ viewTransitionName: `vote-entry-${entry.youtubeId}` }}
+                      style={{
+                        viewTransitionName: `vote-entry-${entry.youtubeId}`,
+                      }}
                       key={entry.id}
                     >
                       <button
@@ -1365,28 +1638,31 @@ export default function VotePage() {
                       </button>
                       <div className="vote-entry__actions">
                         <button
-                          className={`vote-entry__vote-button home-reel-trigger${authState === "authenticated" &&
+                          className={`vote-entry__vote-button home-reel-trigger${
+                            authState === "authenticated" &&
                             currentVoteId === entry.youtubeId
-                            ? " vote-entry__vote-button--current"
-                            : ""
-                            }${votingPhase !== "open" &&
-                              !(
-                                authState === "authenticated" &&
-                                currentVoteId === entry.youtubeId
-                              )
+                              ? " vote-entry__vote-button--current"
+                              : ""
+                          }${
+                            votingPhase !== "open" &&
+                            !(
+                              authState === "authenticated" &&
+                              currentVoteId === entry.youtubeId
+                            )
                               ? " vote-entry__vote-button--unavailable"
                               : ""
-                            }`}
+                          }`}
                           type="button"
                           disabled={
                             votingPhase !== "open" ||
                             authState === "loading" ||
                             (authState === "authenticated" &&
-                              (voteState === "loading" || currentVoteId === entry.youtubeId))
+                              (voteState === "loading" ||
+                                currentVoteId === entry.youtubeId))
                           }
                           aria-label={
                             authState === "authenticated" &&
-                              currentVoteId === entry.youtubeId
+                            currentVoteId === entry.youtubeId
                               ? `エントリー作品 ${index + 1} にすでに投票しています`
                               : votingPhase === "checking"
                                 ? "投票期間を確認中"
@@ -1396,14 +1672,19 @@ export default function VotePage() {
                                     ? "投票期間は終了しました"
                                     : authState === "loading"
                                       ? "ログイン状態を確認中"
-                                      : authState === "authenticated" && currentVoteId
+                                      : authState === "authenticated" &&
+                                          currentVoteId
                                         ? `エントリー作品 ${index + 1} に投票を移行する`
                                         : authState === "authenticated"
                                           ? `エントリー作品 ${index + 1} に投票`
                                           : `Discordでログインしてエントリー作品 ${index + 1} に投票`
                           }
                           onClick={() => {
-                            if (votingPhase !== "open" || authState === "loading") return;
+                            if (
+                              votingPhase !== "open" ||
+                              authState === "loading"
+                            )
+                              return;
                             if (authState === "anonymous") {
                               window.location.assign(
                                 "/api/auth/discord/start?returnTo=%2Fvote",
@@ -1416,7 +1697,7 @@ export default function VotePage() {
                           }}
                         >
                           {authState === "authenticated" &&
-                            currentVoteId === entry.youtubeId ? (
+                          currentVoteId === entry.youtubeId ? (
                             <span className="vote-entry__current-label">
                               すでにこの動画に投票しています
                             </span>
@@ -1430,7 +1711,9 @@ export default function VotePage() {
                             <VoteReelText label="確認中" />
                           ) : authState === "authenticated" ? (
                             <VoteReelText
-                              label={currentVoteId ? "投票を移行する" : "投票する"}
+                              label={
+                                currentVoteId ? "投票を移行する" : "投票する"
+                              }
                             />
                           ) : (
                             <>
@@ -1461,17 +1744,20 @@ export default function VotePage() {
             ) : entriesState === "loading" ? (
               <div className="vote-entry-grid" role="status" aria-busy="true">
                 <span className="sr-only">応募作品を読み込んでいます</span>
-                {Array.from({ length: ENTRY_LOADING_PLACEHOLDERS }, (_, index) => (
-                  <span
-                    className="vote-entry-status-card"
-                    aria-hidden="true"
-                    key={index}
-                  >
-                    <span className="vote-entry-status-card__label">
-                      (ºдº≡ºдº)
+                {Array.from(
+                  { length: ENTRY_LOADING_PLACEHOLDERS },
+                  (_, index) => (
+                    <span
+                      className="vote-entry-status-card"
+                      aria-hidden="true"
+                      key={index}
+                    >
+                      <span className="vote-entry-status-card__label">
+                        (ºдº≡ºдº)
+                      </span>
                     </span>
-                  </span>
-                ))}
+                  ),
+                )}
               </div>
             ) : (
               <>
@@ -1479,7 +1765,9 @@ export default function VotePage() {
                   <span className="sr-only">
                     {entriesState === "error"
                       ? "応募作品の読み込みに失敗しました"
-                      : "作品がまだありません"}
+                      : searchQuery !== ""
+                        ? "検索結果がありません"
+                        : "作品がまだありません"}
                   </span>
                   {Array.from({ length: 2 }, (_, index) => (
                     <span
@@ -1490,7 +1778,9 @@ export default function VotePage() {
                       <span className="vote-entry-status-card__label">
                         {entriesState === "error"
                           ? "読み込みに失敗しました"
-                          : "|•́ω•̀ )ﾏﾀﾞﾅｲﾖ"}
+                          : searchQuery !== ""
+                            ? "見つかりませんでした"
+                            : "|•́ω•̀ )ﾏﾀﾞﾅｲﾖ"}
                       </span>
                     </span>
                   ))}
@@ -1526,7 +1816,14 @@ export default function VotePage() {
               display: "block",
             }}
           />
-          <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", justifyContent: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "1.5rem",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Link
               href="/policy"
               style={{
@@ -1561,12 +1858,49 @@ export default function VotePage() {
             }}
           >
             <div
-              className="relative w-[min(92vw,74rem)]"
+              className="relative w-[min(92vw,74rem)] h-[90vh] sm:h-auto py-[2vh] sm:py-0 flex flex-col justify-between sm:justify-center sm:gap-[clamp(0.8rem,2vw,1.5rem)]"
+              onClick={(event) => {
+                if (event.target === event.currentTarget)
+                  setSelectedEntry(null);
+              }}
               role="dialog"
               aria-modal="true"
               aria-label="エントリー動画"
             >
-              <div className="relative w-full aspect-video overflow-hidden rounded-[clamp(0.9rem,2vw,1.7rem)] bg-black shadow-[0_1.5rem_5rem_rgb(0_0_0_/_55%)]">
+              {/* チャンネル＆概要欄 */}
+              <div
+                className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-4 text-white shrink-0"
+                style={{
+                  textShadow:
+                    "1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 2px 5px rgba(0,0,0,0.8)",
+                }}
+              >
+                <div className="flex items-center gap-3 shrink-0">
+                  {selectedEntry.channelIcon ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={selectedEntry.channelIcon}
+                      alt={selectedEntry.channelTitle}
+                      className="w-[clamp(2.5rem,4.5vw,3.5rem)] h-[clamp(2.5rem,4.5vw,3.5rem)] rounded-full shadow-[0_0_0_1px_rgba(0,0,0,1)] object-cover bg-neutral-900"
+                    />
+                  ) : (
+                    <div className="w-[clamp(2.5rem,4.5vw,3.5rem)] h-[clamp(2.5rem,4.5vw,3.5rem)] rounded-full shadow-[0_0_0_1px_rgba(0,0,0,1)] bg-neutral-800 flex items-center justify-center font-bold text-xl">
+                      {selectedEntry.channelTitle?.charAt(0) || "?"}
+                    </div>
+                  )}
+                  <h3 className="font-bold text-[clamp(1.1rem,2vw,1.5rem)] line-clamp-1">
+                    {selectedEntry.channelTitle || "Unknown Channel"}
+                  </h3>
+                </div>
+                <p
+                  className="text-[clamp(0.85rem,1.5vw,1rem)] font-medium line-clamp-4 sm:line-clamp-2 sm:text-right sm:max-w-[60%]"
+                  style={{ whiteSpace: "pre-wrap" }}
+                >
+                  {selectedEntry.description || selectedEntry.title}
+                </p>
+              </div>
+
+              <div className="relative w-full aspect-video overflow-hidden rounded-[clamp(0.9rem,2vw,1.7rem)] bg-black shadow-[0_1.5rem_5rem_rgb(0_0_0_/_55%)] shrink-0 my-auto sm:my-0">
                 <iframe
                   className="absolute inset-0 w-full h-full border-0"
                   src={`https://www.youtube-nocookie.com/embed/${selectedEntry.youtubeId}?autoplay=1`}
@@ -1576,13 +1910,29 @@ export default function VotePage() {
                   allowFullScreen
                 />
               </div>
+
+              {/* YouTubeで見る ボタン */}
+              <div className="flex justify-center mt-2 shrink-0">
+                <a
+                  className="vote-entry-playlist-button home-reel-trigger"
+                  href={`https://youtube.com/watch?v=${selectedEntry.youtubeId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="YouTubeで見る"
+                  style={{ margin: 0 }}
+                >
+                  <YouTubeLogo className="vote-entry-playlist-button__logo" />
+                  <VoteReelText label="YouTubeで見る →" />
+                </a>
+              </div>
             </div>
           </div>
         ) : null}
         {pendingVoteEntry ? (
           <div
-            className={`vote-confirm-modal${voteConfirmClosing ? " vote-confirm-modal--closing" : ""
-              }`}
+            className={`vote-confirm-modal${
+              voteConfirmClosing ? " vote-confirm-modal--closing" : ""
+            }`}
             onClick={(event) => {
               if (event.target === event.currentTarget) closeVoteConfirmation();
             }}
@@ -1597,7 +1947,10 @@ export default function VotePage() {
               <span className="home__mesh home__mesh--top" aria-hidden="true">
                 <span className="home__mesh-pattern" />
               </span>
-              <span className="home__mesh home__mesh--bottom" aria-hidden="true">
+              <span
+                className="home__mesh home__mesh--bottom"
+                aria-hidden="true"
+              >
                 <span className="home__mesh-pattern" />
               </span>
               <div className="vote-confirm-card__content">
@@ -1617,8 +1970,11 @@ export default function VotePage() {
                 <div className="vote-confirm-card__actions">
                   <button
                     ref={continueButtonRef}
-                    className={`vote-confirm-card__continue home-reel-trigger${voteHoldActive ? " vote-confirm-card__continue--holding" : ""
-                      }`}
+                    className={`vote-confirm-card__continue home-reel-trigger${
+                      voteHoldActive
+                        ? " vote-confirm-card__continue--holding"
+                        : ""
+                    }`}
                     type="button"
                     disabled={voteSubmitting}
                     aria-label="続行する。長押ししてください"
@@ -1630,7 +1986,10 @@ export default function VotePage() {
                     onPointerCancel={cancelVoteHold}
                     onPointerLeave={cancelVoteHold}
                     onKeyDown={(event) => {
-                      if ((event.key === " " || event.key === "Enter") && !event.repeat) {
+                      if (
+                        (event.key === " " || event.key === "Enter") &&
+                        !event.repeat
+                      ) {
                         event.preventDefault();
                         startVoteHold();
                       }
@@ -1643,7 +2002,9 @@ export default function VotePage() {
                     }}
                     onContextMenu={(event) => event.preventDefault()}
                   >
-                    <VoteReelText label={voteSubmitting ? "保存中" : "続行する"} />
+                    <VoteReelText
+                      label={voteSubmitting ? "保存中" : "続行する"}
+                    />
                   </button>
                   <button
                     className="vote-confirm-card__cancel home-reel-trigger"
@@ -1676,7 +2037,10 @@ export default function VotePage() {
               <span className="home__mesh home__mesh--top" aria-hidden="true">
                 <span className="home__mesh-pattern" />
               </span>
-              <span className="home__mesh home__mesh--bottom" aria-hidden="true">
+              <span
+                className="home__mesh home__mesh--bottom"
+                aria-hidden="true"
+              >
                 <span className="home__mesh-pattern" />
               </span>
               <div className="vote-confirm-card__content">
@@ -1684,14 +2048,27 @@ export default function VotePage() {
                   <h2 id="vote-report-title">
                     <span>通報の確認</span>
                   </h2>
-                  <p id="vote-report-note" style={{ marginTop: "0.6rem", fontSize: "0.95rem", opacity: 0.85 }}>
+                  <p
+                    id="vote-report-note"
+                    style={{
+                      marginTop: "0.6rem",
+                      fontSize: "0.95rem",
+                      opacity: 0.85,
+                    }}
+                  >
                     この作品の通報を確定しますか？（長押しで確定）
                   </p>
                 </div>
-                <div className="vote-confirm-card__actions" style={{ gap: "0.8rem", marginTop: "1.2rem" }}>
+                <div
+                  className="vote-confirm-card__actions"
+                  style={{ gap: "0.8rem", marginTop: "1.2rem" }}
+                >
                   <button
-                    className={`vote-confirm-card__continue home-reel-trigger${reportHoldActive ? " vote-confirm-card__continue--holding" : ""
-                      }`}
+                    className={`vote-confirm-card__continue home-reel-trigger${
+                      reportHoldActive
+                        ? " vote-confirm-card__continue--holding"
+                        : ""
+                    }`}
                     type="button"
                     disabled={reportSubmitting}
                     aria-label="通報を確定する。長押ししてください"
@@ -1703,7 +2080,10 @@ export default function VotePage() {
                     onPointerCancel={cancelReportHold}
                     onPointerLeave={cancelReportHold}
                     onKeyDown={(event) => {
-                      if ((event.key === " " || event.key === "Enter") && !event.repeat) {
+                      if (
+                        (event.key === " " || event.key === "Enter") &&
+                        !event.repeat
+                      ) {
                         event.preventDefault();
                         startReportHold();
                       }
@@ -1717,7 +2097,9 @@ export default function VotePage() {
                     onContextMenu={(event) => event.preventDefault()}
                     style={{ background: "#f63049", color: "#fff" }}
                   >
-                    <VoteReelText label={reportSubmitting ? "送信中..." : "長押しで確定"} />
+                    <VoteReelText
+                      label={reportSubmitting ? "送信中..." : "長押しで確定"}
+                    />
                   </button>
                   <button
                     className="vote-confirm-card__cancel home-reel-trigger"

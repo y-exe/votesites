@@ -7,12 +7,20 @@ export type ContestEntry = {
   youtubeId: string;
   submittedAt?: string;
   viewCount?: number;
+  title?: string;
+  channelTitle?: string;
+  description?: string;
+  channelIcon?: string;
 };
 
 type FeedEntry = {
   youtubeId?: unknown;
   submittedAt?: unknown;
   viewCount?: unknown;
+  title?: unknown;
+  channelTitle?: unknown;
+  description?: unknown;
+  channelIcon?: unknown;
 };
 
 type EntryCacheRow = {
@@ -35,37 +43,47 @@ export function isYouTubeId(value: unknown): value is string {
 
 function normalizeEntries(payload: { entries?: FeedEntry[] }): ContestEntry[] {
   const seen = new Set<string>();
-  return (Array.isArray(payload.entries) ? payload.entries : [])
-    .flatMap((entry) => {
-      const youtubeId =
-        typeof entry.youtubeId === "string" ? entry.youtubeId.trim() : "";
-
-      if (!isYouTubeId(youtubeId) || seen.has(youtubeId)) return [];
-
+  if (!Array.isArray(payload.entries)) return [];
+  return payload.entries
+    .filter((entry): entry is FeedEntry & { youtubeId: string } => {
+      if (typeof entry.youtubeId !== "string") return false;
+      const youtubeId = entry.youtubeId.trim();
+      if (!isYouTubeId(youtubeId) || seen.has(youtubeId)) return false;
       seen.add(youtubeId);
+      return true;
+    })
+    .map((entry) => {
+      const youtubeId = entry.youtubeId.trim();
       const submittedAt =
         typeof entry.submittedAt === "string" &&
         Number.isFinite(Date.parse(entry.submittedAt))
           ? entry.submittedAt
           : undefined;
-      const parsedViewCount =
-        typeof entry.viewCount === "number" || typeof entry.viewCount === "string"
-          ? Number(entry.viewCount)
-          : Number.NaN;
+      const parsedViewCount = Number(entry.viewCount);
       const viewCount =
         Number.isSafeInteger(parsedViewCount) && parsedViewCount >= 0
           ? parsedViewCount
           : undefined;
 
-      return [{ id: youtubeId, youtubeId, submittedAt, viewCount }];
+      const title = typeof entry.title === "string" ? entry.title : undefined;
+      const channelTitle = typeof entry.channelTitle === "string" ? entry.channelTitle : undefined;
+      const description = typeof entry.description === "string" ? entry.description : undefined;
+      const channelIcon = typeof entry.channelIcon === "string" ? entry.channelIcon : undefined;
+
+      return { id: youtubeId, youtubeId, submittedAt, viewCount, title, channelTitle, description, channelIcon };
     })
     .slice(0, 200);
 }
 
 type YouTubeVideoResource = {
   id?: unknown;
-  snippet?: { publishedAt?: unknown };
+  snippet?: { publishedAt?: unknown; title?: unknown; channelTitle?: unknown; description?: unknown; channelId?: unknown };
   statistics?: { viewCount?: unknown };
+};
+
+type YouTubeChannelResource = {
+  id?: unknown;
+  snippet?: { thumbnails?: { default?: { url?: unknown } } };
 };
 
 async function enrichWithYouTubeMetadata(
@@ -75,13 +93,13 @@ async function enrichWithYouTubeMetadata(
   if (!apiKey || entries.length === 0) return entries;
 
   const entriesNeedingMetadata = entries.filter(
-    (entry) => entry.viewCount === undefined || !entry.submittedAt,
+    (entry) => entry.viewCount === undefined || !entry.submittedAt || !entry.title || !entry.channelTitle || !entry.description || !entry.channelIcon,
   );
   if (entriesNeedingMetadata.length === 0) return entries;
 
   const metadata = new Map<
     string,
-    { publishedAt?: string; viewCount?: number }
+    { publishedAt?: string; viewCount?: number; title?: string; channelTitle?: string; description?: string; channelId?: string; channelIcon?: string }
   >();
   const batches = Array.from(
     { length: Math.ceil(entriesNeedingMetadata.length / 50) },
@@ -91,7 +109,7 @@ async function enrichWithYouTubeMetadata(
   const results = await Promise.allSettled(
     batches.map(async (batch) => {
       const endpoint = new URL("https://www.googleapis.com/youtube/v3/videos");
-      endpoint.searchParams.set("part", "snippet,statistics");
+      endpoint.searchParams.set("part", "snippet,statistics,id");
       endpoint.searchParams.set("id", batch.map((entry) => entry.youtubeId).join(","));
       endpoint.searchParams.set("key", apiKey);
       const response = await fetch(endpoint, {
@@ -109,6 +127,8 @@ async function enrichWithYouTubeMetadata(
     }),
   );
 
+  const channelIdsToFetch = new Set<string>();
+
   results.forEach((result) => {
     if (result.status !== "fulfilled") return;
     result.value.forEach((video) => {
@@ -123,17 +143,64 @@ async function enrichWithYouTubeMetadata(
         Number.isSafeInteger(parsedViewCount) && parsedViewCount >= 0
           ? parsedViewCount
           : undefined;
-      metadata.set(video.id, { publishedAt, viewCount });
+      const title = typeof video.snippet?.title === "string" ? video.snippet.title : undefined;
+      const channelTitle = typeof video.snippet?.channelTitle === "string" ? video.snippet.channelTitle : undefined;
+      const description = typeof video.snippet?.description === "string" ? video.snippet.description : undefined;
+      const channelId = typeof video.snippet?.channelId === "string" ? video.snippet.channelId : undefined;
+      
+      if (channelId) channelIdsToFetch.add(channelId);
+
+      metadata.set(video.id, { publishedAt, viewCount, title, channelTitle, description, channelId });
     });
   });
 
+  const channelIconMap = new Map<string, string>();
+  if (channelIdsToFetch.size > 0) {
+    const channelBatches = Array.from(
+      { length: Math.ceil(channelIdsToFetch.size / 50) },
+      (_, index) => Array.from(channelIdsToFetch).slice(index * 50, (index + 1) * 50),
+    );
+    const channelResults = await Promise.allSettled(
+      channelBatches.map(async (batch) => {
+        const endpoint = new URL("https://www.googleapis.com/youtube/v3/channels");
+        endpoint.searchParams.set("part", "snippet");
+        endpoint.searchParams.set("id", batch.join(","));
+        endpoint.searchParams.set("key", apiKey);
+        const response = await fetch(endpoint, {
+          next: { revalidate: 3600 },
+          signal: AbortSignal.timeout(ENTRY_FETCH_TIMEOUT_MS),
+        });
+        if (!response.ok) return [];
+        const value = await readLimitedJsonResponse(response, 512 * 1024);
+        const items =
+          value && typeof value === "object" && !Array.isArray(value)
+            ? (value as { items?: YouTubeChannelResource[] }).items
+            : undefined;
+        return Array.isArray(items) ? items : [];
+      }),
+    );
+    channelResults.forEach((result) => {
+      if (result.status !== "fulfilled") return;
+      result.value.forEach((channel) => {
+        if (typeof channel.id === "string" && typeof channel.snippet?.thumbnails?.default?.url === "string") {
+          channelIconMap.set(channel.id, channel.snippet.thumbnails.default.url);
+        }
+      });
+    });
+  }
+
   return entries.map((entry) => {
     const video = metadata.get(entry.youtubeId);
+    const channelIcon = video?.channelId ? channelIconMap.get(video.channelId) : undefined;
     return video
       ? {
           ...entry,
           submittedAt: entry.submittedAt ?? video.publishedAt,
           viewCount: video.viewCount ?? entry.viewCount,
+          title: entry.title ?? video.title,
+          channelTitle: entry.channelTitle ?? video.channelTitle,
+          description: entry.description ?? video.description,
+          channelIcon: entry.channelIcon ?? channelIcon,
         }
       : entry;
   });

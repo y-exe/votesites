@@ -283,6 +283,36 @@ a {
     color 200ms cubic-bezier(0.2, 0, 0, 1);
 }
 
+.vote-entry-search-input {
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  position: relative;
+  display: block;
+  width: clamp(280px, 45vw, 420px);
+  padding: 0.7rem clamp(1.2rem, 3vw, 1.8rem);
+  border: clamp(3px, 0.35vw, 4px) solid #0b0b0b;
+  border-radius: 999px;
+  color: #0b0b0b;
+  background: #ffffff;
+  font: inherit;
+  font-size: clamp(0.9rem, 1.6vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  outline: none;
+}
+
+.vote-entry-search-input::placeholder {
+  color: #888888;
+  font-weight: 600;
+}
+
+.vote-entry-search-input:focus {
+  border-color: #f63049;
+  box-shadow: 0 0 0 2px #f63049;
+}
+
 .vote-entry-playlist-button__logo {
   display: block;
   flex: none;
