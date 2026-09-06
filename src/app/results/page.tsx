@@ -648,8 +648,8 @@ function RankingTailSection({ children, locked = false }: { children: ReactNode;
 
 function TopArtwork({ introReady }: { introReady: boolean }) {
   return (
-    <section className={styles.topArtwork} aria-label="投票結果">
-      <div className={`home-hero__topbar ${styles.topbarOverArt}`}>
+    <section className="relative z-[2] w-full overflow-hidden bg-black" aria-label="投票結果">
+      <div className="home-hero__topbar z-20 h-[4.25rem] border-b-white/40 bg-white/[0.24]">
         <p className={`${lineSeedExtraBold.className} home-hero__brand`}>
           <span className="home-hero__brand-desktop">やまかわ動画編集大会</span>
           <span className="home-hero__brand-mobile">編集大会</span>
@@ -932,24 +932,31 @@ function ErrorState({
   kind: "not-published" | "unavailable";
   onRetry: () => void;
 }) {
+  const cardClassName = "relative z-[2] mx-auto mt-[max(3rem,12vh)] mb-[clamp(5rem,12vw,10rem)] grid w-[min(100%_-_3rem,52rem)] justify-items-center border-[3px] border-[var(--paper)] px-6 py-[clamp(3rem,8vw,6rem)] text-center";
+  const eyebrowClassName = "mb-3 mt-0 text-[0.8rem] tracking-[0.18em] text-[var(--red)]";
+  const titleClassName = "m-0 text-[clamp(1.8rem,5vw,3.5rem)]";
+  const bodyClassName = "mt-4 mb-0 leading-[1.7] text-[#aaa]";
+  const buttonClassName = "mt-8 inline-flex cursor-pointer items-center gap-[0.6rem] border-0 bg-[var(--yellow)] px-6 py-[0.9rem] text-[0.95rem] text-[var(--ink)]";
+  const linkClassName = "mt-4 text-[0.85rem] text-[#aaa]";
+
   if (kind === "not-published") {
     return (
-      <div className={styles.errorCard} role="status">
-        <p className={styles.errorEyebrow}>COMING SOON</p>
-        <h1>結果はまだ公開されていません</h1>
-        <p>2026年9月5日 21:00の結果発表後に公開します。</p>
-        <Link href="/">トップページへ戻る</Link>
+      <div className={cardClassName} role="status">
+        <p className={eyebrowClassName}>COMING SOON</p>
+        <h1 className={titleClassName}>結果はまだ公開されていません</h1>
+        <p className={bodyClassName}>2026年9月5日 21:00の結果発表後に公開します。</p>
+        <Link className={linkClassName} href="/">トップページへ戻る</Link>
       </div>
     );
   }
 
   return (
-    <div className={styles.errorCard} role="alert">
-      <p className={styles.errorEyebrow}>CONNECTION ERROR</p>
-      <h1>結果を読み込めませんでした</h1>
-      <p>通信状況を確認して、もう一度お試しください。</p>
-      <button type="button" onClick={onRetry}>再読み込み</button>
-      <Link href="/">トップページへ戻る</Link>
+    <div className={cardClassName} role="alert">
+      <p className={eyebrowClassName}>CONNECTION ERROR</p>
+      <h1 className={titleClassName}>結果を読み込めませんでした</h1>
+      <p className={bodyClassName}>通信状況を確認して、もう一度お試しください。</p>
+      <button className={buttonClassName} type="button" onClick={onRetry}>再読み込み</button>
+      <Link className={linkClassName} href="/">トップページへ戻る</Link>
     </div>
   );
 }
@@ -1200,7 +1207,7 @@ export default function ResultsPage() {
 
   if (error || !data) {
     return (
-      <main className={`${styles.page} ${lineSeedExtraBold.className}`}>
+      <main className={`relative min-h-[100svh] overflow-hidden bg-[var(--ink)] text-[var(--paper)] [--ink:#080808] [--paper:#f7f5ef] [--red:#f63049] [--yellow:#ffe33c] [--results-art-y:0px] [--results-art-scale:1] [--results-wave-y:0px] [--results-title-y:0px] ${lineSeedExtraBold.className}`}>
         {loading ? <ResultsLoadingScreen ready={false} onDismiss={() => undefined} /> : <ErrorState kind={error ?? "unavailable"} onRetry={() => void loadResults()} />}
       </main>
     );
@@ -1215,7 +1222,7 @@ export default function ResultsPage() {
         />
       ) : null}
       <ReactLenis ref={lenisRef} root />
-      <main ref={pageRef} className={`${styles.page} ${lineSeedExtraBold.className}`}>
+      <main ref={pageRef} className={`relative min-h-[100svh] overflow-hidden bg-[var(--ink)] text-[var(--paper)] [--ink:#080808] [--paper:#f7f5ef] [--red:#f63049] [--yellow:#ffe33c] [--results-art-y:0px] [--results-art-scale:1] [--results-wave-y:0px] [--results-title-y:0px] ${lineSeedExtraBold.className}`}>
       <div className={styles.noise} aria-hidden="true" />
       <TopArtwork introReady={!loadingScreenVisible} />
       <section className={styles.aboutIntro} aria-labelledby="results-about-title">
@@ -1235,39 +1242,39 @@ export default function ResultsPage() {
           <span>ABOUT</span>
           <span className={styles.aboutTitleTag}>集計について</span>
         </h2>
-        <div className={styles.resultsFlow}>
-          <article className={styles.resultsStep}>
-            <h3 className={styles.resultsStepLabel}>
-              <span>1</span>
+        <div className="relative z-[1] mx-auto grid w-[min(90%,74rem)] gap-[clamp(2.25rem,5vw,4rem)] pt-[calc(var(--about-wave-height)_-_var(--about-wave-shift)_+_clamp(2.4rem,4vw,4rem))]">
+          <article className="relative rounded-[clamp(1.5rem,3vw,2.5rem)] bg-white/[.94] px-[clamp(1.5rem,5vw,4.5rem)] pt-[clamp(3.5rem,6vw,5rem)] pb-[clamp(2rem,4vw,3.5rem)] text-[#181218] shadow-[0_1rem_2.5rem_rgb(0_0_0_/_30%)]">
+            <h3 className="absolute top-0 left-1/2 m-0 inline-flex min-h-[clamp(2.75rem,4.5vw,3.75rem)] -translate-x-1/2 -translate-y-[42%] items-center gap-[0.7rem] whitespace-nowrap rounded-full bg-[var(--red)] px-[clamp(1.25rem,3vw,2.25rem)] py-[0.45rem] text-[clamp(1rem,2vw,1.65rem)] leading-[1.15] text-white">
+              <span className="grid h-[1.65em] w-[1.65em] place-items-center rounded-full bg-white text-[var(--red)]">1</span>
               不正投票について
             </h3>
-            <div className={styles.resultsStepBody}>
-              <p>
-                <strong>同一人物による同一作品への複数投票</strong>と判断したものは、
+            <div className="text-center text-[clamp(.95rem,1.65vw,1.35rem)] font-extrabold leading-[1.9]">
+              <p className="m-0">
+                <strong className="inline text-[1.18em] leading-[1.35] text-black [background:linear-gradient(transparent_62%,#ffe33c_62%)]">同一人物による同一作品への複数投票</strong>と判断したものは、
                 <br />
-                複数票であっても<strong>1票として集計</strong>しています。
+                複数票であっても<strong className="inline text-[1.18em] leading-[1.35] text-black [background:linear-gradient(transparent_62%,#ffe33c_62%)]">1票として集計</strong>しています。
               </p>
-              <p className={styles.resultsStepNote}>
+              <p className="mt-3 text-[.82em] text-[#666]">
                 ※この処理は、不正投票と確信できるケースに限って行っています。
               </p>
             </div>
           </article>
 
-          <article className={styles.resultsStep} data-reserve-media="true">
-            <h3 className={styles.resultsStepLabel}>
-              <span>2</span>
+          <article className="relative rounded-[clamp(1.5rem,3vw,2.5rem)] bg-white/[.94] px-[clamp(1.5rem,5vw,4.5rem)] pt-[clamp(3.5rem,6vw,5rem)] pb-[clamp(2rem,4vw,3.5rem)] text-[#181218] shadow-[0_1rem_2.5rem_rgb(0_0_0_/_30%)]" data-reserve-media="true">
+            <h3 className="absolute top-0 left-1/2 m-0 inline-flex min-h-[clamp(2.75rem,4.5vw,3.75rem)] -translate-x-1/2 -translate-y-[42%] items-center gap-[0.7rem] whitespace-nowrap rounded-full bg-[var(--red)] px-[clamp(1.25rem,3vw,2.25rem)] py-[0.45rem] text-[clamp(1rem,2vw,1.65rem)] leading-[1.15] text-white">
+              <span className="grid h-[1.65em] w-[1.65em] place-items-center rounded-full bg-white text-[var(--red)]">2</span>
               エントリー数・投票数
             </h3>
-            <div className={styles.resultsStepBody}>
-              <p>
-                <strong>86名の方にエントリー</strong>いただき、
+            <div className="mx-auto w-[min(54%,35rem)] -translate-x-[22%] text-center text-[clamp(.95rem,1.65vw,1.35rem)] font-extrabold leading-[1.9]">
+              <p className="m-0">
+                <strong className="inline text-[1.18em] leading-[1.35] text-black [background:linear-gradient(transparent_62%,#ffe33c_62%)]">86名の方にエントリー</strong>いただき、
                 <br />
-                <strong>200名を超える皆さま</strong>から投票をいただきました。
+                <strong className="inline text-[1.18em] leading-[1.35] text-black [background:linear-gradient(transparent_62%,#ffe33c_62%)]">200名を超える皆さま</strong>から投票をいただきました。
                 <br />
-                <strong>ご参加・ご協力</strong>、ありがとうございました！
+                <strong className="inline text-[1.18em] leading-[1.35] text-black [background:linear-gradient(transparent_62%,#ffe33c_62%)]">ご参加・ご協力</strong>、ありがとうございました！
               </p>
             </div>
-            <span className={styles.resultsStepGraphic} aria-hidden="true">
+            <span className="absolute top-1/2 right-[clamp(1rem,3.5vw,3.5rem)] block aspect-video w-[clamp(9rem,21vw,19rem)] -translate-y-1/2 overflow-hidden rounded-[clamp(.55rem,1vw,.9rem)] [&_img]:object-cover" aria-hidden="true">
               <Image
                 src={versionedTopAsset("/Top/yokatta.png")}
                 alt=""
@@ -1352,10 +1359,10 @@ export default function ResultsPage() {
               ))}
             </div>
           </section>
-          <div className={styles.resultsDivider} aria-hidden="true">
-            <div className={`${styles.resultsDividerTrack} ${syncopate.className}`}>
-              <span>{"YAMAKAWATERUKI\u00a0\u00a0\u00a0".repeat(12)}</span>
-              <span>{"YAMAKAWATERUKI\u00a0\u00a0\u00a0".repeat(12)}</span>
+          <div className="relative z-[2] flex h-[clamp(2.1rem,3.45vw,3.6rem)] w-full items-center overflow-hidden border-y-[3px] border-[#8a244b] bg-[#d02752] text-white" aria-hidden="true">
+            <div className={`${styles.resultsDividerTrack} ${syncopate.className} flex w-max whitespace-nowrap text-[clamp(1.6rem,3vw,3.3rem)] leading-none tracking-[.08em] will-change-transform`}>
+              <span className="block">{"YAMAKAWATERUKI\u00a0\u00a0\u00a0".repeat(12)}</span>
+              <span className="block">{"YAMAKAWATERUKI\u00a0\u00a0\u00a0".repeat(12)}</span>
             </div>
           </div>
           <EndLogoSection videoIds={streamVideoIds}>
@@ -1390,7 +1397,6 @@ export default function ResultsPage() {
                       <div className={styles.lowerRankingCopy}>
                         <div className={styles.rankingChannel}>
                           {item.channelIcon ? (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={item.channelIcon} alt="" />
                           ) : (
                             <span className={styles.rankingChannelFallback} aria-hidden="true">
@@ -1426,34 +1432,33 @@ export default function ResultsPage() {
           </EndLogoSection>
           <RankingTailSection locked={!finalRankingsUnlocked}>
               {finalRankingsUnlocked ? (
-                <div className={styles.rankingTailGroups}>
+                <div className="grid gap-[clamp(2.4rem,5vw,4.5rem)]">
                   {finalRankGroups.map(([rank, items]) => (
-                    <section className={styles.rankingTailGroup} key={rank}>
-                      <h2 className={styles.rankingTailGroupLabel}>
+                    <section className="min-w-0 text-center" key={rank}>
+                      <h2 className="mx-auto mb-[clamp(.9rem,1.5vw,1.3rem)] inline-flex min-h-[2.4rem] items-center rounded-full bg-[#111f35] px-4 py-1 text-[clamp(1rem,1.7vw,1.45rem)] leading-none tracking-[.02em] text-white">
                         {rank}位{items.length > 1 ? "タイ" : ""}の動画
                       </h2>
-                      <ol className={styles.rankingTailList}>
+                      <ol className="m-0 flex list-none flex-wrap justify-center gap-[clamp(1rem,1.6vw,1.5rem)] p-0 max-[700px]:gap-x-[.8rem] max-[700px]:gap-y-[1.25rem]">
                         {items.map((item) => (
-                          <li className={styles.rankingTailItem} key={item.videoId}>
+                          <li className="min-w-0 text-left [flex:0_1_calc((100%_-_clamp(3rem,4.8vw,4.5rem))_/_4)] max-[1160px]:[flex-basis:calc((100%_-_clamp(2rem,3.2vw,3rem))_/_3)] max-[700px]:[flex-basis:calc((100%_-_.8rem)_/_2)]" key={item.videoId}>
                             <button
-                              className={styles.rankingTailThumbnail}
+                              className="block aspect-video w-full cursor-pointer overflow-hidden rounded-[.65rem] border-0 bg-[#111f35] p-0 focus-visible:outline-[3px] focus-visible:outline-[#111f35]/30 focus-visible:outline-offset-[3px] [&_img]:block [&_img]:h-full [&_img]:w-full [&_img]:object-cover"
                               type="button"
                               onClick={() => setSelectedRankingItem(item)}
                               aria-label={`${item.title || "作品"}を再生`}
                             >
                               <VoteStyleVideoThumbnail youtubeId={item.videoId} alt={`${item.title || "作品"}のサムネイル`} />
                             </button>
-                            <div className={styles.rankingTailCopy}>
-                              <div className={styles.rankingTailChannel}>
+                            <div className="min-w-0 pt-[.7rem]">
+                              <div className="flex items-center gap-[.55rem] text-[clamp(.9rem,1.4vw,1.15rem)] font-extrabold text-[#505c70] [&_img]:grid [&_img]:aspect-square [&_img]:w-[clamp(2rem,2.5vw,2.45rem)] [&_img]:shrink-0 [&_img]:overflow-hidden [&_img]:rounded-full [&_img]:bg-[#111f35] [&_img]:object-cover max-[620px]:[&_img]:w-[1.55rem] [&_span]:grid [&_span]:aspect-square [&_span]:w-[clamp(2rem,2.5vw,2.45rem)] [&_span]:shrink-0 [&_span]:place-items-center [&_span]:overflow-hidden [&_span]:rounded-full [&_span]:bg-[#111f35] [&_span]:text-white max-[620px]:[&_span]:w-[1.55rem]">
                                 {item.channelIcon ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
                                   <img src={item.channelIcon} alt="" />
                                 ) : (
                                   <span aria-hidden="true">{(item.channelTitle || "?").slice(0, 1)}</span>
                                 )}
-                                <p>{item.channelTitle || "参加クリエイター"}</p>
+                                <p className="m-0">{item.channelTitle || "参加クリエイター"}</p>
                               </div>
-                              <h3>{item.title || "タイトル未取得の作品"}</h3>
+                              <h3 className="m-0 mt-[.45rem] line-clamp-2 overflow-hidden text-[clamp(1.12rem,1.75vw,1.55rem)] leading-[1.35]">{item.title || "タイトル未取得の作品"}</h3>
                             </div>
                           </li>
                         ))}
@@ -1463,7 +1468,6 @@ export default function ResultsPage() {
                 </div>
               ) : (
                 <div className={styles.rankingTailLock} role="status" aria-live="polite">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/logo/logo.png" alt="" aria-hidden="true" />
                   <div>
                     <strong>10位以下</strong>
@@ -1475,40 +1479,16 @@ export default function ResultsPage() {
         </>
       )}
 
-      <footer
-        style={{
-          backgroundColor: "#000000",
-          borderTop: "1px solid #222222",
-          padding: "3rem 1.5rem",
-          textAlign: "center",
-          color: "#ffffff",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "1.2rem",
-        }}
-      >
-        {/* The app's local image policy excludes /logo, so keep this footer asset
-            unoptimized rather than routing it through next/image. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+      <footer className="flex flex-col items-center gap-[1.2rem] border-t border-[#222] bg-black px-6 py-12 text-center text-white">
         <img
           src="/logo/logo.png"
           alt="やまかわ動画編集大会"
-          style={{
-            height: "auto",
-            width: "clamp(300px, 50vw, 540px)",
-            display: "block",
-          }}
+          className="block h-auto w-[clamp(300px,50vw,540px)]"
         />
-        <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", justifyContent: "center" }}>
+        <div className="flex items-center justify-center gap-6">
           <Link
             href="/policy"
-            style={{
-              color: "#ffffff",
-              textDecoration: "underline",
-              fontSize: "0.95rem",
-              opacity: 0.85,
-            }}
+            className="text-[0.95rem] text-white/85 underline"
           >
             プライバシーポリシー
           </Link>
@@ -1516,12 +1496,7 @@ export default function ResultsPage() {
             href="https://github.com/y-exe/votesites"
             target="_blank"
             rel="noreferrer"
-            style={{
-              color: "#ffffff",
-              textDecoration: "underline",
-              fontSize: "0.95rem",
-              opacity: 0.85,
-            }}
+            className="text-[0.95rem] text-white/85 underline"
           >
             OSS
           </a>
@@ -1549,7 +1524,6 @@ export default function ResultsPage() {
             >
               <div className="flex items-center gap-3 shrink-0">
               {selectedRankingItem.channelIcon ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img src={selectedRankingItem.channelIcon} alt={selectedRankingItem.channelTitle} className="w-[clamp(2.5rem,4.5vw,3.5rem)] h-[clamp(2.5rem,4.5vw,3.5rem)] rounded-full shadow-[0_0_0_1px_rgba(0,0,0,1)] object-cover bg-neutral-900" />
               ) : (
                 <div className="w-[clamp(2.5rem,4.5vw,3.5rem)] h-[clamp(2.5rem,4.5vw,3.5rem)] rounded-full shadow-[0_0_0_1px_rgba(0,0,0,1)] bg-neutral-800 flex items-center justify-center font-bold text-xl">{selectedRankingItem.channelTitle?.charAt(0) || "?"}</div>

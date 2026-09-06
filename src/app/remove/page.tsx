@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import styles from "./remove.module.css";
 
 type Step = "email" | "code" | "select" | "none" | "done";
 
@@ -104,7 +103,7 @@ export default function RemovePage() {
   }
 
   return (
-    <main className={styles.page}>
+    <main className="m-2 [&_a]:[all:revert] [&_button]:[all:revert] [&_h1]:[all:revert] [&_h2]:[all:revert] [&_input]:[all:revert] [&_p]:[all:revert] [&_strong]:[all:revert] [&_ul]:[all:revert]">
       <h1>動画削除申請</h1>
 
       {step === "email" && (

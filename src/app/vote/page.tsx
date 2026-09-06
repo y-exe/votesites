@@ -143,11 +143,6 @@ function YouTubeThumbnail({
             loading={eager ? "eager" : "lazy"}
             sizes="(max-width: 640px) calc(100vw - 2.5rem), 44vw"
             onLoad={(event) => {
-              // i.ytimg.com returns a 120x90 placeholder (HTTP 200), not an
-              // error, when the requested resolution does not exist (e.g. SD
-              // videos without a maxres thumbnail). onError never fires, so
-              // detect the placeholder here and fall back to a lower
-              // resolution.
               const image = event.currentTarget;
               if (image.naturalWidth <= 160 && image.naturalHeight <= 120) {
                 fallbackResolution();
@@ -380,8 +375,6 @@ function findCircuitIntersections(
           const secondOnSegment =
             secondProgress >= -0.001 && secondProgress <= 1.001;
 
-          // A branch may begin or end on the middle of another line. Ignore
-          // only endpoint-to-endpoint contacts, which are ordinary bends.
           if (
             !firstOnSegment ||
             !secondOnSegment ||
@@ -744,8 +737,6 @@ export function VoteCircuit({
             onAnimationEnd={(event) => {
               if (event.animationName !== "vote-line-draw") return;
 
-              // The dash is only needed while the line grows. Leaving it on
-              // very long paths can render as visible gaps in mobile Safari.
               event.currentTarget.style.strokeDasharray = "none";
               event.currentTarget.style.strokeDashoffset = "0";
             }}
@@ -920,8 +911,8 @@ export default function VotePage() {
           .toLowerCase()
           .replace(/[\u3041-\u3096]/g, (m) =>
             String.fromCharCode(m.charCodeAt(0) + 0x60),
-          ) // Hiragana to Katakana
-          .replace(/[\s　]+/g, ""); // Remove spaces
+          )
+          .replace(/[\s　]+/g, "");
       };
 
       const normalizedQuery = normalizeForSearch(searchFilter);
@@ -1334,9 +1325,6 @@ export default function VotePage() {
     const handleViewportResize = () => {
       const viewportWidth = window.innerWidth;
 
-      // Mobile browser chrome continuously changes the viewport height while
-      // scrolling. Rebuilding the full-page SVG for those height-only resizes
-      // can leave transient gaps in Safari, so only react to width changes.
       if (Math.abs(viewportWidth - lastViewportWidth) < 2) return;
 
       lastViewportWidth = viewportWidth;
@@ -2160,26 +2148,10 @@ export default function VotePage() {
 
         {reportToastVisible ? (
           <div
-            style={{
-              position: "fixed",
-              zIndex: 1100,
-              inset: 0,
-              display: "grid",
-              placeItems: "center",
-              pointerEvents: "none",
-            }}
+            className="pointer-events-none fixed inset-0 z-[1100] grid place-items-center"
           >
             <div
-              style={{
-                background: "#ffffff",
-                color: "#111111",
-                padding: "1rem 2.2rem",
-                borderRadius: "0.85rem",
-                fontWeight: 800,
-                fontSize: "1.15rem",
-                boxShadow: "0 0.8rem 2.5rem rgba(0,0,0,0.35)",
-                animation: "vote-confirm-card-in 220ms ease-out both",
-              }}
+              className="rounded-[0.85rem] bg-white px-[2.2rem] py-4 text-[1.15rem] font-extrabold text-[#111] shadow-[0_0.8rem_2.5rem_rgba(0,0,0,0.35)] [animation:vote-confirm-card-in_220ms_ease-out_both]"
             >
               {reportToastMessage}
             </div>

@@ -1652,39 +1652,18 @@ export default function Home() {
           </div>
         </section>
         </section>
-        <footer
-          style={{
-            backgroundColor: "#000000",
-            borderTop: "1px solid #222222",
-            padding: "3rem 1.5rem",
-            textAlign: "center",
-            color: "#ffffff",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "1.2rem",
-          }}
-        >
+        <footer className="flex flex-col items-center gap-[1.2rem] border-t border-[#222] bg-black px-6 py-12 text-center text-white">
           <Image
             src="/logo/logo.png"
             alt="やまかわ動画編集大会"
             width={540}
             height={180}
-            style={{
-              height: "auto",
-              width: "clamp(300px, 50vw, 540px)",
-              display: "block",
-            }}
+            className="block h-auto w-[clamp(300px,50vw,540px)]"
           />
-          <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", justifyContent: "center" }}>
+          <div className="flex items-center justify-center gap-6">
             <Link
               href="/policy"
-              style={{
-                color: "#ffffff",
-                textDecoration: "underline",
-                fontSize: "0.95rem",
-                opacity: 0.85,
-              }}
+              className="text-[0.95rem] text-white/85 underline"
             >
               プライバシーポリシー
             </Link>
@@ -1692,12 +1671,7 @@ export default function Home() {
               href="https://github.com/y-exe/votesites"
               target="_blank"
               rel="noreferrer"
-              style={{
-                color: "#ffffff",
-                textDecoration: "underline",
-                fontSize: "0.95rem",
-                opacity: 0.85,
-              }}
+              className="text-[0.95rem] text-white/85 underline"
             >
               OSS
             </a>
