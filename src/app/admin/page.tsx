@@ -15,8 +15,13 @@ type RecentVote = {
   userAgent: string;
   country: string;
   createdAt: number;
+  isExcluded: number;
   username: string | null;
   globalName: string | null;
+};
+
+type SuspiciousVote = RecentVote & {
+  matchValue: string;
 };
 
 type AdminResponse = {
@@ -24,6 +29,8 @@ type AdminResponse = {
   requiresPasswordUpgrade?: boolean;
   rankings?: VoteRanking[];
   recentVotes?: RecentVote[];
+  suspiciousVotes?: SuspiciousVote[];
+  liveResults?: { publishedCount: number; updatedAt: number };
   error?: string;
 };
 
@@ -32,14 +39,22 @@ export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [rankings, setRankings] = useState<VoteRanking[]>([]);
   const [recentVotes, setRecentVotes] = useState<RecentVote[]>([]);
+  const [suspiciousVotes, setSuspiciousVotes] = useState<SuspiciousVote[]>([]);
+  const [updatingVoteId, setUpdatingVoteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [requiresPasswordUpgrade, setRequiresPasswordUpgrade] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [publishedCount, setPublishedCount] = useState(0);
+  const [resettingReveal, setResettingReveal] = useState(false);
 
   function applyResponse(data: AdminResponse) {
     if (Array.isArray(data.rankings)) setRankings(data.rankings);
     if (Array.isArray(data.recentVotes)) setRecentVotes(data.recentVotes);
+    if (Array.isArray(data.suspiciousVotes)) setSuspiciousVotes(data.suspiciousVotes);
+    if (data.liveResults && Number.isInteger(data.liveResults.publishedCount)) {
+      setPublishedCount(data.liveResults.publishedCount);
+    }
     if (typeof data.requiresPasswordUpgrade === "boolean") {
       setRequiresPasswordUpgrade(data.requiresPasswordUpgrade);
     }
@@ -138,11 +153,54 @@ export default function AdminPage() {
         setAuthenticated(false);
         setRankings([]);
         setRecentVotes([]);
+        setSuspiciousVotes([]);
       } else {
         setError("エラーが発生しました。");
       }
     } catch {
       setError("通信エラーが発生しました。");
+    }
+  }
+
+  async function handleResetResultsReveal() {
+    if (!window.confirm("生放送の順位公開を1位からやり直します。よろしいですか？")) return;
+    setError(null);
+    setResettingReveal(true);
+    try {
+      const response = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reset-results-reveal" }),
+      });
+      const data = (await response.json()) as AdminResponse;
+      if (response.ok && data.success) applyResponse(data);
+      else setError("公開状態をリセットできませんでした。");
+    } catch {
+      setError("通信エラーが発生しました。");
+    } finally {
+      setResettingReveal(false);
+    }
+  }
+
+  async function handleVoteExclusion(discordUserId: string, isExcluded: boolean) {
+    setError(null);
+    setUpdatingVoteId(discordUserId);
+    try {
+      const response = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set-vote-excluded", discordUserId, isExcluded }),
+      });
+      const data = (await response.json()) as AdminResponse;
+      if (response.ok && data.success) {
+        applyResponse(data);
+      } else {
+        setError(data.error === "vote_not_found" ? "投票データが見つかりません。" : "更新に失敗しました。");
+      }
+    } catch {
+      setError("通信エラーが発生しました。");
+    } finally {
+      setUpdatingVoteId(null);
     }
   }
 
@@ -206,6 +264,81 @@ export default function AdminPage() {
       </div>
 
       {error && <p className="mt-4 font-semibold text-red-600">{error}</p>}
+
+      <section className="mb-12 rounded border border-neutral-200 bg-neutral-50 p-5">
+        <h2 className="text-xl font-bold">生放送の順位公開</h2>
+        <p className="mt-2 text-neutral-700">現在、<strong>{publishedCount}位</strong>まで公開済みです。</p>
+        <button
+          type="button"
+          onClick={handleResetResultsReveal}
+          disabled={resettingReveal}
+          className="mt-4 rounded bg-neutral-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-neutral-700 disabled:opacity-50"
+        >
+          {resettingReveal ? "リセット中..." : "公開状態をリセット"}
+        </button>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="mb-2 text-xl font-bold border-b border-neutral-200 pb-2">
+          不正投票の疑い
+        </h2>
+        <p className="mb-4 text-sm text-neutral-600">
+          同じ作品に、別の Discord ユーザーが同一 IP で投票している候補です。自動判定ではないため、内容を確認してから集計対象を切り替えてください。
+        </p>
+        {suspiciousVotes.length === 0 ? (
+          <p className="text-neutral-500">該当する候補はありません。</p>
+        ) : (
+          <div className="overflow-x-auto rounded border border-neutral-200">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-neutral-50 border-b border-neutral-200">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">一致した IP</th>
+                  <th className="px-4 py-3 font-semibold">動画ID</th>
+                  <th className="px-4 py-3 font-semibold">ユーザー名 (Discord)</th>
+                  <th className="px-4 py-3 font-semibold">日時</th>
+                  <th className="px-4 py-3 font-semibold">IP</th>
+                  <th className="px-4 py-3 font-semibold">User Agent</th>
+                  <th className="px-4 py-3 font-semibold">集計状態</th>
+                  <th className="px-4 py-3 font-semibold">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200">
+                {suspiciousVotes.map((vote) => {
+                  const isExcluded = vote.isExcluded === 1;
+                  const isUpdating = updatingVoteId === vote.discordUserId;
+                  return (
+                    <tr key={`${vote.matchValue}:${vote.discordUserId}`} className={isExcluded ? "bg-amber-50 hover:bg-amber-100" : "hover:bg-neutral-50"}>
+                      <td className="px-4 py-3">
+                        <span className="block font-mono">{vote.matchValue}</span>
+                      </td>
+                      <td className="px-4 py-3 font-mono">
+                        <a href={`https://youtube.com/watch?v=${vote.videoId}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{vote.videoId}</a>
+                      </td>
+                      <td className="px-4 py-3">
+                        {vote.globalName ? `${vote.globalName} (@${vote.username})` : (vote.username ? `@${vote.username}` : vote.discordUserId)}
+                      </td>
+                      <td className="px-4 py-3">{new Date(vote.createdAt).toLocaleString("ja-JP")}</td>
+                      <td className="px-4 py-3 font-mono">{vote.ip || "N/A"}</td>
+                      <td className="px-4 py-3 max-w-xs truncate" title={vote.userAgent}>{vote.userAgent || "N/A"}</td>
+                      <td className="px-4 py-3 font-medium">{isExcluded ? "除外中" : "集計中"}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => void handleVoteExclusion(vote.discordUserId, !isExcluded)}
+                          disabled={isUpdating}
+                          className={isExcluded ? "rounded border border-neutral-300 px-3 py-1.5 font-medium hover:bg-white disabled:opacity-50" : "rounded bg-red-600 px-3 py-1.5 font-medium text-white hover:bg-red-700 disabled:opacity-50"}
+                        >
+                          {isUpdating ? "更新中..." : isExcluded ? "集計に戻す" : "集計から除外"}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <section className="mb-12">
         <h2 className="mb-4 text-xl font-bold border-b border-neutral-200 pb-2">

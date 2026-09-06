@@ -206,9 +206,39 @@ export function evaluateVpnOrProxy(
 
 export function assertSameOrigin(request: Request): void {
   const origin = request.headers.get("origin");
-  if (!origin || origin !== new URL(request.url).origin) {
+  if (!origin || !getRequestOrigins(request).has(origin)) {
     throw new Error("Same-origin request required");
   }
+}
+
+function firstHeader(value: string | null): string | undefined {
+  return value?.split(",")[0]?.trim() || undefined;
+}
+
+/**
+ * Returns the set of origins this request is legitimately served from.
+ *
+ * Behind an SSH reverse tunnel (or a LAN IP) Next.js normalizes `request.url`
+ * to e.g. http://localhost:3000 while the browser still sends the public
+ * host (e.g. http://162.43.78.145:8080) as its Origin header. We therefore
+ * accept both the normalized URL origin and the origin derived from the
+ * Host header so CSRF checks keep working in local/tunnel setups.
+ */
+export function getRequestOrigins(request: Request): Set<string> {
+  const origins = new Set<string>();
+  const requestUrl = new URL(request.url);
+  origins.add(requestUrl.origin);
+
+  const host =
+    firstHeader(request.headers.get("x-forwarded-host")) ||
+    firstHeader(request.headers.get("host"));
+  if (host) {
+    const proto =
+      firstHeader(request.headers.get("x-forwarded-proto")) ||
+      requestUrl.protocol.slice(0, -1);
+    origins.add(`${proto}://${host}`);
+  }
+  return origins;
 }
 
 export async function consumeSlidingWindowRateLimit(args: {

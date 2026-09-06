@@ -312,9 +312,9 @@ function ReelText({ label }: { label: string }) {
   );
 }
 
-function HeroReelLink({ href, label }: { href: string; label: string }) {
+function HeroReelLink({ href, label, className = "" }: { href: string; label: string; className?: string }) {
   return (
-    <a className="home-hero__action" href={href} aria-label={label}>
+    <a className={`home-hero__action ${className}`} href={href} aria-label={label}>
       <ReelText label={label} />
     </a>
   );
@@ -1221,6 +1221,7 @@ export default function Home() {
           >
             <HeroReelLink href="#entry-card-title" label="エントリー　→" />
             <HeroReelLink href="#home-vote-title" label="投票　→" />
+            <HeroReelLink href="/results" label="結果発表　→" className="home-hero__action--results" />
           </nav>
         </section>
 

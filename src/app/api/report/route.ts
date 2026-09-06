@@ -1,4 +1,4 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDatabase } from '@/lib/db';
 import { NextRequest, NextResponse } from "next/server";
 import {
   getReportSummaries,
@@ -27,9 +27,7 @@ const RESPONSE_HEADERS = {
   "X-Content-Type-Options": "nosniff",
 };
 
-function getDatabase() {
-  return getCloudflareContext().env.VOTES_DB;
-}
+
 
 function json(body: unknown, init?: ResponseInit) {
   return NextResponse.json(body, {

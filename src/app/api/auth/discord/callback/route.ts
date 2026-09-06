@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDatabase } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import {
   authCookieOptions,
@@ -51,7 +51,8 @@ export async function GET(request: NextRequest) {
     return response;
   };
   const errorRedirect = (reason: string) => {
-    const target = new URL(returnTo, request.url);
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://event.ymkw.top";
+    const target = new URL(returnTo, baseUrl);
     target.searchParams.set("auth", reason);
     return finish(NextResponse.redirect(target));
   };
@@ -100,7 +101,7 @@ export async function GET(request: NextRequest) {
 
     const sessionToken = createDiscordSessionToken();
     const now = Date.now();
-    await getCloudflareContext().env.VOTES_DB
+    await getDatabase()
       .prepare(
         `INSERT INTO discord_sessions
          (token_hash, discord_user_id, username, global_name, avatar, created_at, expires_at)
@@ -116,13 +117,15 @@ export async function GET(request: NextRequest) {
         now + DISCORD_SESSION_MAX_AGE * 1000,
       )
       .run();
-    const response = NextResponse.redirect(new URL(returnTo, request.url));
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://event.ymkw.top";
+    const response = NextResponse.redirect(new URL(returnTo, baseUrl));
     response.cookies.set(DISCORD_SESSION_COOKIE, sessionToken, {
       ...authCookieOptions,
       maxAge: DISCORD_SESSION_MAX_AGE,
     });
     return finish(response);
-  } catch {
+  } catch (err) {
+    console.error("Discord Auth Error:", err);
     return errorRedirect("discord_unavailable");
   }
 }

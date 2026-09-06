@@ -1,4 +1,5 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDatabase } from '@/lib/db';
+
 import { normalizeEmail, verifyRemovalCode } from "@/lib/removals";
 import { readLimitedJsonObject } from "@/lib/request-json";
 import { assertSameOrigin } from "@/lib/security";
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     }
 
     const result = await verifyRemovalCode({
-      database: getCloudflareContext().env.VOTES_DB,
+      database: getDatabase(),
       requestId,
       code,
       email,

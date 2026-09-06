@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getRequestOrigins } from "@/lib/security";
+
 const DEFAULT_MAX_BYTES = 4 * 1024;
 
 async function readLimitedJsonValue(
@@ -50,7 +52,7 @@ export async function readLimitedJsonObject(
   }
 
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) {
+  if (origin && !getRequestOrigins(request).has(origin)) {
     throw new Error("Cross-origin request rejected");
   }
 

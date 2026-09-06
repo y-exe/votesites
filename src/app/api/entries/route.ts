@@ -1,10 +1,11 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDatabase } from '@/lib/db';
+
 import { fetchContestEntries } from "@/lib/entries";
 
 export const runtime = "nodejs";
 
 function getEntriesDatabase() {
-  return getCloudflareContext().env.VOTES_DB;
+  return getDatabase();
 }
 
 export async function GET() {

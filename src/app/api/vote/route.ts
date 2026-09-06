@@ -1,4 +1,4 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDatabase } from '@/lib/db';
 import { NextRequest } from "next/server";
 import {
   DISCORD_SESSION_COOKIE,
@@ -10,6 +10,7 @@ import {
   consumeSlidingWindowRateLimit,
   evaluateVpnOrProxy,
   getClientNetworkInfo,
+  getRequestOrigins,
   hmacHex,
   pruneExpiredSecurityRows,
   requireSecuritySecret,
@@ -49,7 +50,7 @@ async function getSession(request: NextRequest) {
 
 function isSameOrigin(request: NextRequest) {
   const origin = request.headers.get("origin");
-  return origin !== null && origin === request.nextUrl.origin;
+  return origin !== null && getRequestOrigins(request).has(origin);
 }
 
 async function readSmallJson(request: Request): Promise<unknown> {
@@ -81,7 +82,7 @@ async function readSmallJson(request: Request): Promise<unknown> {
 }
 
 function getVotesDatabase() {
-  return getCloudflareContext().env.VOTES_DB;
+  return getDatabase();
 }
 
 export async function GET(request: NextRequest) {
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
     const vote = await getVotesDatabase()
       .prepare("SELECT video_id FROM votes WHERE discord_user_id = ?1")
       .bind(session.user.id)
-      .first<VoteRow>();
+      .first();
 
     return json({ vote: vote ? { videoId: vote.video_id } : null });
   } catch (error) {
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const cf = getCloudflareContext().cf;
+  const cf = undefined;
   const networkInfo = getClientNetworkInfo(request, cf);
   const vpnCheck = evaluateVpnOrProxy(request, networkInfo);
 
@@ -169,7 +170,7 @@ export async function POST(request: NextRequest) {
     const currentVote = await database
       .prepare("SELECT video_id FROM votes WHERE discord_user_id = ?1")
       .bind(session.user.id)
-      .first<VoteRow>();
+      .first();
 
     if (currentVote?.video_id === videoId) {
       return json({ vote: { videoId }, action: "unchanged" });
@@ -203,6 +204,8 @@ export async function POST(request: NextRequest) {
            is_suspicious = excluded.is_suspicious,
            suspicious_reason = excluded.suspicious_reason,
            threat_score = excluded.threat_score,
+           is_excluded = 0,
+           excluded_at = NULL,
            updated_at = excluded.updated_at`,
       )
       .bind(

@@ -1,4 +1,4 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDatabase } from '@/lib/db';
 import { NextRequest, NextResponse } from "next/server";
 import { assertSameOrigin } from "@/lib/security";
 import { DISCORD_SESSION_COOKIE, hashDiscordSessionToken } from "@/lib/discord-auth";
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     assertSameOrigin(request);
     const token = request.cookies.get(DISCORD_SESSION_COOKIE)?.value;
     if (token && /^[A-Za-z0-9_-]{43}$/.test(token)) {
-      await getCloudflareContext().env.VOTES_DB
+      await getDatabase()
         .prepare("DELETE FROM discord_sessions WHERE token_hash = ?1")
         .bind(hashDiscordSessionToken(token))
         .run();

@@ -1,4 +1,4 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDatabase } from '@/lib/db';
 import { createRemovalRequest, normalizeEmail } from "@/lib/removals";
 import { readLimitedJsonObject } from "@/lib/request-json";
 import { assertSameOrigin, getTrustedClientIp } from "@/lib/security";
@@ -38,9 +38,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { env } = getCloudflareContext();
+    const env = process.env;
     const result = await createRemovalRequest({
-      database: env.VOTES_DB,
+      database: getDatabase(),
       resendApiKey,
       email,
       ip: getTrustedClientIp(request),

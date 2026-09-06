@@ -1,7 +1,9 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDatabase } from '@/lib/db';
+
 import { NextRequest, NextResponse } from "next/server";
 
-import { getVoteRankings, getRecentVotes } from "@/lib/admin";
+import { getSuspiciousVotes, getVoteRankings, getRecentVotes } from "@/lib/admin";
+import { getLiveResultsState, resetLiveResults } from "@/lib/live-results";
 import { readLimitedJsonObject } from "@/lib/request-json";
 import {
   assertSameOrigin,
@@ -23,9 +25,7 @@ const RESPONSE_HEADERS = {
   "X-Content-Type-Options": "nosniff",
 };
 
-function getDatabase() {
-  return getCloudflareContext().env.VOTES_DB;
-}
+
 
 function json(body: unknown, init?: ResponseInit) {
   return NextResponse.json(body, {
@@ -170,7 +170,9 @@ async function getAuthorizedSession(
 async function getDashboardData(database: D1Database) {
   return {
     rankings: await getVoteRankings(database),
-    recentVotes: await getRecentVotes(database)
+    recentVotes: await getRecentVotes(database),
+    suspiciousVotes: await getSuspiciousVotes(database),
+    liveResults: await getLiveResultsState(),
   };
 }
 
@@ -260,6 +262,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (action === "reset-results-reveal") {
+      await resetLiveResults();
+      return json({
+        success: true,
+        requiresPasswordUpgrade: !(await getPasswordVerifier(database)),
+        ...(await getDashboardData(database)),
+      });
+    }
+
     if (action === "upgrade-password") {
       const newPassword = payload.newPassword;
       if (typeof newPassword !== "string" || newPassword.length < 11 || newPassword.length > 256) {
@@ -274,6 +285,33 @@ export async function POST(request: NextRequest) {
         .bind(await createPasswordVerifier(newPassword), Date.now())
         .run();
       return json({ success: true, requiresPasswordUpgrade: false, ...(await getDashboardData(database)) });
+    }
+
+    if (action === "set-vote-excluded") {
+      const discordUserId = payload.discordUserId;
+      const isExcluded = payload.isExcluded;
+      if (
+        typeof discordUserId !== "string" ||
+        !/^\d{17,20}$/.test(discordUserId) ||
+        typeof isExcluded !== "boolean"
+      ) {
+        return json({ success: false, error: "invalid_vote" }, { status: 400 });
+      }
+
+      const result = await database
+        .prepare(
+          `UPDATE votes
+           SET is_excluded = ?1,
+               excluded_at = CASE WHEN ?1 = 1 THEN ?2 ELSE NULL END
+           WHERE discord_user_id = ?3`,
+        )
+        .bind(isExcluded ? 1 : 0, Date.now(), discordUserId)
+        .run();
+      if (result.meta.changes !== 1) {
+        return json({ success: false, error: "vote_not_found" }, { status: 404 });
+      }
+
+      return json({ success: true, ...(await getDashboardData(database)) });
     }
 
 

@@ -45,7 +45,7 @@ const ENTRY_LOADING_PLACEHOLDERS = 16;
 
 type CircuitPoint = { x: number; y: number };
 
-type CircuitLayout = {
+export type CircuitLayout = {
   width: number;
   height: number;
   paths: string[];
@@ -86,6 +86,12 @@ function YouTubeThumbnail({
   >("maxresdefault");
   const [isHovered, setIsHovered] = useState(false);
   const [hasHovered, setHasHovered] = useState(false);
+
+  const fallbackResolution = () => {
+    setResolution((current) =>
+      current === "maxresdefault" ? "sddefault" : "hqdefault",
+    );
+  };
 
   return (
     <div
@@ -129,17 +135,25 @@ function YouTubeThumbnail({
           aria-hidden="true"
         >
           <Image
+            unoptimized={true}
             className="pvt-cover-img object-cover"
             src={`https://i.ytimg.com/vi/${youtubeId}/${resolution}.jpg`}
             alt={alt}
             fill
             loading={eager ? "eager" : "lazy"}
             sizes="(max-width: 640px) calc(100vw - 2.5rem), 44vw"
-            onError={() => {
-              setResolution((current) =>
-                current === "maxresdefault" ? "sddefault" : "hqdefault",
-              );
+            onLoad={(event) => {
+              // i.ytimg.com returns a 120x90 placeholder (HTTP 200), not an
+              // error, when the requested resolution does not exist (e.g. SD
+              // videos without a maxres thumbnail). onError never fires, so
+              // detect the placeholder here and fall back to a lower
+              // resolution.
+              const image = event.currentTarget;
+              if (image.naturalWidth <= 160 && image.naturalHeight <= 120) {
+                fallbackResolution();
+              }
             }}
+            onError={fallbackResolution}
           />
         </div>
 
@@ -396,7 +410,10 @@ function findCircuitIntersections(
   return intersections;
 }
 
-function buildCircuit(page: HTMLElement): CircuitLayout | null {
+export function buildCircuit(
+  page: HTMLElement,
+  { compactStart = false }: { compactStart?: boolean } = {},
+): CircuitLayout | null {
   const mobile = window.innerWidth <= 640;
   const pageRect = page.getBoundingClientRect();
   const field = page.querySelector<HTMLElement>(".vote-line-field");
@@ -444,10 +461,10 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
   const maxAnchorY = Math.max(...anchors.map((anchor) => anchor.y));
 
   const heroTurnStart =
-    maxAnchorY + Math.max(72, (fieldTop - maxAnchorY) * 0.26);
+    maxAnchorY + Math.max(compactStart ? 24 : 72, (fieldTop - maxAnchorY) * 0.26);
   const heroTurnEnd = Math.max(
-    heroTurnStart + 100,
-    fieldTop - (mobile ? 70 : 95),
+    heroTurnStart + (compactStart ? 36 : 100),
+    fieldTop - (compactStart ? 28 : mobile ? 70 : 95),
   );
   const heroOrdered = currentX
     .map((x, index) => ({ x, index }))
@@ -472,6 +489,10 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
 
   const spreadLeft = width * (mobile ? 0.13 : 0.11);
   const spreadRight = width * (mobile ? 0.87 : 0.89);
+  const initialSpreadDistance = compactStart
+    ? Math.min(300, Math.max(180, height * 0.07))
+    : 125;
+  const initialReleaseY = fieldTop + initialSpreadDistance;
   const spreadLanes = currentX.map((_, index) =>
     currentX.length === 1
       ? width / 2
@@ -486,7 +507,7 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
     expandedX[line.index] = spreadLanes[orderIndex];
   });
   paths.forEach((points, lineIndex) => {
-    points.push({ x: expandedX[lineIndex], y: fieldTop + 125 });
+    points.push({ x: expandedX[lineIndex], y: initialReleaseY });
   });
   currentX = expandedX;
 
@@ -525,15 +546,15 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
         ? candidate
         : nearest,
     );
-    const turnY = fieldTop + 175 + inactiveIndex * 90;
-    const intersectionY = turnY + 110;
+    const turnY = initialReleaseY + (compactStart ? 46 : 50) + inactiveIndex * (compactStart ? 46 : 90);
+    const intersectionY = turnY + (compactStart ? 56 : 110);
 
     paths[lineIndex].push({ x: lineX, y: turnY });
     paths[lineIndex].push({ x: currentX[targetLine], y: intersectionY });
   });
 
   if (labelLine !== undefined) {
-    labels.push({ x: currentX[labelLine] + 22, y: fieldTop + 285 });
+    labels.push({ x: currentX[labelLine] + 22, y: initialReleaseY + 160 });
   }
 
   const orderedAtEnd = activeLines
@@ -548,16 +569,16 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
         ? width - 36
         : (lane.x + orderedAtEnd[laneIndex + 1].x) / 2,
   }));
-  const labelExemptUntil = fieldTop + (mobile ? 565 : 785);
+  const labelExemptUntil = initialReleaseY + (mobile ? 440 : 660);
   const lanes = orderedAtEnd.map(({ lineIndex, x }, laneIndex) => ({
     x,
     baseX: x,
     pathIndex: lineIndex,
-    lastY: fieldTop + 125,
+    lastY: initialReleaseY,
     bendDirection: laneIndex % 2 === 0 ? 1 : -1,
     minimumX: laneBoundaries[laneIndex].minimumX,
     maximumX: laneBoundaries[laneIndex].maximumX,
-    exemptUntil: lineIndex === labelLine ? labelExemptUntil : fieldTop + 125,
+    exemptUntil: lineIndex === labelLine ? labelExemptUntil : initialReleaseY,
   }));
   const maximumStraightLength = mobile ? 310 : 430;
   const bendHeight = mobile ? 52 : 68;
@@ -683,7 +704,15 @@ function buildCircuit(page: HTMLElement): CircuitLayout | null {
   };
 }
 
-function VoteCircuit({ layout }: { layout: CircuitLayout }) {
+export function VoteCircuit({
+  layout,
+  maskRings = false,
+}: {
+  layout: CircuitLayout;
+  maskRings?: boolean;
+}) {
+  const ringMaskId = "vote-circuit-ring-mask";
+
   return (
     <svg
       className="vote-circuit"
@@ -691,7 +720,20 @@ function VoteCircuit({ layout }: { layout: CircuitLayout }) {
       preserveAspectRatio="none"
       aria-hidden="true"
     >
-      <g className="vote-circuit__paths">
+      {maskRings ? (
+        <defs>
+          <mask id={ringMaskId}>
+            <rect width="100%" height="100%" fill="#fff" />
+            {layout.rings.map((ring, index) => (
+              <circle key={index} cx={ring.x} cy={ring.y} r="18" fill="#000" />
+            ))}
+          </mask>
+        </defs>
+      ) : null}
+      <g
+        className="vote-circuit__paths"
+        mask={maskRings ? `url(#${ringMaskId})` : undefined}
+      >
         {layout.paths.map((path, index) => (
           <path
             key={index}
@@ -1806,6 +1848,7 @@ export default function VotePage() {
           }}
         >
           <Image
+            unoptimized={true}
             src="/logo/logo.png"
             alt="やまかわ動画編集大会"
             width={540}
@@ -2003,7 +2046,7 @@ export default function VotePage() {
                     onContextMenu={(event) => event.preventDefault()}
                   >
                     <VoteReelText
-                      label={voteSubmitting ? "保存中" : "続行する"}
+                      label={voteSubmitting ? "保存中" : "長押しして続行！！"}
                     />
                   </button>
                   <button

@@ -1560,6 +1560,10 @@ a {
   text-decoration: none;
 }
 
+.home-hero__action--results {
+  background: linear-gradient(112deg, #5b2cb7 0%, #8e43c9 48%, #d24aac 100%);
+}
+
 .home-hero__reel {
   display: inline-flex;
   height: 1.2em;

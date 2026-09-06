@@ -1,4 +1,4 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDatabase } from '@/lib/db';
 import { fetchContestEntries } from "@/lib/entries";
 import { recordReport, isValidYouTubeId } from "@/lib/reports";
 import { readLimitedJsonObject } from "@/lib/request-json";
@@ -13,9 +13,7 @@ import {
 
 export const runtime = "nodejs";
 
-function getDatabase() {
-  return getCloudflareContext().env.VOTES_DB;
-}
+
 
 const RESPONSE_HEADERS = {
   "Cache-Control": "no-store",
