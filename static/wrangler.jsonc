@@ -1,0 +1,38 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "votesites",
+  "account_id": "d80dcdc5e1ece83d242a1b1b20a96b27",
+  "main": "./static-worker.mjs",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "event.ymkw.top",
+      "custom_domain": true
+    }
+  ],
+  "compatibility_date": "2026-08-01",
+  "assets": {
+    "directory": "./out",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "LIVE_RESULTS_ROOM",
+        "class_name": "LiveResultsRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1-live-results-room",
+      "new_sqlite_classes": ["LiveResultsRoom"]
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

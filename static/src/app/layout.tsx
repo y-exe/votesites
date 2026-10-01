@@ -1,0 +1,125 @@
+import type { Metadata } from "next";
+import Script from "next/script";
+import "lenis/dist/lenis.css";
+import "./globals.css";
+
+const gaId = process.env.NEXT_PUBLIC_GA_ID || "G-7CCF8W05WC";
+
+export const metadata: Metadata = {
+  title: {
+    default: "やまかわ動画編集大会 | 投票・エントリーサイト",
+    template: "%s | やまかわ動画編集大会",
+  },
+  description: "やまかわてるきの動画編集大会投票・エントリーサイトです。",
+  keywords: [
+    "やまかわてるき",
+    "動画編集大会",
+    "動画コンテスト",
+    "切り抜き動画",
+    "YouTube",
+    "動画編集",
+    "投票",
+    "エントリー",
+  ],
+  metadataBase: new URL("https://event.ymkw.top"),
+  alternates: {
+    canonical: "https://event.ymkw.top",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    title: "やまかわ動画編集大会 | 投票・エントリーサイト",
+    description: "やまかわてるきの動画編集大会投票・エントリーサイトです。",
+    url: "https://event.ymkw.top",
+    siteName: "やまかわ動画編集大会",
+    images: [
+      {
+        url: "/ogp/ogp.png",
+        width: 1200,
+        height: 630,
+        alt: "やまかわ動画編集大会 メインビジュアル",
+      },
+    ],
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "やまかわ動画編集大会 | 投票・エントリーサイト",
+    description: "やまかわてるきの動画編集大会投票・エントリーサイトです。",
+    images: ["/ogp/ogp.png"],
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://event.ymkw.top/#website",
+      "url": "https://event.ymkw.top",
+      "name": "やまかわ動画編集大会",
+      "description": "やまかわてるきの動画編集大会投票・エントリーサイトです。",
+      "inLanguage": "ja-JP",
+    },
+    {
+      "@type": "Event",
+      "@id": "https://event.ymkw.top/#event",
+      "name": "やまかわ動画編集大会",
+      "description": "やまかわてるきの動画素材を使用した動画編集コンテスト＆ユーザー投票イベント",
+      "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
+      "eventStatus": "https://schema.org/EventScheduled",
+      "location": {
+        "@type": "VirtualLocation",
+        "url": "https://event.ymkw.top",
+      },
+      "organizer": {
+        "@type": "Person",
+        "name": "やまかわてるき",
+        "url": "https://x.com/YamakawaTeruki",
+      },
+    },
+  ],
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ja" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        {gaId ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaId}');
+              `}
+            </Script>
+          </>
+        ) : null}
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
