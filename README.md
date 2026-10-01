@@ -77,6 +77,9 @@ DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback
 
 ## Workersへデプロイ
 
+Cloudflare Workers Buildsでは、ビルドコマンドを `npm run cf:build`、デプロイコマンドを `npx wrangler deploy` に設定します。
+`npm run build` はNext.js単体のビルドで、Workers用の `.open-next/worker.js` は生成しません。
+
 ```bash
 npx wrangler d1 migrations apply votesites-db --remote
 npm run deploy
