@@ -2,11 +2,11 @@
 <h1>
   編集大会投票サイト
 
-  [![Next.js 16.3.0](https://img.shields.io/badge/Next.js-16.3.0-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
-  [![React 19.2.8](https://img.shields.io/badge/React-19.2.8-61DAFB?style=flat-square&logo=react&logoColor=white)](https://react.dev/)
+  [![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
+  [![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=white)](https://react.dev/)
   [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
   [![Cloudflare D1](https://img.shields.io/badge/Cloudflare-D1-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/d1/)
-  [![License GPL-3.0](https://img.shields.io/badge/LICENSE-GPL--3.0-green.svg?style=flat-square)](LICENSE)
+  [![License GPL v3](https://img.shields.io/badge/LICENSE-GPL%20v3-green.svg?style=flat-square)](LICENSE)
 </h1>
 期間限定の大会のサイトです！！<br>
 開催要項、エントリー、応募動画の閲覧・投票までを1つにまとめています。<br>
