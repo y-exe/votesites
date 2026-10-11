@@ -42,9 +42,9 @@ export async function GET() {
       }))
       .sort((a, b) => {
         if (a.count !== b.count) {
-          return b.count - a.count; // 票が多い順 (降順)
+          return b.count - a.count;
         }
-        return 0; // 同票なら順位はそのまま
+        return 0;
       });
 
     const isFullyPublished = liveState.publishedRanks.length >= 10;

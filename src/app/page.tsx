@@ -242,7 +242,7 @@ function AmbientMedia({
         />
       ) : null}
       {isNearViewport && mode === "ios-image" && !motionFailed ? (
-        // Safari supports short MP4 files in image elements without media controls.
+
         // eslint-disable-next-line @next/next/no-img-element
         <img
           className={`ambient-media__motion${className ? ` ${className}` : ""}`}

@@ -1898,7 +1898,7 @@ export default function VotePage() {
               aria-modal="true"
               aria-label="エントリー動画"
             >
-              {/* チャンネル＆概要欄 */}
+              { }
               <div
                 className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-4 text-white shrink-0"
                 style={{
@@ -1942,7 +1942,7 @@ export default function VotePage() {
                 />
               </div>
 
-              {/* YouTubeで見る ボタン */}
+              { }
               <div className="flex justify-center mt-2 shrink-0">
                 <a
                   className="vote-entry-playlist-button home-reel-trigger"

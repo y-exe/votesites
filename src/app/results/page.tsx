@@ -429,7 +429,7 @@ function BroadcastReveal({
     clearSequenceTimers();
     if (published) beginReveal();
     else setStage("covered");
-  // The transition itself intentionally runs only when the server state changes.
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [published]);
 
@@ -490,7 +490,7 @@ function BroadcastReveal({
       {mode === "podium" && (stage === "second-enter" || stage === "second-exit") ? (
         <div className={styles.broadcastSecondSequence} aria-hidden="true">
           {Array.from({ length: 8 }, (_, index) => (
-            // Plain img intentionally avoids image optimization during the timed reveal.
+
             // eslint-disable-next-line @next/next/no-img-element
             <img
               className={styles.broadcastSecondLayer}
@@ -1079,7 +1079,7 @@ export default function ResultsPage() {
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       socket = new WebSocket(`${protocol}//${location.host}/api/live-results/socket`);
       socket.onmessage = (event) => {
-        try { applyState(JSON.parse(event.data) as { publishedRanks?: number[] }); } catch { /* Ignore invalid broadcasts. */ }
+        try { applyState(JSON.parse(event.data) as { publishedRanks?: number[] }); } catch {   }
       };
       socket.onerror = () => socket?.close();
       socket.onclose = () => { if (active) poll = window.setInterval(fetchState, 1500); };

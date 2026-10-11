@@ -26,11 +26,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Local voting data, exports, and recovery copies must never be published.
 /*.db
 /backups/
 
-# One-off maintenance/debug helpers (some require local credentials or data).
 /check.js
 /check_db.js
 /dump-db.js

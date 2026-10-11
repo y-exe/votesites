@@ -57,7 +57,6 @@ export default function ReportAdminPage() {
           applyResponse(data);
         }
       } catch {
-        // An absent or expired session is the normal logged-out state.
       }
     })();
     return () => controller.abort();

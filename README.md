@@ -85,6 +85,24 @@ npx wrangler d1 migrations apply votesites-db --remote
 npm run deploy
 ```
 
+## 開発ツール
+
+Bun 1.3.14とBiomeを使用します。投票アプリのランタイムはNode.jsです。
+
+```bash
+bun install --frozen-lockfile
+bun run dev
+```
+
+| コマンド | 内容 |
+|---|---|
+| `bun run lint:biome` | Biome検査 |
+| `bun run typecheck` | 型検査 |
+| `bun run format` | コード整形 |
+| `bun run build` | Next.jsビルド |
+
+結果サイトは `static/` にあります。`bun run build:bun` で保存済みデータからビルドします。依存変更時はBun・npmの両ロックファイルを更新してください。WindowsでSQLiteを使う場合はC++ビルドツールが必要です。
+
 ## ライセンス
 
 [GPL-3.0](LICENSE)

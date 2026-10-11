@@ -1,6 +1,3 @@
-// ローカルSQLiteDBに migrations/*.sql を順に適用するスクリプト
-// 使い方: node scripts/dev-db.js [dbPath]
-//   dbPath 省略時は votes-dev.db
 const Database = require("better-sqlite3");
 const fs = require("fs");
 const path = require("path");

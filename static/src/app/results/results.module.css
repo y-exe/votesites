@@ -251,7 +251,6 @@
 }
 
 .topCanvas::after {
-  /* The lower black fill obscured the lower half of the wave transition. */
   display: none;
 }
 
@@ -717,8 +716,6 @@
   z-index: 2;
   padding: clamp(4.5rem, 10vw, 10rem) 0 clamp(6rem, 13vw, 13rem);
   overflow: hidden;
-  /* The surrounding EndLogoSection owns the black background. Keeping this
-     layer transparent lets the fixed logo remain visible behind the cards. */
   background: transparent;
 }
 
@@ -892,8 +889,6 @@
   object-fit: cover;
 }
 
-/* Live-broadcast result covers. The finished ranking design remains intact
-   underneath and is only exposed once its individual hold action completes. */
 .broadcastReveal {
   position: absolute;
   z-index: 30;
@@ -1247,7 +1242,6 @@
 .endLogo {
   position: relative;
   z-index: 1;
-  /* Wider than the alternating cards so its edges remain visible behind them. */
   width: min(48vw, 48rem);
   height: auto;
   filter:

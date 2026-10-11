@@ -1,0 +1,25 @@
+name: Development checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bun run lint:biome
+      - run: bun run typecheck
+      - run: bun run build
+      - run: bun install --frozen-lockfile --ignore-scripts
+        working-directory: static
+      - run: bun run typecheck
+        working-directory: static
+      - run: bun run build:bun
+        working-directory: static

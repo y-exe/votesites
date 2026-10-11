@@ -12,8 +12,6 @@ import styles from "./results.module.css";
 const lineSeedExtraBold = { className: "font-line-seed" };
 const zakkuriGothic = { className: "font-zakkuri-gothic" };
 
-// Static hosting must not fetch font metadata at build time. The page keeps
-// the existing system-font fallbacks defined in its CSS module instead.
 const leagueGothic = { className: "font-league-gothic" };
 const syncopate = { className: "font-syncopate" };
 const googleSans = { variable: "font-google-sans" };
@@ -394,7 +392,7 @@ function BroadcastReveal({
     clearSequenceTimers();
     if (published) beginReveal();
     else setStage("covered");
-  // The transition itself intentionally runs only when the server state changes.
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [published]);
 
@@ -455,7 +453,7 @@ function BroadcastReveal({
       {mode === "podium" && (stage === "second-enter" || stage === "second-exit") ? (
         <div className={styles.broadcastSecondSequence} aria-hidden="true">
           {Array.from({ length: 8 }, (_, index) => (
-            // Plain img intentionally avoids image optimization during the timed reveal.
+
             // eslint-disable-next-line @next/next/no-img-element
             <img
               className={styles.broadcastSecondLayer}

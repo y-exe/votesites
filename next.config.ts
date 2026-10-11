@@ -3,8 +3,6 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 void initOpenNextCloudflareForDev();
 
-// 開発ビルド（next dev）の React は eval() を必要とするため、
-// 開発時のみ 'unsafe-eval' を許可する。本番では付与しない。
 const isDev = process.env.NODE_ENV !== "production";
 
 const contentSecurityPolicy = [
@@ -53,9 +51,6 @@ const nextConfig: NextConfig = {
       {
         pathname: "/banner/**",
       },
-      // All files below public/ are repository-owned static assets. Allowing
-      // the complete local asset tree prevents each new homepage/VOTE icon
-      // directory from needing a separate next/image allow-list entry.
       {
         pathname: "/**",
       },
@@ -70,9 +65,6 @@ const nextConfig: NextConfig = {
   },
   typescript: {
     ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 };
 
