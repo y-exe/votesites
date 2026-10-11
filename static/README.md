@@ -11,3 +11,5 @@
 更新したい場合だけ、元データを持つ `C:\Code\Vote` の `votes.db` を更新してから `npm run snapshot` を実行します。
 
 Cloudflare Workers Buildsでは、リポジトリのルートディレクトリを `static`、ビルドコマンドを `npm run build:cloudflare`、デプロイコマンドを `npx wrangler deploy` に設定します。Workers上ではローカルの投票DBを使えないため、結果を更新したときはローカルで `npm run snapshot` を実行し、更新された `src/data/results.json` と `src/data/entries.json` をコミットしてからプッシュしてください。
+
+ローカル開発はBun 1.3.14で `bun install --frozen-lockfile`、`bun run dev` を使います。`bun run build:bun` はコミット済みのデータだけで静的サイトをビルドし、DB/CSVのsnapshotは更新しません。Cloudflareの `build:cloudflare` とnpmロックファイルも維持します。依存変更時は `bun.lock` と `package-lock.json` の両方を更新してください。

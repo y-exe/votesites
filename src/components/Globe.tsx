@@ -39,15 +39,18 @@ export default function Globe() {
         { location: [40.7128, -74.006], size: 0.1 },  // NY
         { location: [51.5074, -0.1278], size: 0.1 }   // London
       ],
-      onRender: (state) => {
-        state.phi = phi;
-        phi += 0.003;
-        state.width = width * 2;
-        state.height = width * 2;
-      }
     });
 
+    let animationFrame: number;
+    const animate = () => {
+      phi += 0.003;
+      globe.update({ phi, width: width * 2, height: width * 2 });
+      animationFrame = requestAnimationFrame(animate);
+    };
+    animationFrame = requestAnimationFrame(animate);
+
     return () => {
+      cancelAnimationFrame(animationFrame);
       globe.destroy();
       window.removeEventListener('resize', onResize);
     };

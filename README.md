@@ -92,3 +92,23 @@ npm run deploy
 ---
 
 © 2026 ymkw.top
+
+## 開発ツール
+
+`bun install --frozen-lockfile` で依存をインストールします。ルートの `bun.lock` はBun開発・CI用、`package-lock.json` は既存のnpmビルド互換用として維持し、依存変更時は両方を更新します。ルートのBiomeは投票アプリと `static/` のコードを検査します。`static/` は独立したCloudflare Workers Buildsのビルドルートなので、既存の個別インストール・デプロイを維持し、Turborepoのワークスペースには統合しません。
+
+- `bun run lint:biome`: Biomeで構文と初期導入の正確性ルールを検査。
+- `bun run format`: Biomeで整形。
+- `bun run format:check`: 整形差分を確認。既存コードの一括整形は行わず、編集時に適用します。
+- `npm run lint`: 既存のNext.js/React用ESLint検査。
+- `bun run typecheck`: TypeScript検査。
+
+Biomeは既存ESLintのReact専用ルールと併用します。初期ルールは実行上の誤りを対象とし、推奨ルール全体への拡張は別途行います。生成物・公開アセット・結果スナップショットは対象外です。CIではlintを必須とし、既存の整形差分はブロックしません。
+
+`static/` のsnapshotなど、ローカルDBを必要とする操作はCIで実行しません。
+
+静的サイトは `cd static && bun install --frozen-lockfile` の後、`bun run dev` / `bun run build:bun` でBun上のNext.jsを実行します。`build:bun` はコミット済みの結果データだけを使い、snapshotを実行しません。Cloudflareの `build:cloudflare` は既存のNode.jsでのビルド方式を維持します。
+
+投票アプリの `dev/build/start` は既存のNode.jsを維持し、`dev:bun/build:bun/start:bun` を移行検証用に用意しています。SQLiteの `better-sqlite3` を使うため、WindowsではVisual Studio C++ビルドツールが必要です。この依存のBun互換性を確認してから既定ランタイムを切り替えてください。型・lintだけを検査する場合は `bun install --frozen-lockfile --ignore-scripts` を使えますが、DB動作の検証にはなりません。
+
+Bun 1.3.14を開発・CIで固定します。Cloudflare上の実行環境はWorkersです。速度改善率は環境依存のため、導入だけで数値を保証しません。
