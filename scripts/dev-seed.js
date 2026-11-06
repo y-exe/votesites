@@ -19,8 +19,10 @@ if (entries.length === 0) {
   process.exit(1);
 }
 
+// 既存の投票をクリア（開発用のみ）
 db.prepare("DELETE FROM votes").run();
 
+// エントリ数が多めに減衰する形で票数を割り当てる
 const totalTarget = 200;
 const counts = [];
 let remaining = totalTarget;
@@ -47,6 +49,7 @@ entries.forEach((entry, index) => {
   const videoId = entry.youtubeId;
   const count = counts[index] || 0;
   for (let k = 0; k < count; k++) {
+    // 17桁のダミー Discord ID（CHECK制約: 17〜20桁の数字）
     const discordUserId = (10000000000000000n + BigInt(idCounter)).toString();
     idCounter += 1;
     insert.run(
