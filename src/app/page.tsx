@@ -565,10 +565,17 @@ function VideoRow({
     syncScrollReactivity();
     compactMedia.addEventListener("change", syncScrollReactivity);
 
-    const animate = (now: number) => {
+    // 毎フレームのoffsetWidth読み取りは強制リフローになるため、サイズ変化時のみ再計測する
+    let groupWidth = 0;
+    const measureGroupWidth = () => {
       const firstGroup = track.firstElementChild as HTMLElement | null;
-      const groupWidth = firstGroup?.offsetWidth ?? 0;
+      groupWidth = firstGroup?.offsetWidth ?? 0;
+    };
+    const sizeObserver = new ResizeObserver(measureGroupWidth);
+    if (track.firstElementChild) sizeObserver.observe(track.firstElementChild);
+    measureGroupWidth();
 
+    const animate = (now: number) => {
       if (groupWidth === 0) {
         animationFrame = requestAnimationFrame(animate);
         return;
@@ -618,6 +625,7 @@ function VideoRow({
 
     return () => {
       cancelAnimationFrame(animationFrame);
+      sizeObserver.disconnect();
       window.removeEventListener("scroll", handleScroll);
       compactMedia.removeEventListener("change", syncScrollReactivity);
     };
@@ -736,6 +744,21 @@ function EditingContestWall() {
     const compactMedia = window.matchMedia("(max-width: 1024px)");
     let scrollReactivityEnabled = !compactMedia.matches;
 
+    // 毎フレームのoffsetWidth読み取りは強制リフローになるため、サイズ変化時のみ再計測する
+    let groupWidths: number[] = [];
+    const measureGroupWidths = () => {
+      groupWidths = trackRefs.current.map((track) => {
+        const firstGroup = track?.firstElementChild as HTMLElement | null;
+        return firstGroup?.offsetWidth ?? 0;
+      });
+    };
+    const sizeObserver = new ResizeObserver(measureGroupWidths);
+    trackRefs.current.forEach((track) => {
+      const firstGroup = track?.firstElementChild;
+      if (firstGroup) sizeObserver.observe(firstGroup);
+    });
+    measureGroupWidths();
+
     const handleScroll = () => {
       if (!scrollReactivityEnabled) return;
 
@@ -760,10 +783,6 @@ function EditingContestWall() {
       const elapsed = Math.min(now - previousTime, 100);
       const elapsedSeconds = elapsed / 1000;
       previousTime = now;
-      const groupWidths = trackRefs.current.map((track) => {
-        const firstGroup = track?.firstElementChild as HTMLElement | null;
-        return firstGroup?.offsetWidth ?? 0;
-      });
 
       if (!initialized && groupWidths.every((width) => width > 0)) {
         groupWidths.forEach((width, index) => {
@@ -822,6 +841,7 @@ function EditingContestWall() {
 
     return () => {
       cancelAnimationFrame(animationFrame);
+      sizeObserver.disconnect();
       window.removeEventListener("scroll", handleScroll);
       compactMedia.removeEventListener("change", syncScrollReactivity);
     };
