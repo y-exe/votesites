@@ -2,15 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { editingAppIcons } from "./equipment-data";
 
-type EquipmentKind =
-  | "mouse"
-  | "cursor"
-  | "microphone"
-  | "monitor"
-  | "keyboard"
-  | "headphones";
+type EquipmentKind = "cursor" | "microphone" | "monitor" | "keyboard";
 
 const equipmentKinds: EquipmentKind[] = [
   "cursor",
@@ -95,7 +90,7 @@ function createRoundedSquare(size: number, radius: number) {
   return shape;
 }
 
-function createIconFace(shape: THREE.Shape, size: number) {
+function createIconFaceGeometry(shape: THREE.Shape, size: number) {
   const geometry = new THREE.ShapeGeometry(shape, 10);
   const positions = geometry.getAttribute("position");
   const uvs = new Float32Array(positions.count * 2);
@@ -107,90 +102,21 @@ function createIconFace(shape: THREE.Shape, size: number) {
   return geometry;
 }
 
-function createAppIcon(
-  config: (typeof editingAppIcons)[number],
-  renderer: THREE.WebGLRenderer,
-  maxAnisotropy: number,
-) {
-  const group = new THREE.Group();
-  const size = 1.82;
-  const depth = 0.36;
-  const shape = createRoundedSquare(size, 0.2);
-  const bodyGeometry = new THREE.ExtrudeGeometry(shape, {
-    depth,
-    bevelEnabled: false,
-    curveSegments: 10,
-  });
-  bodyGeometry.translate(0, 0, -depth / 2);
-  group.add(
-    new THREE.Mesh(
-      bodyGeometry,
-      new THREE.MeshBasicMaterial({ color: config.sideColor }),
-    ),
-  );
+// 機材モデルは種類ごとにパーツを1ジオメトリへ統合し、全インスタンスで共有する
+function createEquipmentGeometry(kind: EquipmentKind) {
+  const parts: THREE.BufferGeometry[] = [];
 
-  const texture = new THREE.TextureLoader().load(config.image);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = Math.min(
-    renderer.capabilities.getMaxAnisotropy(),
-    maxAnisotropy,
-  );
-  const material = new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true,
-    alphaTest: 0.02,
-  });
-  const faceGeometry = createIconFace(shape, size);
-  const front = new THREE.Mesh(faceGeometry, material);
-  front.position.z = depth / 2 + 0.002;
-  group.add(front);
-  const backGeometry = faceGeometry.clone();
-  const backUvs = backGeometry.getAttribute("uv");
-  for (let index = 0; index < backUvs.count; index += 1) {
-    backUvs.setX(index, 1 - backUvs.getX(index));
-  }
-  const back = new THREE.Mesh(backGeometry, material);
-  back.position.z = -depth / 2 - 0.002;
-  back.rotation.y = Math.PI;
-  group.add(back);
-  return group;
-}
-
-function createEquipment(kind: EquipmentKind, color: string) {
-  const group = new THREE.Group();
-  const bodyMaterial = new THREE.MeshBasicMaterial({
-    color,
-  });
-  const detailMaterial = new THREE.MeshBasicMaterial({
-    color,
-  });
-
-  const addBox = (
-    size: [number, number, number],
-    position: [number, number, number],
-    material = bodyMaterial,
+  const pushPart = (
+    geometry: THREE.BufferGeometry,
+    x = 0,
+    y = 0,
+    z = 0,
+    rotateX = 0,
   ) => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
-    mesh.position.set(...position);
-    group.add(mesh);
-    return mesh;
+    if (rotateX !== 0) geometry.rotateX(rotateX);
+    if (x !== 0 || y !== 0 || z !== 0) geometry.translate(x, y, z);
+    parts.push(geometry);
   };
-
-  if (kind === "mouse") {
-    const body = new THREE.Mesh(
-      new THREE.SphereGeometry(0.72, 10, 6),
-      bodyMaterial,
-    );
-    body.scale.set(0.86, 0.55, 1.16);
-    group.add(body);
-    const wheel = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.09, 0.09, 0.14, 8),
-      detailMaterial,
-    );
-    wheel.position.set(0, 0.36, -0.18);
-    wheel.rotation.z = Math.PI / 2;
-    group.add(wheel);
-  }
 
   if (kind === "cursor") {
     const shape = new THREE.Shape();
@@ -202,66 +128,133 @@ function createEquipment(kind: EquipmentKind, color: string) {
     shape.lineTo(0.15, -0.27);
     shape.lineTo(0.64, -0.13);
     shape.closePath();
-    const cursor = new THREE.Mesh(
-      new THREE.ExtrudeGeometry(shape, {
-        depth: 0.22,
-        bevelEnabled: false,
-        curveSegments: 1,
-      }),
-      bodyMaterial,
-    );
-    cursor.geometry.center();
-    group.add(cursor);
+    const cursor = new THREE.ExtrudeGeometry(shape, {
+      depth: 0.22,
+      bevelEnabled: false,
+      curveSegments: 1,
+    });
+    cursor.center();
+    parts.push(cursor);
   }
 
   if (kind === "microphone") {
-    const head = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.35, 0.48, 3, 8),
-      bodyMaterial,
-    );
-    head.position.y = 0.4;
-    group.add(head);
-    addBox([0.16, 0.75, 0.16], [0, -0.32, 0], detailMaterial);
-    addBox([1.05, 0.12, 0.62], [0, -0.78, 0]);
-    addBox([0.12, 0.9, 0.12], [-0.55, 0.05, 0], detailMaterial);
-    addBox([0.12, 0.9, 0.12], [0.55, 0.05, 0], detailMaterial);
+    const head = new THREE.CapsuleGeometry(0.35, 0.48, 3, 8);
+    pushPart(head, 0, 0.4, 0);
+    pushPart(new THREE.BoxGeometry(0.16, 0.75, 0.16), 0, -0.32, 0);
+    pushPart(new THREE.BoxGeometry(1.05, 0.12, 0.62), 0, -0.78, 0);
+    pushPart(new THREE.BoxGeometry(0.12, 0.9, 0.12), -0.55, 0.05, 0);
+    pushPart(new THREE.BoxGeometry(0.12, 0.9, 0.12), 0.55, 0.05, 0);
   }
 
   if (kind === "monitor") {
-    addBox([1.95, 1.18, 0.2], [0, 0.22, 0]);
-    addBox([1.62, 0.84, 0.035], [0, 0.26, 0.118], detailMaterial);
-    addBox([0.18, 0.58, 0.18], [0, -0.62, 0]);
-    addBox([1.05, 0.12, 0.55], [0, -0.92, 0]);
+    pushPart(new THREE.BoxGeometry(1.95, 1.18, 0.2), 0, 0.22, 0);
+    pushPart(new THREE.BoxGeometry(1.62, 0.84, 0.035), 0, 0.26, 0.118);
+    pushPart(new THREE.BoxGeometry(0.18, 0.58, 0.18), 0, -0.62, 0);
+    pushPart(new THREE.BoxGeometry(1.05, 0.12, 0.55), 0, -0.92, 0);
   }
 
   if (kind === "keyboard") {
-    const slab = addBox([2.15, 0.18, 0.92], [0, 0, 0]);
-    slab.rotation.x = -0.08;
-    addBox([1.82, 0.05, 0.64], [0, 0.13, 0], detailMaterial).rotation.x = -0.08;
+    pushPart(new THREE.BoxGeometry(2.15, 0.18, 0.92), 0, 0, 0, -0.08);
+    pushPart(new THREE.BoxGeometry(1.82, 0.05, 0.64), 0, 0.13, 0, -0.08);
   }
 
-  if (kind === "headphones") {
-    group.add(
-      new THREE.Mesh(
-        new THREE.TorusGeometry(0.72, 0.13, 4, 10, Math.PI),
-        bodyMaterial,
-      ),
-    );
-    const leftCup = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.34, 0.34, 0.34, 8),
-      detailMaterial,
-    );
-    leftCup.position.set(-0.72, -0.18, 0);
-    leftCup.rotation.z = Math.PI / 2;
-    group.add(leftCup);
-    const rightCup = leftCup.clone();
-    rightCup.position.x = 0.72;
-    group.add(rightCup);
-    addBox([0.12, 0.42, 0.12], [-0.72, 0.25, 0]);
-    addBox([0.12, 0.42, 0.12], [0.72, 0.25, 0]);
+  if (parts.length === 1) return parts[0];
+
+  const merged = mergeGeometries(parts, false);
+  if (!merged) throw new Error(`failed to merge equipment geometry: ${kind}`);
+  for (const part of parts) part.dispose();
+  return merged;
+}
+
+type IconAssets = {
+  bodyGeometry: THREE.BufferGeometry;
+  faceGeometry: THREE.BufferGeometry;
+  sideMaterial: THREE.MeshBasicMaterial;
+  faceMaterial: THREE.MeshBasicMaterial;
+};
+
+const equipmentGeometryCache = new Map<EquipmentKind, THREE.BufferGeometry>();
+const equipmentMaterialCache = new Map<string, THREE.MeshBasicMaterial>();
+const iconTextureCache = new Map<string, THREE.Texture>();
+const iconAssetCache = new Map<string, IconAssets>();
+
+function getEquipmentGeometry(kind: EquipmentKind) {
+  let geometry = equipmentGeometryCache.get(kind);
+  if (!geometry) {
+    geometry = createEquipmentGeometry(kind);
+    equipmentGeometryCache.set(kind, geometry);
+  }
+  return geometry;
+}
+
+function getEquipmentMaterial(color: string) {
+  let material = equipmentMaterialCache.get(color);
+  if (!material) {
+    material = new THREE.MeshBasicMaterial({ color });
+    equipmentMaterialCache.set(color, material);
+  }
+  return material;
+}
+
+function getIconAssets(
+  config: (typeof editingAppIcons)[number],
+  renderer: THREE.WebGLRenderer,
+) {
+  const cached = iconAssetCache.get(config.name);
+  if (cached) return cached;
+
+  const size = 1.82;
+  const depth = 0.36;
+  const shape = createRoundedSquare(size, 0.2);
+  const bodyGeometry = new THREE.ExtrudeGeometry(shape, {
+    depth,
+    bevelEnabled: false,
+    curveSegments: 10,
+  });
+  bodyGeometry.translate(0, 0, -depth / 2);
+
+  // 表面と裏面を1ジオメトリに統合して描画呼び出しを削る
+  const faceOffset = depth / 2 + 0.002;
+  const baseFace = createIconFaceGeometry(shape, size);
+  const frontFace = baseFace.clone();
+  frontFace.translate(0, 0, faceOffset);
+  const backFace = baseFace.clone();
+  const backUvs = backFace.getAttribute("uv");
+  for (let index = 0; index < backUvs.count; index += 1) {
+    backUvs.setX(index, 1 - backUvs.getX(index));
+  }
+  backFace.applyMatrix4(new THREE.Matrix4().makeRotationY(Math.PI));
+  backFace.translate(0, 0, -faceOffset);
+  baseFace.dispose();
+  const faceGeometry = mergeGeometries([frontFace, backFace], false);
+  frontFace.dispose();
+  backFace.dispose();
+  if (!faceGeometry) throw new Error(`failed to merge icon face: ${config.name}`);
+
+  let texture = iconTextureCache.get(config.image);
+  if (!texture) {
+    texture = new THREE.TextureLoader().load(config.image);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    // 装飾用の小さなアイコンなので異方性は控えめで十分
+    texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 4);
+    iconTextureCache.set(config.image, texture);
   }
 
-  return group;
+  const sideMaterial = new THREE.MeshBasicMaterial({ color: config.sideColor });
+  const faceMaterial = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    alphaTest: 0.02,
+  });
+
+  const assets: IconAssets = {
+    bodyGeometry,
+    faceGeometry,
+    sideMaterial,
+    faceMaterial,
+  };
+  iconAssetCache.set(config.name, assets);
+  return assets;
 }
 
 export default function EquipmentFlow({
@@ -290,7 +283,13 @@ export default function EquipmentFlow({
       deviceMemory,
     } = getRenderProfile();
     const isResourceLimited = quality !== "high";
-    const pixelRatioLimit = quality === "low" ? 1 : quality === "balanced" ? 1.25 : 2;
+    // 装飾背景なのでMSAAは無効化し、描画ピクセル数に予算を設けてフィルレートを抑える
+    const basePixelRatio = Math.min(
+      window.devicePixelRatio || 1,
+      quality === "low" ? 1 : quality === "balanced" ? 1.5 : 2,
+    );
+    const pixelBudget =
+      quality === "low" ? 1_200_000 : quality === "balanced" ? 2_200_000 : 4_000_000;
     const frameRateLimit = quality === "low" ? 24 : quality === "balanced" ? 30 : 60;
     element.dataset.renderQuality = quality;
     element.dataset.logicalCores = String(logicalCores);
@@ -300,13 +299,18 @@ export default function EquipmentFlow({
     const camera = new THREE.OrthographicCamera(-4, 4, 2, -2, 0.1, 30);
     camera.position.z = 10;
     const renderer = new THREE.WebGLRenderer({
-      antialias: quality === "high",
+      antialias: false,
       alpha: true,
       powerPreference: isResourceLimited ? "low-power" : "high-performance",
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioLimit));
     renderer.setClearColor(0x000000, 0);
     element.appendChild(renderer.domElement);
+
+    // 負荷が高い環境では実測フレーム時間に応じて内部解像度を下げる
+    let canvasPixelRatio = basePixelRatio;
+    let adaptiveScale = 1;
+    let slowStreak = 0;
+    let lastRenderTime = 0;
 
     let leftEdge = -4;
     let rightEdge = 4;
@@ -328,7 +332,7 @@ export default function EquipmentFlow({
     const count = equipmentCount + appCount;
     element.dataset.modelCount = String(count);
     element.dataset.frameRate = String(frameRateLimit);
-    element.dataset.pixelRatioLimit = String(pixelRatioLimit);
+    element.dataset.pixelRatioLimit = String(basePixelRatio);
     const diagonalColumns = isMobile ? 4 : lowQuality ? 5 : balancedQuality ? 6 : 12;
     const diagonalRows = Math.ceil(count / diagonalColumns);
     const appInterval = Math.max(2, Math.floor(count / appCount));
@@ -339,18 +343,22 @@ export default function EquipmentFlow({
       const isApp = isMobile
         ? index % 2 === 1
         : index % appInterval === appOffset && nextApp < appCount;
-      let group: THREE.Group;
+      let group: THREE.Object3D;
 
       if (isApp) {
-        group = createAppIcon(
+        const assets = getIconAssets(
           editingAppIcons[nextApp++ % editingAppIcons.length],
           renderer,
-          quality === "low" ? 1 : quality === "balanced" ? 2 : Number.POSITIVE_INFINITY,
         );
+        group = new THREE.Group();
+        group.add(new THREE.Mesh(assets.bodyGeometry, assets.sideMaterial));
+        group.add(new THREE.Mesh(assets.faceGeometry, assets.faceMaterial));
       } else {
-        group = createEquipment(
-          equipmentKinds[nextEquipment % equipmentKinds.length],
-          pinkPalette[nextEquipment % pinkPalette.length],
+        group = new THREE.Mesh(
+          getEquipmentGeometry(
+            equipmentKinds[nextEquipment % equipmentKinds.length],
+          ),
+          getEquipmentMaterial(pinkPalette[nextEquipment % pinkPalette.length]),
         );
         nextEquipment += 1;
       }
@@ -389,6 +397,12 @@ export default function EquipmentFlow({
 
     const resize = () => {
       const { width, height } = element.getBoundingClientRect();
+      const cssPixels = Math.max(width * height, 1);
+      canvasPixelRatio = Math.min(
+        basePixelRatio,
+        Math.max(0.6, Math.sqrt(pixelBudget / cssPixels)),
+      );
+      renderer.setPixelRatio(canvasPixelRatio * adaptiveScale);
       renderer.setSize(width, height, false);
       const vertical = direction === "diagonal" ? 3.2 : 2;
       const aspect = width / height;
@@ -509,6 +523,22 @@ export default function EquipmentFlow({
         group.rotation.z += spin.z * delta;
       });
       renderer.render(scene, camera);
+
+      if (lastRenderTime !== 0) {
+        const renderGap = timestamp - lastRenderTime;
+        if (renderGap > renderInterval * 1.5) {
+          slowStreak += 1;
+        } else {
+          slowStreak = Math.max(0, slowStreak - 1);
+        }
+        if (slowStreak >= 30 && adaptiveScale > 0.55) {
+          adaptiveScale = Math.max(0.55, adaptiveScale - 0.12);
+          renderer.setPixelRatio(canvasPixelRatio * adaptiveScale);
+          slowStreak = 0;
+        }
+      }
+      lastRenderTime = timestamp;
+
       if (!readyReported) {
         readyReported = true;
         onReadyRef.current?.();
@@ -523,17 +553,7 @@ export default function EquipmentFlow({
       visibilityObserver.disconnect();
       window.removeEventListener("scroll", handleScroll);
       renderer.dispose();
-      items.forEach(({ group }) => {
-        group.traverse((object) => {
-          if (!(object instanceof THREE.Mesh)) return;
-          object.geometry.dispose();
-          const materials = Array.isArray(object.material) ? object.material : [object.material];
-          materials.forEach((material) => {
-            if (material instanceof THREE.MeshBasicMaterial) material.map?.dispose();
-            material.dispose();
-          });
-        });
-      });
+      // ジオメトリ・マテリアル・テクスチャはモジュールキャッシュで全インスタンス共有のため破棄しない
       element.replaceChildren();
     };
   }, [direction]);
