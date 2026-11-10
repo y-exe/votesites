@@ -1168,7 +1168,7 @@ export default function Home() {
           <div className="home-hero__topbar">
             <p className={`${lineSeedExtraBold.className} home-hero__brand`}>
               <span className="home-hero__brand-desktop">やまかわ動画編集大会</span>
-              <span className="home-hero__brand-mobile">編集大会</span>
+              <span className="home-hero__brand-mobile">やまかわ編集大会</span>
             </p>
             <nav
               className={`${lineSeedExtraBold.className} home-social`}
@@ -1642,7 +1642,7 @@ export default function Home() {
           <div className="flex items-center justify-center gap-6">
             <Link
               href="/policy"
-              className="text-[0.95rem] text-white/85 underline"
+              className={`${lineSeedExtraBold.className} text-[0.95rem] text-white/85 underline`}
             >
               プライバシーポリシー
             </Link>
@@ -1650,7 +1650,7 @@ export default function Home() {
               href="https://github.com/y-exe/votesites"
               target="_blank"
               rel="noreferrer"
-              className="text-[0.95rem] text-white/85 underline"
+              className={`${lineSeedExtraBold.className} text-[0.95rem] text-white/85 underline`}
             >
               OSS
             </a>

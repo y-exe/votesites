@@ -1565,7 +1565,7 @@ a {
   justify-items: start;
   margin: 0;
   color: #fff;
-  font-size: clamp(3rem, 5vw, 6rem);
+  font-size: clamp(3.4rem, 5.8vw, 6.9rem);
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.04em;
@@ -1600,7 +1600,7 @@ a {
   overflow: hidden;
   color: #fff;
   background: rgb(0 0 0 / 74%);
-  font-size: clamp(1.8rem, 2.8vw, 2.8rem);
+  font-size: clamp(2rem, 3.2vw, 3.2rem);
   font-weight: 800;
   line-height: 1.2;
   text-decoration: none;
@@ -2717,7 +2717,7 @@ a {
     right: auto;
     left: 50%;
     width: max-content;
-    font-size: clamp(3.6rem, 18vw, 5.25rem);
+    font-size: clamp(3.6rem, 19.5vw, 5.75rem);
     transform: translateX(-50%);
   }
 
@@ -2732,7 +2732,7 @@ a {
   }
 
   .home-hero__action {
-    font-size: clamp(2rem, 9.5vw, 2.75rem);
+    font-size: clamp(2rem, 10.5vw, 3rem);
   }
 
   .home-hero__topbar {

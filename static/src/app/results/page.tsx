@@ -77,6 +77,7 @@ const TOP_LOADING_ASSETS = [
   "/Top/11.png",
   "/Top/12.png",
   "/Top/yokatta.png",
+  "/logo/logo-red.png",
 ] as const;
 const UNAVAILABLE_THUMBNAIL_IDS = new Set(["rMNoahdPhz0"]);
 const rankingColors = ["#f05d73", "#a71e42"] as const;
@@ -303,6 +304,12 @@ function SpinningRay() {
           unoptimized
         />
       </span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className={styles.rayLogo}
+        src={versionedTopAsset("/logo/logo-red.png")}
+        alt=""
+      />
     </span>
   );
 }
