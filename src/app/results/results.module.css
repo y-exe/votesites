@@ -346,6 +346,17 @@
   object-fit: contain;
 }
 
+.rayLogo {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: 33%;
+  height: auto;
+  transform: translate(-50%, -50%);
+}
+
 @keyframes topFloatOne {
   from { transform: translateY(-1.35%); }
   to { transform: translateY(2.25%); }
